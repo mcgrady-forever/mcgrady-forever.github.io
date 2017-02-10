@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next pisces use-motion" lang="">
+<html class="theme-next pisces use-motion" lang="zh-CN">
 <head>
   <meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -132,7 +132,7 @@
   <title> HeLei Blog </title>
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage" lang="">
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
 
   
 
@@ -313,7 +313,7 @@
               
                 <span class="post-meta-item-text">Veröffentlicht am</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-10T00:25:50-08:00">
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-10T17:15:31+08:00">
                 2017-02-10
               </time>
             
@@ -352,7 +352,12 @@
         
           
             <h2 id="1-Hexo简介"><a href="#1-Hexo简介" class="headerlink" title="1. Hexo简介"></a>1. Hexo简介</h2><p>Hexo 是一款基于 Node.js 的静态博客框架。Hexo 使用 Markdown 解析文章，用户在本地安装Hexo并进行写作，通过一条命令，Hexo即可利用靓丽的主题自动生成静态网页。<br>参考：Hexo Github地址     Hexo帮助文档</p>
-<h2 id="2-如何使用Hexo搭建自己的博客"><a href="#2-如何使用Hexo搭建自己的博客" class="headerlink" title="2. 如何使用Hexo搭建自己的博客"></a>2. 如何使用Hexo搭建自己的博客</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new <span class="string">"My New Post"</span></div></pre></td></tr></table></figure>
+<h2 id="2-如何使用Hexo搭建自己的博客"><a href="#2-如何使用Hexo搭建自己的博客" class="headerlink" title="2. 如何使用Hexo搭建自己的博客"></a>2. 如何使用Hexo搭建自己的博客</h2><p>### </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo apt-get purge nodejs npm</div></pre></td></tr></table></figure>
+<h3 id="update-gcc-g"><a href="#update-gcc-g" class="headerlink" title="update gcc g++"></a>update gcc g++</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">sudo add-apt-repository ppa:ubuntu-toolchain-r/<span class="built_in">test</span></div><div class="line">sudo apt-get update</div><div class="line">sudo apt-get install gcc-4.9</div><div class="line">sudo apt-get install g++-4.9</div><div class="line"></div><div class="line">update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 100</div><div class="line">update-alternatives --install /usr/bin/gcc gcc /usr/bin/g++-4.9 100</div></pre></td></tr></table></figure>
+<h3 id="install-nodejs"><a href="#install-nodejs" class="headerlink" title="install nodejs"></a>install nodejs</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ wget https://nodejs.org/dist/v6.9.5/node-v6.9.5.tar.gz</div><div class="line">$ tar xvf node-v6.9.5.tar.gz</div><div class="line">$ ./configure</div><div class="line">$ make </div><div class="line">$ make install</div></pre></td></tr></table></figure>
+<h3 id="install-npm"><a href="#install-npm" class="headerlink" title="install npm"></a>install npm</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo apt-get install npm</div></pre></td></tr></table></figure>
+<h3 id="check-res"><a href="#check-res" class="headerlink" title="check res"></a>check res</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new <span class="string">"My New Post"</span></div></pre></td></tr></table></figure>
 <p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="external">Writing</a></p>
 <h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo server</div></pre></td></tr></table></figure>
 <p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="external">Server</a></p>
@@ -442,8 +447,8 @@
               
                 <span class="post-meta-item-text">Veröffentlicht am</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-09T18:44:56-08:00">
-                2017-02-09
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-10T10:44:56+08:00">
+                2017-02-10
               </time>
             
 
