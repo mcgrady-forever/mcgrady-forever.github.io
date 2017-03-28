@@ -87,19 +87,43 @@
 
 
 
-<meta name="description" content="1. Hexo简介Hexo 是一款基于 Node.js 的静态博客框架。Hexo 使用 Markdown 解析文章，用户在本地安装Hexo并进行写作，通过一条命令，Hexo即可利用靓丽的主题自动生成静态网页。参考：Hexo Github地址     Hexo帮助文档
-2. 如何使用Hexo搭建自己的博客uninstall old version of nodejs &amp;amp; npm1$ sudo">
+<meta name="description" content="阻塞io模型
+非阻塞io模型
+io复用模型
+信号驱动io模型
+异步io模型
+
+阻塞和非阻塞描述的对象是函数，指调用这个函数后是否会block进程/线程。
+同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="What is Hexo?">
-<meta property="og:url" content="http://hlei.io/2017/02/10/hello-world/index.html">
+<meta property="og:title" content="network-io-model">
+<meta property="og:url" content="http://hlei.io/2017/03/22/network-io-model/index.html">
 <meta property="og:site_name" content="HeLei Blog">
-<meta property="og:description" content="1. Hexo简介Hexo 是一款基于 Node.js 的静态博客框架。Hexo 使用 Markdown 解析文章，用户在本地安装Hexo并进行写作，通过一条命令，Hexo即可利用靓丽的主题自动生成静态网页。参考：Hexo Github地址     Hexo帮助文档
-2. 如何使用Hexo搭建自己的博客uninstall old version of nodejs &amp;amp; npm1$ sudo">
-<meta property="og:updated_time" content="2017-02-10T10:00:54.425Z">
+<meta property="og:description" content="阻塞io模型
+非阻塞io模型
+io复用模型
+信号驱动io模型
+异步io模型
+
+阻塞和非阻塞描述的对象是函数，指调用这个函数后是否会block进程/线程。
+同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。">
+<meta property="og:image" content="http://hlei.io/2017/03/08/network/阻塞io模型.png">
+<meta property="og:image" content="http://hlei.io/2017/03/08/network/非阻塞io模型.png">
+<meta property="og:image" content="http://hlei.io/2017/03/08/network/io复用模型.png">
+<meta property="og:image" content="http://hlei.io/2017/03/08/network/信号驱动io模型.png">
+<meta property="og:image" content="http://hlei.io/2017/03/08/network/异步io.png">
+<meta property="og:updated_time" content="2017-03-28T02:33:54.120Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="What is Hexo?">
-<meta name="twitter:description" content="1. Hexo简介Hexo 是一款基于 Node.js 的静态博客框架。Hexo 使用 Markdown 解析文章，用户在本地安装Hexo并进行写作，通过一条命令，Hexo即可利用靓丽的主题自动生成静态网页。参考：Hexo Github地址     Hexo帮助文档
-2. 如何使用Hexo搭建自己的博客uninstall old version of nodejs &amp;amp; npm1$ sudo">
+<meta name="twitter:title" content="network-io-model">
+<meta name="twitter:description" content="阻塞io模型
+非阻塞io模型
+io复用模型
+信号驱动io模型
+异步io模型
+
+阻塞和非阻塞描述的对象是函数，指调用这个函数后是否会block进程/线程。
+同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。">
+<meta name="twitter:image" content="http://hlei.io/2017/03/08/network/阻塞io模型.png">
 
 
 
@@ -127,13 +151,13 @@
 
 
 
-  <link rel="canonical" href="http://hlei.io/2017/02/10/hello-world/"/>
+  <link rel="canonical" href="http://hlei.io/2017/03/22/network-io-model/"/>
 
 
 
 
 
-  <title> What is Hexo? | HeLei Blog </title>
+  <title> network-io-model | HeLei Blog </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -173,7 +197,7 @@
     </a>
   </div>
     
-      <p class="site-subtitle">不要因为走得太远，就忘记为什么而出发</p>
+      <h1 class="site-subtitle" itemprop="description">不要因为走得太远，就忘记为什么而出发</h1>
     
 </div>
 
@@ -198,6 +222,16 @@
               <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
             
             首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
           </a>
         </li>
       
@@ -273,7 +307,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/02/10/hello-world/">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/03/22/network-io-model/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="He Lei">
@@ -293,14 +327,14 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">
+          <h2 class="post-title" itemprop="name headline">
             
             
               
-                What is Hexo?
+                network-io-model
               
             
-          </h1>
+          </h2>
         
 
         <div class="post-meta">
@@ -312,8 +346,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-10T02:00:54-08:00">
-                2017-02-10
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-03-22T05:07:55-07:00">
+                2017-03-22
               </time>
             
 
@@ -322,6 +356,28 @@
             
           </span>
 
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/network/" itemprop="url" rel="index">
+                    <span itemprop="name">network</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -348,20 +404,14 @@
       
 
       
-        <h2 id="1-Hexo简介"><a href="#1-Hexo简介" class="headerlink" title="1. Hexo简介"></a>1. Hexo简介</h2><p>Hexo 是一款基于 Node.js 的静态博客框架。Hexo 使用 Markdown 解析文章，用户在本地安装Hexo并进行写作，通过一条命令，Hexo即可利用靓丽的主题自动生成静态网页。<br>参考：Hexo Github地址     Hexo帮助文档</p>
-<h2 id="2-如何使用Hexo搭建自己的博客"><a href="#2-如何使用Hexo搭建自己的博客" class="headerlink" title="2. 如何使用Hexo搭建自己的博客"></a>2. 如何使用Hexo搭建自己的博客</h2><h3 id="uninstall-old-version-of-nodejs-amp-npm"><a href="#uninstall-old-version-of-nodejs-amp-npm" class="headerlink" title="uninstall old version of nodejs &amp; npm"></a>uninstall old version of nodejs &amp; npm</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo apt-get purge nodejs npm</div></pre></td></tr></table></figure>
-<h3 id="update-gcc-g"><a href="#update-gcc-g" class="headerlink" title="update gcc g++"></a>update gcc g++</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">sudo add-apt-repository ppa:ubuntu-toolchain-r/<span class="built_in">test</span></div><div class="line">sudo apt-get update</div><div class="line">sudo apt-get install gcc-4.9</div><div class="line">sudo apt-get install g++-4.9</div><div class="line"></div><div class="line">update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 100</div><div class="line">update-alternatives --install /usr/bin/gcc gcc /usr/bin/g++-4.9 100</div></pre></td></tr></table></figure>
-<h3 id="install-nodejs"><a href="#install-nodejs" class="headerlink" title="install nodejs"></a>install nodejs</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ wget https://nodejs.org/dist/v6.9.5/node-v6.9.5.tar.gz</div><div class="line">$ tar xvf node-v6.9.5.tar.gz</div><div class="line">$ ./configure</div><div class="line">$ make </div><div class="line">$ make install</div></pre></td></tr></table></figure>
-<h3 id="install-npm"><a href="#install-npm" class="headerlink" title="install npm"></a>install npm</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo apt-get install npm</div></pre></td></tr></table></figure>
-<h3 id="check-res"><a href="#check-res" class="headerlink" title="check res"></a>check res</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ node -v</div><div class="line">v6.9.5</div><div class="line"></div><div class="line">$ npm -v</div><div class="line">3.10.10</div></pre></td></tr></table></figure>
-<h3 id="安装并初始化Hexo"><a href="#安装并初始化Hexo" class="headerlink" title="安装并初始化Hexo"></a>安装并初始化Hexo</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ npm install -g hexo-cli</div><div class="line">$ hexo init</div></pre></td></tr></table></figure>
-<p>安装完成后，指定文件夹的目录如下：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">1 ├── _config.yml</div><div class="line">2 ├── package.json</div><div class="line">3 ├── scaffolds</div><div class="line">4 ├── <span class="built_in">source</span></div><div class="line">5 |   ├── _drafts</div><div class="line">6 |   └── _posts</div><div class="line">7 └── themes</div></pre></td></tr></table></figure></p>
-<p>其中_config.yml文件用于存放网站的配置信息，你可以在此配置大部分的参数；scaffolds是存放模板的文件夹，当新建文章时，Hexo 会根据scaffold来建立文件；source是资源文件夹，用于存放用户资源，themes是主题文件夹，存放博客主题，Hexo 会根据主题来生成静态页面。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new <span class="string">"My New Post"</span></div></pre></td></tr></table></figure>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo server</div></pre></td></tr></table></figure>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo generate</div></pre></td></tr></table></figure>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo deploy</div></pre></td></tr></table></figure>
-
+        <h2 id="阻塞io模型"><a href="#阻塞io模型" class="headerlink" title="阻塞io模型"></a>阻塞io模型</h2><p><img src="/2017/03/08/network/阻塞io模型.png" alt="阻塞io模型"></p>
+<h2 id="非阻塞io模型"><a href="#非阻塞io模型" class="headerlink" title="非阻塞io模型"></a>非阻塞io模型</h2><p><img src="/2017/03/08/network/非阻塞io模型.png" alt="阻塞io模型"></p>
+<h2 id="io复用模型"><a href="#io复用模型" class="headerlink" title="io复用模型"></a>io复用模型</h2><p><img src="/2017/03/08/network/io复用模型.png" alt="阻塞io模型"></p>
+<h2 id="信号驱动io模型"><a href="#信号驱动io模型" class="headerlink" title="信号驱动io模型"></a>信号驱动io模型</h2><p><img src="/2017/03/08/network/信号驱动io模型.png" alt="阻塞io模型"></p>
+<h2 id="异步io模型"><a href="#异步io模型" class="headerlink" title="异步io模型"></a>异步io模型</h2><p><img src="/2017/03/08/network/异步io.png" alt="阻塞io模型"></p>
+<hr>
+<p><bold>阻塞和非阻塞</bold>描述的对象是函数，指调用这个函数后是否会block进程/线程。</p>
+<h2 id="同步-异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。"><a href="#同步-异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。" class="headerlink" title="同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。"></a>同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。</h2>
       
     </div>
 
@@ -391,8 +441,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/02/09/first/" rel="next" title="H">
-                <i class="fa fa-chevron-left"></i> H
+              <a href="/2017/03/19/network-send-recv/" rel="next" title="network_send_recv">
+                <i class="fa fa-chevron-left"></i> network_send_recv
               </a>
             
           </div>
@@ -400,6 +450,10 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/03/22/boost-coroutine/" rel="prev" title="boost_coroutine">
+                boost_coroutine <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -469,14 +523,28 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-count">11</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
           
 
           
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
 
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
           
 
         </nav>
@@ -528,7 +596,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-Hexo简介"><span class="nav-number">1.</span> <span class="nav-text">1. Hexo简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-如何使用Hexo搭建自己的博客"><span class="nav-number">2.</span> <span class="nav-text">2. 如何使用Hexo搭建自己的博客</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#uninstall-old-version-of-nodejs-amp-npm"><span class="nav-number">2.1.</span> <span class="nav-text">uninstall old version of nodejs & npm</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#update-gcc-g"><span class="nav-number">2.2.</span> <span class="nav-text">update gcc g++</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#install-nodejs"><span class="nav-number">2.3.</span> <span class="nav-text">install nodejs</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#install-npm"><span class="nav-number">2.4.</span> <span class="nav-text">install npm</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#check-res"><span class="nav-number">2.5.</span> <span class="nav-text">check res</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安装并初始化Hexo"><span class="nav-number">2.6.</span> <span class="nav-text">安装并初始化Hexo</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Run-server"><span class="nav-number">2.7.</span> <span class="nav-text">Run server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Generate-static-files"><span class="nav-number">2.8.</span> <span class="nav-text">Generate static files</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Deploy-to-remote-sites"><span class="nav-number">2.9.</span> <span class="nav-text">Deploy to remote sites</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#阻塞io模型"><span class="nav-number">1.</span> <span class="nav-text">阻塞io模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#非阻塞io模型"><span class="nav-number">2.</span> <span class="nav-text">非阻塞io模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#io复用模型"><span class="nav-number">3.</span> <span class="nav-text">io复用模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#信号驱动io模型"><span class="nav-number">4.</span> <span class="nav-text">信号驱动io模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#异步io模型"><span class="nav-number">5.</span> <span class="nav-text">异步io模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#同步-异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。"><span class="nav-number">6.</span> <span class="nav-text">同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。</span></a></li></ol></div>
             
 
           </div>

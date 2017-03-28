@@ -87,16 +87,25 @@
 
 
 
-<meta name="description" content="c/c++/python | redis | recommend algorithm | search engine">
+<meta name="description" content="两个函数如何并发执行？
+执行转移机制
+123456789101112131415161718192021222324252627282930313233#include &amp;lt;iostream&amp;gt;#include &amp;lt;boost/coroutine/all.hpp&amp;gt;typedef boost::coroutines::asymmetric_coroutine&amp;lt; void &amp;g">
 <meta property="og:type" content="article">
-<meta property="og:title" content="redis-analysis">
-<meta property="og:url" content="http://hlei.io/2017/02/22/redis-analysis/index.html">
+<meta property="og:title" content="boost_coroutine">
+<meta property="og:url" content="http://hlei.io/2017/03/22/boost-coroutine/index.html">
 <meta property="og:site_name" content="HeLei Blog">
-<meta property="og:description" content="c/c++/python | redis | recommend algorithm | search engine">
-<meta property="og:updated_time" content="2017-02-23T07:14:13.189Z">
+<meta property="og:description" content="两个函数如何并发执行？
+执行转移机制
+123456789101112131415161718192021222324252627282930313233#include &amp;lt;iostream&amp;gt;#include &amp;lt;boost/coroutine/all.hpp&amp;gt;typedef boost::coroutines::asymmetric_coroutine&amp;lt; void &amp;g">
+<meta property="og:image" content="http://hlei.io/2017/03/22/boost-coroutine/coroutine01.png">
+<meta property="og:image" content="http://hlei.io/2017/03/22/boost-coroutine/coroutine02.png">
+<meta property="og:updated_time" content="2017-03-24T10:28:10.757Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="redis-analysis">
-<meta name="twitter:description" content="c/c++/python | redis | recommend algorithm | search engine">
+<meta name="twitter:title" content="boost_coroutine">
+<meta name="twitter:description" content="两个函数如何并发执行？
+执行转移机制
+123456789101112131415161718192021222324252627282930313233#include &amp;lt;iostream&amp;gt;#include &amp;lt;boost/coroutine/all.hpp&amp;gt;typedef boost::coroutines::asymmetric_coroutine&amp;lt; void &amp;g">
+<meta name="twitter:image" content="http://hlei.io/2017/03/22/boost-coroutine/coroutine01.png">
 
 
 
@@ -124,13 +133,13 @@
 
 
 
-  <link rel="canonical" href="http://hlei.io/2017/02/22/redis-analysis/"/>
+  <link rel="canonical" href="http://hlei.io/2017/03/22/boost-coroutine/"/>
 
 
 
 
 
-  <title> redis-analysis | HeLei Blog </title>
+  <title> boost_coroutine | HeLei Blog </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -280,7 +289,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/02/22/redis-analysis/">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/03/22/boost-coroutine/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="He Lei">
@@ -304,7 +313,7 @@
             
             
               
-                redis-analysis
+                boost_coroutine
               
             
           </h2>
@@ -319,8 +328,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-22T07:13:44-08:00">
-                2017-02-22
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-03-22T11:32:48-07:00">
+                2017-03-23
               </time>
             
 
@@ -342,8 +351,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Redis/" itemprop="url" rel="index">
-                    <span itemprop="name">Redis</span>
+                  <a href="/categories/协程/" itemprop="url" rel="index">
+                    <span itemprop="name">协程</span>
                   </a>
                 </span>
 
@@ -377,7 +386,13 @@
       
 
       
-        
+        <h2 id="两个函数如何并发执行？"><a href="#两个函数如何并发执行？" class="headerlink" title="两个函数如何并发执行？"></a>两个函数如何并发执行？</h2><p><img src="/2017/03/22/boost-coroutine/coroutine01.png" alt="函数并发执行"></p>
+<h2 id="执行转移机制"><a href="#执行转移机制" class="headerlink" title="执行转移机制"></a>执行转移机制</h2><p><img src="/2017/03/22/boost-coroutine/coroutine02.png" alt="执行转移机制"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line">#include &lt;iostream&gt;</div><div class="line">#include &lt;boost/coroutine/all.hpp&gt;</div><div class="line"></div><div class="line">typedef boost::coroutines::asymmetric_coroutine&lt; void &gt;::pull_type pull_coro_t;</div><div class="line">typedef boost::coroutines::asymmetric_coroutine&lt; void &gt;::push_type push_coro_t;</div><div class="line"></div><div class="line"></div><div class="line">void foo(push_coro_t &amp; sink)</div><div class="line">&#123;</div><div class="line">    std::cout &lt;&lt; &quot;1&quot;;</div><div class="line">    sink();</div><div class="line">    std::cout &lt;&lt; &quot;2&quot;;</div><div class="line">    sink();</div><div class="line">    std::cout &lt;&lt; &quot;3&quot;;</div><div class="line">    sink();</div><div class="line">    std::cout &lt;&lt; &quot;4&quot;;</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main(int argc, char * argv[])</div><div class="line">&#123;</div><div class="line">    &#123;</div><div class="line">        pull_coro_t source(foo);</div><div class="line">        while (source)</div><div class="line">        &#123;</div><div class="line">            std::cout &lt;&lt; &quot;-&quot;;</div><div class="line">            source();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    std::cout &lt;&lt; &quot;\nDone&quot; &lt;&lt; std::endl;</div><div class="line"></div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>运行输出<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">1-2-3-4</div></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div></pre></td><td class="code"><pre><div class="line">#include &lt;iostream&gt;</div><div class="line">#include &lt;boost/coroutine/all.hpp&gt;</div><div class="line"></div><div class="line">using namespace std;</div><div class="line"></div><div class="line">typedef boost::coroutines::asymmetric_coroutine&lt; int &gt;::pull_type pull_coro_t1;</div><div class="line">typedef boost::coroutines::asymmetric_coroutine&lt; int &gt;::push_type push_coro_t1;</div><div class="line"></div><div class="line">void foo1(push_coro_t1&amp; sink1)</div><div class="line">&#123;</div><div class="line">	cout&lt;&lt;&quot;1&quot;;</div><div class="line">	sink1(10);</div><div class="line">	cout&lt;&lt;&quot;2&quot;;</div><div class="line">	sink1(20);</div><div class="line">	cout&lt;&lt;&quot;3&quot;;</div><div class="line">	sink1(30);</div><div class="line">	cout&lt;&lt;&quot;4&quot;;</div><div class="line">	sink1(40);</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main(int argc, char const *argv[])</div><div class="line">&#123;</div><div class="line">	&#123;</div><div class="line">		pull_coro_t1 source1(foo1);</div><div class="line">		while (source1)</div><div class="line">		&#123;</div><div class="line">			int ret = source1.get();</div><div class="line">			cout&lt;&lt;&quot;ret: &quot;&lt;&lt;ret&lt;&lt;endl;</div><div class="line">			source1();</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	cout&lt;&lt;&quot;\nDone&quot;&lt;&lt;endl;</div><div class="line"></div><div class="line">	return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>运行输出<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">1ret: 10</div><div class="line">2ret: 20</div><div class="line">3ret: 30</div><div class="line">4ret: 40</div></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line">#include &lt;iostream&gt;</div><div class="line">#include &lt;boost/coroutine/all.hpp&gt;</div><div class="line"></div><div class="line">using namespace std;</div><div class="line"></div><div class="line">typedef boost::coroutines::asymmetric_coroutine&lt; int &gt;::pull_type pull_coro_t1;</div><div class="line">typedef boost::coroutines::asymmetric_coroutine&lt; int &gt;::push_type push_coro_t1;</div><div class="line"></div><div class="line"></div><div class="line">void foo1(pull_coro_t1&amp; sink1)</div><div class="line">&#123;</div><div class="line">	cout&lt;&lt;&quot;1 &quot;&lt;&lt;source1.get();</div><div class="line">	sink1();</div><div class="line">	cout&lt;&lt;&quot;2 &quot;&lt;&lt;source1.get();</div><div class="line">	sink1();</div><div class="line">	cout&lt;&lt;&quot;3 &quot;&lt;&lt;source1.get();</div><div class="line">	sink1();</div><div class="line">	cout&lt;&lt;&quot;4 &quot;&lt;&lt;source1.get();</div><div class="line">	sink1();</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main(int argc, char const *argv[])</div><div class="line">&#123;</div><div class="line">	&#123;</div><div class="line">		push_coro_t1 source1(foo1);</div><div class="line">		int c = 0;</div><div class="line">		while (source1)</div><div class="line">		&#123;</div><div class="line">			++c;</div><div class="line">			source1();</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	cout&lt;&lt;&quot;\nDone&quot;&lt;&lt;endl;</div><div class="line"></div><div class="line">	return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
       
     </div>
 
@@ -407,8 +422,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/02/22/spring-task/" rel="next" title="Spring Summary 1：Quartz定时任务为什么会被阻塞">
-                <i class="fa fa-chevron-left"></i> Spring Summary 1：Quartz定时任务为什么会被阻塞
+              <a href="/2017/03/22/network-io-model/" rel="next" title="network-io-model">
+                <i class="fa fa-chevron-left"></i> network-io-model
               </a>
             
           </div>
@@ -417,8 +432,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2017/02/22/hello-world/" rel="prev" title="What is Hexo?">
-                What is Hexo? <i class="fa fa-chevron-right"></i>
+              <a href="/2017/03/22/generate/" rel="prev" title="generate">
+                generate <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -466,8 +481,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel sidebar-panel-active">
+      <section class="site-overview sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/avatar.gif"
@@ -543,6 +567,22 @@
 
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#两个函数如何并发执行？"><span class="nav-number">1.</span> <span class="nav-text">两个函数如何并发执行？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#执行转移机制"><span class="nav-number">2.</span> <span class="nav-text">执行转移机制</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
     </div>

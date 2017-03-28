@@ -87,18 +87,36 @@
 
 
 
-<meta name="description" content="tcp使用分隔符通过包头记录包的长度">
+<meta name="description" content="tcp使用分隔符通过包头记录包的长度
+tcp状态机
+建立连接过程流程图
+tcpdump抓包(listen port 1234)1sudo tcpdump -i lo tcp port 1234 and host 127.0.0.1
+客户端代码1234if(connect(sockfd,(struct sockaddr *)&amp;amp;server,sizeof(server))==-1)&amp;#123;">
 <meta property="og:type" content="article">
 <meta property="og:title" content="network">
 <meta property="og:url" content="http://hlei.io/2017/03/08/network/index.html">
 <meta property="og:site_name" content="HeLei Blog">
-<meta property="og:description" content="tcp使用分隔符通过包头记录包的长度">
-<meta property="og:image" content="http://hlei.io/land.jpg">
-<meta property="og:updated_time" content="2017-03-13T02:17:06.599Z">
+<meta property="og:description" content="tcp使用分隔符通过包头记录包的长度
+tcp状态机
+建立连接过程流程图
+tcpdump抓包(listen port 1234)1sudo tcpdump -i lo tcp port 1234 and host 127.0.0.1
+客户端代码1234if(connect(sockfd,(struct sockaddr *)&amp;amp;server,sizeof(server))==-1)&amp;#123;">
+<meta property="og:image" content="http://hlei.io/2017/03/08/network/tcp_state_machine.png">
+<meta property="og:image" content="http://hlei.io/2017/03/08/network/connect.png">
+<meta property="og:image" content="http://hlei.io/2017/03/08/network/tcpdump_connect.png">
+<meta property="og:image" content="http://hlei.io/2017/03/08/network/established.png">
+<meta property="og:image" content="http://hlei.io/2017/03/08/network/close.png">
+<meta property="og:image" content="http://hlei.io/2017/03/08/network/tcpdump_close.png">
+<meta property="og:image" content="http://hlei.io/2017/03/08/network/close_wait.png">
+<meta property="og:updated_time" content="2017-03-14T01:42:08.329Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="network">
-<meta name="twitter:description" content="tcp使用分隔符通过包头记录包的长度">
-<meta name="twitter:image" content="http://hlei.io/land.jpg">
+<meta name="twitter:description" content="tcp使用分隔符通过包头记录包的长度
+tcp状态机
+建立连接过程流程图
+tcpdump抓包(listen port 1234)1sudo tcpdump -i lo tcp port 1234 and host 127.0.0.1
+客户端代码1234if(connect(sockfd,(struct sockaddr *)&amp;amp;server,sizeof(server))==-1)&amp;#123;">
+<meta name="twitter:image" content="http://hlei.io/2017/03/08/network/tcp_state_machine.png">
 
 
 
@@ -380,7 +398,22 @@
 
       
         <p>tcp<br>使用分隔符<br>通过包头记录包的长度</p>
-<p><img src="land.jpg" alt="Alt text"></p>
+<h2 id="tcp状态机"><a href="#tcp状态机" class="headerlink" title="tcp状态机"></a>tcp状态机</h2><p><img src="/2017/03/08/network/tcp_state_machine.png" alt="tcp状态机"></p>
+<h2 id="建立连接过程"><a href="#建立连接过程" class="headerlink" title="建立连接过程"></a>建立连接过程</h2><p>流程图<br><img src="/2017/03/08/network/connect.png" alt="三次握手流程图"></p>
+<p>tcpdump抓包(listen port 1234)<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo tcpdump -i lo tcp port 1234 and host 127.0.0.1</div></pre></td></tr></table></figure></p>
+<p>客户端代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">if(connect(sockfd,(struct sockaddr *)&amp;server,sizeof(server))==-1)&#123;</div><div class="line">       printf(&quot;connect()error\n&quot;);</div><div class="line">       exit(1);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>服务端代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">if((connectfd = accept(listenfd,(struct sockaddr*)&amp;client,&amp;addrlen))==-1) &#123;</div><div class="line">       perror(&quot;accept()error\n&quot;);</div><div class="line">       exit(1);</div><div class="line">&#125;</div><div class="line">else</div><div class="line">&#123;</div><div class="line">       printf(&quot;Yougot a connection from cient&apos;s ip is %s, prot is %d\n&quot;,inet_ntoa(client.sin_addr),htons(client.sin_port));</div><div class="line">&#125;</div><div class="line">sleep(30);</div></pre></td></tr></table></figure></p>
+<p>tcpdump抓包<br><img src="/2017/03/08/network/tcpdump_connect.png" alt="tcpdump三次握手"></p>
+<p>netstat查看连接状态<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">netstat -apn |grep 1234</div></pre></td></tr></table></figure></p>
+<p><img src="/2017/03/08/network/established.png" alt="established status"></p>
+<h2 id="关闭连接过程"><a href="#关闭连接过程" class="headerlink" title="关闭连接过程"></a>关闭连接过程</h2><p>为验证CLOSE_WAIT状态，服务端accpet后sleep，客户单立即调用close</p>
+<p>流程图<br><img src="/2017/03/08/network/close.png" alt="四次挥手流程图"></p>
+<p>客户端代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">close(sockfd);</div></pre></td></tr></table></figure></p>
+<p>服务端代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sleep(30);</div></pre></td></tr></table></figure></p>
+<p>tcpdump抓包<br><img src="/2017/03/08/network/tcpdump_close.png" alt="tcpdump四次挥手"></p>
+<p>netstat查看连接状态<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">netstat -apn |grep 1234</div></pre></td></tr></table></figure></p>
+<p><img src="/2017/03/08/network/close_wait.png" alt="established status"></p>
+<p>服务端sleep时间到后，此时客户端已close，read返回0后，服务端也调用close，进入TIME_WAIT状态。</p>
 
       
     </div>
@@ -420,6 +453,10 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/03/19/network-send-recv/" rel="prev" title="network_send_recv">
+                network_send_recv <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -466,8 +503,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel sidebar-panel-active">
+      <section class="site-overview sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/avatar.gif"
@@ -480,7 +526,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-count">11</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -489,12 +535,19 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-count">8</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
           
 
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
           
 
         </nav>
@@ -536,6 +589,22 @@
 
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#tcp状态机"><span class="nav-number">1.</span> <span class="nav-text">tcp状态机</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#建立连接过程"><span class="nav-number">2.</span> <span class="nav-text">建立连接过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#关闭连接过程"><span class="nav-number">3.</span> <span class="nav-text">关闭连接过程</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
     </div>
