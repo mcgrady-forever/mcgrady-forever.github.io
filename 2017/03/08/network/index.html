@@ -108,7 +108,7 @@ tcpdump抓包(listen port 1234)1sudo tcpdump -i lo tcp port 1234 and host 127.0.
 <meta property="og:image" content="http://hlei.io/2017/03/08/network/close.png">
 <meta property="og:image" content="http://hlei.io/2017/03/08/network/tcpdump_close.png">
 <meta property="og:image" content="http://hlei.io/2017/03/08/network/close_wait.png">
-<meta property="og:updated_time" content="2017-03-14T01:42:08.329Z">
+<meta property="og:updated_time" content="2017-03-28T04:08:23.180Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="network">
 <meta name="twitter:description" content="tcp使用分隔符通过包头记录包的长度
@@ -414,6 +414,7 @@ tcpdump抓包(listen port 1234)1sudo tcpdump -i lo tcp port 1234 and host 127.0.
 <p>netstat查看连接状态<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">netstat -apn |grep 1234</div></pre></td></tr></table></figure></p>
 <p><img src="/2017/03/08/network/close_wait.png" alt="established status"></p>
 <p>服务端sleep时间到后，此时客户端已close，read返回0后，服务端也调用close，进入TIME_WAIT状态。</p>
+<p>为什么需要TIME_WAIT?<br>a. 当发起关闭一方的最后一个ack丢失后，对方会重传FIN，如果没有直接关闭连接，发起发就收不到重传FIN。<br>b. 当被动关闭一方的最后一个FIN包超时重传，如果没有TIME_WAIT状态而且此时发起方用相同的ip和port建立了新的连接，这时候会收到这个重传的包，并认为他是新连接的包，就会导致严重错误。</p>
 
       
     </div>
@@ -428,6 +429,27 @@ tcpdump抓包(listen port 1234)1sudo tcpdump -i lo tcp port 1234 and host 127.0.
     <div>
       
         
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="themes/next/source/images/wechat.jpg" alt="He Lei WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="themes/next/source/images/alipay.png" alt="He Lei Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
 
       
     </div>
@@ -526,7 +548,7 @@ tcpdump抓包(listen port 1234)1sudo tcpdump -i lo tcp port 1234 and host 127.0.
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">19</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -535,7 +557,7 @@ tcpdump抓包(listen port 1234)1sudo tcpdump -i lo tcp port 1234 and host 127.0.
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-count">11</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>

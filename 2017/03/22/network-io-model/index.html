@@ -92,9 +92,7 @@
 io复用模型
 信号驱动io模型
 异步io模型
-
-阻塞和非阻塞描述的对象是函数，指调用这个函数后是否会block进程/线程。
-同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。">
+多啰嗦几句：a. 阻塞和非阻塞描述的对象是函数，指调用这个函数后是否会block进程/线程。b. 同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="network-io-model">
 <meta property="og:url" content="http://hlei.io/2017/03/22/network-io-model/index.html">
@@ -104,15 +102,13 @@ io复用模型
 io复用模型
 信号驱动io模型
 异步io模型
-
-阻塞和非阻塞描述的对象是函数，指调用这个函数后是否会block进程/线程。
-同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。">
+多啰嗦几句：a. 阻塞和非阻塞描述的对象是函数，指调用这个函数后是否会block进程/线程。b. 同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。">
 <meta property="og:image" content="http://hlei.io/2017/03/08/network/阻塞io模型.png">
 <meta property="og:image" content="http://hlei.io/2017/03/08/network/非阻塞io模型.png">
 <meta property="og:image" content="http://hlei.io/2017/03/08/network/io复用模型.png">
 <meta property="og:image" content="http://hlei.io/2017/03/08/network/信号驱动io模型.png">
 <meta property="og:image" content="http://hlei.io/2017/03/08/network/异步io.png">
-<meta property="og:updated_time" content="2017-03-28T02:33:54.120Z">
+<meta property="og:updated_time" content="2017-03-28T02:42:10.128Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="network-io-model">
 <meta name="twitter:description" content="阻塞io模型
@@ -120,9 +116,7 @@ io复用模型
 io复用模型
 信号驱动io模型
 异步io模型
-
-阻塞和非阻塞描述的对象是函数，指调用这个函数后是否会block进程/线程。
-同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。">
+多啰嗦几句：a. 阻塞和非阻塞描述的对象是函数，指调用这个函数后是否会block进程/线程。b. 同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。">
 <meta name="twitter:image" content="http://hlei.io/2017/03/08/network/阻塞io模型.png">
 
 
@@ -409,15 +403,7 @@ io复用模型
 <h2 id="io复用模型"><a href="#io复用模型" class="headerlink" title="io复用模型"></a>io复用模型</h2><p><img src="/2017/03/08/network/io复用模型.png" alt="阻塞io模型"></p>
 <h2 id="信号驱动io模型"><a href="#信号驱动io模型" class="headerlink" title="信号驱动io模型"></a>信号驱动io模型</h2><p><img src="/2017/03/08/network/信号驱动io模型.png" alt="阻塞io模型"></p>
 <h2 id="异步io模型"><a href="#异步io模型" class="headerlink" title="异步io模型"></a>异步io模型</h2><p><img src="/2017/03/08/network/异步io.png" alt="阻塞io模型"></p>
-<hr>
-<p><bold>阻塞和非阻塞</bold>描述的对象是函数，指调用这个函数后是否会block进程/线程。</p>
-<h2 id="同步-异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。"><a href="#同步-异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。" class="headerlink" title="同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。"></a>同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。</h2>
-      
-    </div>
-
-    <div>
-      
-        
+<p>多啰嗦几句：<br>a. <strong>阻塞和非阻塞</strong>描述的对象是函数，指调用这个函数后是否会block进程/线程。<br>b. <strong>同步/异步</strong>描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。</p>
 
       
     </div>
@@ -425,6 +411,34 @@ io复用模型
     <div>
       
         
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="themes/next/source/images/wechat.jpg" alt="He Lei WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="themes/next/source/images/alipay.png" alt="He Lei Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
 
       
     </div>
@@ -523,7 +537,7 @@ io复用模型
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">19</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -532,7 +546,7 @@ io复用模型
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">8</span>
+                <span class="site-state-item-count">11</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -596,7 +610,7 @@ io复用模型
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#阻塞io模型"><span class="nav-number">1.</span> <span class="nav-text">阻塞io模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#非阻塞io模型"><span class="nav-number">2.</span> <span class="nav-text">非阻塞io模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#io复用模型"><span class="nav-number">3.</span> <span class="nav-text">io复用模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#信号驱动io模型"><span class="nav-number">4.</span> <span class="nav-text">信号驱动io模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#异步io模型"><span class="nav-number">5.</span> <span class="nav-text">异步io模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#同步-异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。"><span class="nav-number">6.</span> <span class="nav-text">同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#阻塞io模型"><span class="nav-number">1.</span> <span class="nav-text">阻塞io模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#非阻塞io模型"><span class="nav-number">2.</span> <span class="nav-text">非阻塞io模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#io复用模型"><span class="nav-number">3.</span> <span class="nav-text">io复用模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#信号驱动io模型"><span class="nav-number">4.</span> <span class="nav-text">信号驱动io模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#异步io模型"><span class="nav-number">5.</span> <span class="nav-text">异步io模型</span></a></li></ol></div>
             
 
           </div>
