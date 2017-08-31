@@ -281,6 +281,294 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/08/21/java-timer/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/08/21/java-timer/" itemprop="url">
+                  java-timer
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-08-21T15:28:45+08:00">
+                2017-08-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="使用Timer类实现"><a href="#使用Timer类实现" class="headerlink" title="使用Timer类实现"></a>使用Timer类实现</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TimerTest</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">getStringDate</span><span class="params">()</span> </span>&#123;</div><div class="line">        Date currentTime = <span class="keyword">new</span> Date();</div><div class="line">        SimpleDateFormat formatter = <span class="keyword">new</span> SimpleDateFormat(<span class="string">"yyyy-MM-dd HH:mm:ss"</span>);</div><div class="line">        String dateString = formatter.format(currentTime);</div><div class="line">        <span class="keyword">return</span> dateString;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">        <span class="keyword">final</span> TimerTask timerTask1 = <span class="keyword">new</span> TimerTask() &#123;</div><div class="line">            <span class="meta">@Override</span></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">try</span> &#123;</div><div class="line">                    System.out.println(<span class="string">"task2 invoked!"</span>+Thread.currentThread().getId());</div><div class="line">                    System.out.println(<span class="string">"begin: "</span>+getStringDate());</div><div class="line">                    <span class="comment">//Thread.sleep(5000L);</span></div><div class="line">                &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">                    e.printStackTrace();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;;</div><div class="line"></div><div class="line">        <span class="keyword">final</span> TimerTask timerTask2 = <span class="keyword">new</span> TimerTask() &#123;</div><div class="line">            <span class="meta">@Override</span></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">try</span> &#123;</div><div class="line">                    System.out.println(<span class="string">"task2 invoked!"</span>+Thread.currentThread().getId());</div><div class="line">                    System.out.println(<span class="string">"begin: "</span>+getStringDate());</div><div class="line">                    <span class="comment">//Thread.sleep(5000L);</span></div><div class="line">                &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">                    e.printStackTrace();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;;</div><div class="line"></div><div class="line">        Timer timer = <span class="keyword">new</span> Timer();<span class="comment">// 实例化Timer</span></div><div class="line">        timer.schedule(timerTask1, <span class="number">8000</span>);</div><div class="line">        timer.schedule(timerTask2, <span class="number">10000</span>);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"></div></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/06/21/pb-CopyFrom/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/06/21/pb-CopyFrom/" itemprop="url">
+                  Protocal Buffer trap 1-CopyFrom
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-06-22T04:22:38+08:00">
+                2017-06-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/C/" itemprop="url" rel="index">
+                    <span itemprop="name">C++</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>最近在使用pb时遇到了这么一个问题，还是废了不少时间去定位，出现coredump的场景类似下面的代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">Student stu;</div><div class="line">Teacher teacher;</div><div class="line"></div><div class="line">stu.CopyFrom(teacher);</div></pre></td></tr></table></figure></p>
+<p>奇怪的是这样居然可以编译通过，查了pb的源码发现类都是共同的基类Message，而有两个overload版本<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">void CopyFrom(const ::google::protobuf::Message&amp; from);</div><div class="line">void CopyFrom(const Student&amp; from);</div></pre></td></tr></table></figure></p>
+<p>终于恍然大悟了！！</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/05/18/java-cmd01/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -895,7 +1183,8 @@
       
         
           
-            
+            <h2 id="阻塞io模型"><a href="#阻塞io模型" class="headerlink" title="阻塞io模型"></a>阻塞io模型</h2><p><img src="/2017/03/08/network/阻塞io模型.png" alt="阻塞io模型"></p>
+
           
         
       
@@ -1037,7 +1326,7 @@
       
         
           
-            <p>##<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line">public class test01 &#123;</div><div class="line">    public static void main(String[] args) throws InterruptedException &#123;</div><div class="line">        class Counter &#123;</div><div class="line">            private int count = 0;</div><div class="line"></div><div class="line">            public void incre() &#123;</div><div class="line">                count += 1;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            public int getCount() &#123;</div><div class="line">                return count;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        final Counter counter = new Counter();</div><div class="line">        class CountingThread extends Thread &#123;</div><div class="line">            public void run() &#123;</div><div class="line">                for (int i = 0; i &lt; 200000; ++i) &#123;</div><div class="line">                    System.out.println(&quot;thread id:&quot;+this.getId());</div><div class="line">                    counter.incre();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        Thread thread1 = new CountingThread();</div><div class="line">        Thread thread2 = new CountingThread();</div><div class="line"></div><div class="line">        thread2.start();</div><div class="line">        thread1.start();</div><div class="line">        thread1.join();</div><div class="line">        thread2.join();</div><div class="line"></div><div class="line">        System.out.println(&quot;counter: &quot;+counter.getCount());</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+            <p>##<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">test01</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">        <span class="class"><span class="keyword">class</span> <span class="title">Counter</span> </span>&#123;</div><div class="line">            <span class="keyword">private</span> <span class="keyword">int</span> count = <span class="number">0</span>;</div><div class="line"></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">incre</span><span class="params">()</span> </span>&#123;</div><div class="line">                count += <span class="number">1</span>;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getCount</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">return</span> count;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="keyword">final</span> Counter counter = <span class="keyword">new</span> Counter();</div><div class="line">        <span class="class"><span class="keyword">class</span> <span class="title">CountingThread</span> <span class="keyword">extends</span> <span class="title">Thread</span> </span>&#123;</div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">200000</span>; ++i) &#123;</div><div class="line">                    System.out.println(<span class="string">"thread id:"</span>+<span class="keyword">this</span>.getId());</div><div class="line">                    counter.incre();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        Thread thread1 = <span class="keyword">new</span> CountingThread();</div><div class="line">        Thread thread2 = <span class="keyword">new</span> CountingThread();</div><div class="line"></div><div class="line">        thread2.start();</div><div class="line">        thread1.start();</div><div class="line">        thread1.join();</div><div class="line">        thread2.join();</div><div class="line"></div><div class="line">        System.out.println(<span class="string">"counter: "</span>+counter.getCount());</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">counter: 399998</div></pre></td></tr></table></figure>
 <p>使用synchronized修饰方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">public synchronized void incre() &#123;</div><div class="line">    count += 1;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 <p>使用synchronized修饰”关键区域”<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">public void incre() &#123;</div><div class="line">    synchronized (this) &#123;</div><div class="line">        count += 1;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
@@ -1224,6 +1513,150 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/04/16/c-02-stlsort/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/04/16/c-02-stlsort/" itemprop="url">
+                  回顾C++之一-STL中的sort
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-04-17T02:50:00+08:00">
+                2017-04-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/C/" itemprop="url" rel="index">
+                    <span itemprop="name">C++</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="相等-or-等价"><a href="#相等-or-等价" class="headerlink" title="相等 or 等价"></a>相等 or 等价</h2><p>STL充满了比较对象是否有同样的值。比如，当你用find来定位区间中第一个有特定值的对象的位置，find必须可以比较两个对象，看看一个的值是否与另一个相等。同样，当你尝试向set中插入一个新元素时，set::insert必须可以判断那个元素的值是否已经在set中了。</p>
+<p>find算法和set的insert成员函数是很多必须判断两个值是否相同的函数的代表。但它们以不同的方式完成，find对“相同”的定义是相等，基于operator==。set::insert对“相同”的定义是等价，通常基于operator&lt;。等价是基于在一个有序区间中对象值的相对位置。等价一般在每种标准关联容器（比如，set、multiset、map和multimap）的一部分——排序顺序方面有意义。两个对象x和y如果在关联容器c的排序顺序中没有哪个排在另一个之前，那么它们关于c使用的排序顺序有等价的值。set<widget>的默认比较函数是less<widget>，而默认的less<widget>简单地对Widget调用operator&lt;，所以w1和w2关于operator&lt;有等价的值如果下面表达式为真：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">(w1 &lt; w2) // w1 &lt; w2时它非真</div><div class="line">&amp;&amp;        // 而且</div><div class="line">(w2&lt;w1)   // w2 &lt; w1时它非真</div></pre></td></tr></table></figure></widget></widget></widget></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/04/16/c-01-stlclear/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1326,406 +1759,14 @@
       
         
           
-            <p>通常我们可能会写下这样的代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">std::vector&lt;int&gt; v1;</div><div class="line">for (int i = 0; i &lt; 100; ++i)</div><div class="line">&#123;</div><div class="line">	v1.push_back(i);</div><div class="line">&#125;</div><div class="line"></div><div class="line">cout&lt;&lt;&quot;v1 before clear&quot;&lt;&lt;endl;</div><div class="line">cout&lt;&lt; &quot;v1.size() = &quot;&lt;&lt;v1.size()&lt;&lt;endl;</div><div class="line">cout&lt;&lt; &quot;v1.capacity() = &quot;&lt;&lt;v1.capacity()&lt;&lt;endl;</div><div class="line"></div><div class="line">v1.clear();</div><div class="line">cout&lt;&lt;&quot;v1 after clear&quot;&lt;&lt;endl;</div><div class="line">cout&lt;&lt; &quot;v1.size() = &quot;&lt;&lt;v1.size()&lt;&lt;endl;</div><div class="line">cout&lt;&lt; &quot;v1.capacity() = &quot;&lt;&lt;v1.capacity()&lt;&lt;endl;</div><div class="line"></div><div class="line">std::vector&lt;int&gt; v2;</div><div class="line">for (int i = 0; i &lt; 100; ++i)</div><div class="line">&#123;</div><div class="line">	v2.push_back(i);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>运行结果<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">v1 before clear--------------</div><div class="line">v1.size() = 100</div><div class="line">v1.capacity() = 128</div><div class="line">v1 after clear--------------</div><div class="line">v1.size() = 0</div><div class="line">v1.capacity() = 128</div></pre></td></tr></table></figure></p>
-<p>clear并没有释放掉内存，而仅仅是将size置为0，如果需要立即释放掉内存，可以用一个空的容器和其交换，修改后的代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">cout&lt;&lt;&quot;v2 before swap&quot;&lt;&lt;endl;</div><div class="line">cout&lt;&lt; &quot;v2.size() = &quot;&lt;&lt;v2.size()&lt;&lt;endl;</div><div class="line">cout&lt;&lt; &quot;v2.capacity() = &quot;&lt;&lt;v2.capacity()&lt;&lt;endl;</div><div class="line"></div><div class="line">vector&lt;int&gt;().swap(v2);</div><div class="line">cout&lt;&lt;&quot;v2 after swap--------------&quot;&lt;&lt;endl;</div><div class="line">cout&lt;&lt; &quot;v2.size() = &quot;&lt;&lt;v2.size()&lt;&lt;endl;</div><div class="line">cout&lt;&lt; &quot;v2.capacity() = &quot;&lt;&lt;v2.capacity()&lt;&lt;endl;</div></pre></td></tr></table></figure></p>
-<p>运行结果<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">v2 before swap--------------</div><div class="line">v2.size() = 100</div><div class="line">v2.capacity() = 128</div><div class="line">v2 after swap--------------</div><div class="line">v2.size() = 0</div><div class="line">v2.capacity() = 0</div></pre></td></tr></table></figure></p>
-<p>c++11中增加了新的方法shrink_to_fit，可以释放掉多余的内存<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">std::vector&lt;int&gt; v3;</div><div class="line">for (int i = 0; i &lt; 100; ++i)</div><div class="line">&#123;</div><div class="line">	v3.push_back(i);</div><div class="line">&#125;</div><div class="line"></div><div class="line">cout&lt;&lt;&quot;v3 before shrink_to_fit--------------&quot;&lt;&lt;endl;</div><div class="line">cout&lt;&lt; &quot;v3.size() = &quot;&lt;&lt;v3.size()&lt;&lt;endl;</div><div class="line">cout&lt;&lt; &quot;v3.capacity() = &quot;&lt;&lt;v3.capacity()&lt;&lt;endl;</div><div class="line"></div><div class="line">v3.shrink_to_fit();</div><div class="line">cout&lt;&lt;&quot;v3 after shrink_to_fit--------------&quot;&lt;&lt;endl;</div><div class="line">cout&lt;&lt; &quot;v3.size() = &quot;&lt;&lt;v3.size()&lt;&lt;endl;</div><div class="line">cout&lt;&lt; &quot;v3.capacity() = &quot;&lt;&lt;v3.capacity()&lt;&lt;endl;</div></pre></td></tr></table></figure></p>
-<p>运行结果<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">v3 before shrink_to_fit--------------</div><div class="line">v3.size() = 100</div><div class="line">v3.capacity() = 128</div><div class="line">v3 after shrink_to_fit--------------</div><div class="line">v3.size() = 100</div><div class="line">v3.capacity() = 100</div></pre></td></tr></table></figure></p>
+            <p>通常我们可能会写下这样的代码<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; v1;</div><div class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; ++i)</div><div class="line">&#123;</div><div class="line">	v1.push_back(i);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v1 before clear"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v1.size() = "</span>&lt;&lt;v1.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v1.capacity() = "</span>&lt;&lt;v1.capacity()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"></div><div class="line">v1.clear();</div><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v1 after clear"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v1.size() = "</span>&lt;&lt;v1.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v1.capacity() = "</span>&lt;&lt;v1.capacity()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"></div><div class="line"><span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; v2;</div><div class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; ++i)</div><div class="line">&#123;</div><div class="line">	v2.push_back(i);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>运行结果<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">v1 before clear--------------</div><div class="line">v1.size() = <span class="number">100</span></div><div class="line">v1.capacity() = <span class="number">128</span></div><div class="line">v1 after clear--------------</div><div class="line">v1.size() = <span class="number">0</span></div><div class="line">v1.capacity() = <span class="number">128</span></div></pre></td></tr></table></figure></p>
+<p>clear并没有释放掉内存，而仅仅是将size置为0，如果需要立即释放掉内存，可以用一个空的容器和其交换，修改后的代码如下：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v2 before swap"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v2.size() = "</span>&lt;&lt;v2.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v2.capacity() = "</span>&lt;&lt;v2.capacity()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"></div><div class="line"><span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;().swap(v2);</div><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v2 after swap--------------"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v2.size() = "</span>&lt;&lt;v2.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v2.capacity() = "</span>&lt;&lt;v2.capacity()&lt;&lt;<span class="built_in">endl</span>;</div></pre></td></tr></table></figure></p>
+<p>运行结果<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">v2 before swap--------------</div><div class="line">v2.size() = <span class="number">100</span></div><div class="line">v2.capacity() = <span class="number">128</span></div><div class="line">v2 after swap--------------</div><div class="line">v2.size() = <span class="number">0</span></div><div class="line">v2.capacity() = <span class="number">0</span></div></pre></td></tr></table></figure></p>
+<p>c++11中增加了新的方法shrink_to_fit，可以释放掉多余的内存<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; v3;</div><div class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; ++i)</div><div class="line">&#123;</div><div class="line">	v3.push_back(i);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v3 before shrink_to_fit--------------"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v3.size() = "</span>&lt;&lt;v3.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v3.capacity() = "</span>&lt;&lt;v3.capacity()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"></div><div class="line">v3.shrink_to_fit();</div><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v3 after shrink_to_fit--------------"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v3.size() = "</span>&lt;&lt;v3.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v3.capacity() = "</span>&lt;&lt;v3.capacity()&lt;&lt;<span class="built_in">endl</span>;</div></pre></td></tr></table></figure></p>
+<p>运行结果<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">v3 before shrink_to_fit--------------</div><div class="line">v3.size() = <span class="number">100</span></div><div class="line">v3.capacity() = <span class="number">128</span></div><div class="line">v3 after shrink_to_fit--------------</div><div class="line">v3.size() = <span class="number">100</span></div><div class="line">v3.capacity() = <span class="number">100</span></div></pre></td></tr></table></figure></p>
 <p><em>Question?</em><br>不理解这个方法的作用，设置capacity的本意是预留内存，下次插入元素时不用涉及耗时的内存分配，这样下次插入元素肯定会触发重新分配内存。</p>
 
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/04/11/lucence-01/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/04/11/lucence-01/" itemprop="url">
-                  lucence-01
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-04-11T23:18:51+08:00">
-                2017-04-11
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="lucence简介"><a href="#lucence简介" class="headerlink" title="lucence简介"></a>lucence简介</h2><p>Lucene不是一个完整的全文索引应用，而是是一个用Java写的全文索引引擎工具包，它可以方便的嵌入到各种应用中实现针对应用的全文索引/检索功能。</p>
-<p>Lucene的作者：Lucene的贡献者Doug Cutting是一位资深全文索引/检索专家，曾经是V-Twin搜索引擎(Apple的Copland操作系统的成就之一)的主要开发者，后在Excite担任高级系统架构设计师，目前从事于一些INTERNET底层架构的研究。他贡献出的Lucene的目标是为各种中小型应用程序加入全文检索功能。</p>
-<p>Lucene的发展历程：早先发布在作者自己的www.lucene.com，后来发布在SourceForge，2001年年底成为APACHE基金会jakarta的一个子项目：<a href="http://jakarta.apache.org/lucene/" target="_blank" rel="external">http://jakarta.apache.org/lucene/</a></p>
-<p>全文检索的实现机制:<br>Lucene | 数据库<br>索引数据源：doc(field1,field2…) doc(field1,field2…) |  索引数据源：record(field1,field2…) record(field1..)<br> 结果输出：Hits(doc(field1,field2) doc(field1…)) | 结果输出：results(record(field1,field2..) record(field1…))<br>Document：一个需要进行索引的“单元”,一个Document由多个字段组成 | Record：记录，包含多个字段<br>Field：字段    Field：字段 | Hits：查询结果集，由匹配的Document组成    RecordSet：查询结果集，由多个Record组成</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/03/22/generate/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/03/22/generate/" itemprop="url">
-                  generate
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-03-23T03:19:55+08:00">
-                2017-03-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/03/22/boost-coroutine/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/03/22/boost-coroutine/" itemprop="url">
-                  boost_coroutine
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-03-23T02:32:48+08:00">
-                2017-03-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/协程/" itemprop="url" rel="index">
-                    <span itemprop="name">协程</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="两个函数如何并发执行？"><a href="#两个函数如何并发执行？" class="headerlink" title="两个函数如何并发执行？"></a>两个函数如何并发执行？</h2><p><img src="/2017/03/22/boost-coroutine/coroutine01.png" alt="函数并发执行"></p>
-<h2 id="执行转移机制"><a href="#执行转移机制" class="headerlink" title="执行转移机制"></a>执行转移机制</h2><p><img src="/2017/03/22/boost-coroutine/coroutine02.png" alt="执行转移机制"></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line">#include &lt;iostream&gt;</div><div class="line">#include &lt;boost/coroutine/all.hpp&gt;</div><div class="line"></div><div class="line">typedef boost::coroutines::asymmetric_coroutine&lt; void &gt;::pull_type pull_coro_t;</div><div class="line">typedef boost::coroutines::asymmetric_coroutine&lt; void &gt;::push_type push_coro_t;</div><div class="line"></div><div class="line"></div><div class="line">void foo(push_coro_t &amp; sink)</div><div class="line">&#123;</div><div class="line">    std::cout &lt;&lt; &quot;1&quot;;</div><div class="line">    sink();</div><div class="line">    std::cout &lt;&lt; &quot;2&quot;;</div><div class="line">    sink();</div><div class="line">    std::cout &lt;&lt; &quot;3&quot;;</div><div class="line">    sink();</div><div class="line">    std::cout &lt;&lt; &quot;4&quot;;</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main(int argc, char * argv[])</div><div class="line">&#123;</div><div class="line">    &#123;</div><div class="line">        pull_coro_t source(foo);</div><div class="line">        while (source)</div><div class="line">        &#123;</div><div class="line">            std::cout &lt;&lt; &quot;-&quot;;</div><div class="line">            source();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    std::cout &lt;&lt; &quot;\nDone&quot; &lt;&lt; std::endl;</div><div class="line"></div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>运行输出<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">1-2-3-4</div></pre></td></tr></table></figure></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div></pre></td><td class="code"><pre><div class="line">#include &lt;iostream&gt;</div><div class="line">#include &lt;boost/coroutine/all.hpp&gt;</div><div class="line"></div><div class="line">using namespace std;</div><div class="line"></div><div class="line">typedef boost::coroutines::asymmetric_coroutine&lt; int &gt;::pull_type pull_coro_t1;</div><div class="line">typedef boost::coroutines::asymmetric_coroutine&lt; int &gt;::push_type push_coro_t1;</div><div class="line"></div><div class="line">void foo1(push_coro_t1&amp; sink1)</div><div class="line">&#123;</div><div class="line">	cout&lt;&lt;&quot;1&quot;;</div><div class="line">	sink1(10);</div><div class="line">	cout&lt;&lt;&quot;2&quot;;</div><div class="line">	sink1(20);</div><div class="line">	cout&lt;&lt;&quot;3&quot;;</div><div class="line">	sink1(30);</div><div class="line">	cout&lt;&lt;&quot;4&quot;;</div><div class="line">	sink1(40);</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main(int argc, char const *argv[])</div><div class="line">&#123;</div><div class="line">	&#123;</div><div class="line">		pull_coro_t1 source1(foo1);</div><div class="line">		while (source1)</div><div class="line">		&#123;</div><div class="line">			int ret = source1.get();</div><div class="line">			cout&lt;&lt;&quot;ret: &quot;&lt;&lt;ret&lt;&lt;endl;</div><div class="line">			source1();</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	cout&lt;&lt;&quot;\nDone&quot;&lt;&lt;endl;</div><div class="line"></div><div class="line">	return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>运行输出<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">1ret: 10</div><div class="line">2ret: 20</div><div class="line">3ret: 30</div><div class="line">4ret: 40</div></pre></td></tr></table></figure></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line">#include &lt;iostream&gt;</div><div class="line">#include &lt;boost/coroutine/all.hpp&gt;</div><div class="line"></div><div class="line">using namespace std;</div><div class="line"></div><div class="line">typedef boost::coroutines::asymmetric_coroutine&lt; int &gt;::pull_type pull_coro_t1;</div><div class="line">typedef boost::coroutines::asymmetric_coroutine&lt; int &gt;::push_type push_coro_t1;</div><div class="line"></div><div class="line"></div><div class="line">void foo1(pull_coro_t1&amp; sink1)</div><div class="line">&#123;</div><div class="line">	cout&lt;&lt;&quot;1 &quot;&lt;&lt;source1.get();</div><div class="line">	sink1();</div><div class="line">	cout&lt;&lt;&quot;2 &quot;&lt;&lt;source1.get();</div><div class="line">	sink1();</div><div class="line">	cout&lt;&lt;&quot;3 &quot;&lt;&lt;source1.get();</div><div class="line">	sink1();</div><div class="line">	cout&lt;&lt;&quot;4 &quot;&lt;&lt;source1.get();</div><div class="line">	sink1();</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main(int argc, char const *argv[])</div><div class="line">&#123;</div><div class="line">	&#123;</div><div class="line">		push_coro_t1 source1(foo1);</div><div class="line">		int c = 0;</div><div class="line">		while (source1)</div><div class="line">		&#123;</div><div class="line">			++c;</div><div class="line">			source1();</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	cout&lt;&lt;&quot;\nDone&quot;&lt;&lt;endl;</div><div class="line"></div><div class="line">	return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
           
         
       
@@ -1760,7 +1801,7 @@
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1803,7 +1844,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-count">22</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
