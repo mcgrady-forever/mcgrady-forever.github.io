@@ -281,6 +281,1283 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/05/18/java-cmd02/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/05/18/java-cmd02/" itemprop="url">
+                  java-cmd01-jstat
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-05-18T19:58:12+08:00">
+                2017-05-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>jstat位于java的bin目录下，主要利用JVM内建的指令对Java应用程序的资源和性能进行实时的命令行的监控，包括了对Heap size和垃圾回收状况的监控。可见，Jstat是轻量级的、专门针对JVM的工具，非常适用。</p>
+<h2 id="jstat-命令格式"><a href="#jstat-命令格式" class="headerlink" title="jstat 命令格式"></a>jstat 命令格式</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jstat -&lt;option&gt; [-t] [-h&lt;lines&gt;] &lt;vmid&gt; [&lt;interval&gt; [&lt;count&gt;]]</div></pre></td></tr></table></figure>
+<p>参数解释：<br>Option — 选项，我们一般使用 -gcutil 查看gc情况<br>vmid — VM的进程号，即当前运行的java进程号<br>interval– 间隔时间，单位为秒或者毫秒<br>count — 打印次数，如果缺省则打印无数次</p>
+<p>参数interval和count代表查询间隔和次数，如果省略这两个参数，说明只查询一次。假设需要每250毫秒查询一次进程5828垃圾收集状况，一共查询5次，那命令行如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jstat -gc 5828 250 5</div></pre></td></tr></table></figure></p>
+<h2 id="option"><a href="#option" class="headerlink" title="option"></a>option</h2><p>选项option代表这用户希望查询的虚拟机信息，主要分为3类：类装载、垃圾收集和运行期编译状况，具体选项及作用如下：</p>
+<table>
+<thead>
+<tr>
+<th>param</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>–class</td>
+<td>监视类装载、卸载数量、总空间及类装载所耗费的时间</td>
+</tr>
+<tr>
+<td>–gc</td>
+<td>监视Java堆状况，包括Eden区、2个Survivor区、老年代、永久代等的容量</td>
+</tr>
+<tr>
+<td>–gccapacity</td>
+<td>监视内容与-gc基本相同，但输出主要关注Java堆各个区域使用到的最大和最小空间</td>
+</tr>
+<tr>
+<td>–gcutil</td>
+<td>监视内容与-gc基本相同，但输出主要关注已使用空间占总空间的百分比</td>
+</tr>
+<tr>
+<td>–gccause</td>
+<td>与-gcutil功能一样，但是会额外输出导致上一次GC产生的原因</td>
+</tr>
+<tr>
+<td>–gcnew</td>
+<td>监视新生代GC的状况</td>
+</tr>
+<tr>
+<td>–gcnewcapacity</td>
+<td>监视内容与-gcnew基本相同，输出主要关注使用到的最大和最小空间</td>
+</tr>
+<tr>
+<td>–gcold</td>
+<td>监视老年代GC的状况</td>
+</tr>
+<tr>
+<td>–gcoldcapacity</td>
+<td>监视内容与——gcold基本相同，输出主要关注使用到的最大和最小空间</td>
+</tr>
+<tr>
+<td>–gcpermcapacity</td>
+<td>输出永久代使用到的最大和最小空间</td>
+</tr>
+<tr>
+<td>-compiler</td>
+<td>输出JIT编译器编译过的方法、耗时等信息</td>
+</tr>
+<tr>
+<td>–printcompilation</td>
+<td>输出已经被JIT编译的方法</td>
+</tr>
+</tbody>
+</table>
+<p>1、jstat –class <pid>: 显示加载class的数量，及所占空间等信息。<br>Loaded 装载的类的数量<br>Bytes 装载类所占用的字节数<br>Unloaded 卸载类的数量<br>Bytes 卸载类的字节数<br>Time 装载和卸载类所花费的时间</pid></p>
+<p>2、jstat -compiler <pid>: 显示VM实时编译的数量等信息。</pid></p>
+<p>Compiled 编译任务执行数量 Failed 编译任务执行失败数量 Invalid 编译任务执行失效数量 Time 编译任务消耗时间 FailedType 最后一个编译失败任务的类型 FailedMethod 最后一个编译失败任务所在的类及方法</p>
+<p>3、jstat -gc <pid>: 可以显示gc的信息，查看gc的次数，及时间。</pid></p>
+<p>S0C 年轻代中第一个survivor（幸存区）的容量 (字节) S1C 年轻代中第二个survivor（幸存区）的容量 (字节) S0U 年轻代中第一个survivor（幸存区）目前已使用空间 (字节) S1U 年轻代中第二个survivor（幸存区）目前已使用空间 (字节) EC 年轻代中Eden（伊甸园）的容量 (字节) EU 年轻代中Eden（伊甸园）目前已使用空间 (字节) OC Old代的容量 (字节) OU Old代目前已使用空间 (字节) PC Perm(持久代)的容量 (字节) PU Perm(持久代)目前已使用空间 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 YGCT 从应用程序启动到采样时年轻代中gc所用时间(s) FGC 从应用程序启动到采样时old代(全gc)gc次数 FGCT 从应用程序启动到采样时old代(全gc)gc所用时间(s) GCT 从应用程序启动到采样时gc用的总时间(s)</p>
+<p>4、jstat -gccapacity <pid>:可以显示，VM内存中三代（young,old,perm）对象的使用和占用大小</pid></p>
+<p>NGCMN 年轻代(young)中初始化(最小)的大小(字节) NGCMX 年轻代(young)的最大容量 (字节) NGC 年轻代(young)中当前的容量 (字节) S0C 年轻代中第一个survivor（幸存区）的容量 (字节) S1C 年轻代中第二个survivor（幸存区）的容量 (字节) EC 年轻代中Eden（伊甸园）的容量 (字节) OGCMN old代中初始化(最小)的大小 (字节) OGCMX old代的最大容量(字节) OGC old代当前新生成的容量 (字节) OC Old代的容量 (字节) PGCMN perm代中初始化(最小)的大小 (字节) PGCMX perm代的最大容量 (字节)<br>PGC perm代当前新生成的容量 (字节) PC Perm(持久代)的容量 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 FGC 从应用程序启动到采样时old代(全gc)gc次数</p>
+<p>5、jstat -gcutil <pid>:统计gc信息</pid></p>
+<p>S0 年轻代中第一个survivor（幸存区）已使用的占当前容量百分比 S1 年轻代中第二个survivor（幸存区）已使用的占当前容量百分比 E 年轻代中Eden（伊甸园）已使用的占当前容量百分比 O old代已使用的占当前容量百分比 P perm代已使用的占当前容量百分比 YGC 从应用程序启动到采样时年轻代中gc次数 YGCT 从应用程序启动到采样时年轻代中gc所用时间(s) FGC 从应用程序启动到采样时old代(全gc)gc次数 FGCT 从应用程序启动到采样时old代(全gc)gc所用时间(s) GCT 从应用程序启动到采样时gc用的总时间(s)</p>
+<p>6、jstat -gcnew <pid>:年轻代对象的信息。</pid></p>
+<p>S0C 年轻代中第一个survivor（幸存区）的容量 (字节) S1C 年轻代中第二个survivor（幸存区）的容量 (字节) S0U 年轻代中第一个survivor（幸存区）目前已使用空间 (字节) S1U 年轻代中第二个survivor（幸存区）目前已使用空间 (字节) TT 持有次数限制 MTT 最大持有次数限制 EC 年轻代中Eden（伊甸园）的容量 (字节) EU 年轻代中Eden（伊甸园）目前已使用空间 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 YGCT 从应用程序启动到采样时年轻代中gc所用时间(s)</p>
+<p>7、jstat -gcnewcapacity<pid>: 年轻代对象的信息及其占用量。</pid></p>
+<p>NGCMN 年轻代(young)中初始化(最小)的大小(字节) NGCMX 年轻代(young)的最大容量 (字节) NGC 年轻代(young)中当前的容量 (字节) S0CMX 年轻代中第一个survivor（幸存区）的最大容量 (字节) S0C 年轻代中第一个survivor（幸存区）的容量 (字节) S1CMX 年轻代中第二个survivor（幸存区）的最大容量 (字节) S1C 年轻代中第二个survivor（幸存区）的容量 (字节) ECMX 年轻代中Eden（伊甸园）的最大容量 (字节) EC 年轻代中Eden（伊甸园）的容量 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 FGC 从应用程序启动到采样时old代(全gc)gc次数</p>
+<p>8、jstat -gcold <pid>：old代对象的信息。</pid></p>
+<p>PC Perm(持久代)的容量 (字节) PU Perm(持久代)目前已使用空间 (字节) OC Old代的容量 (字节) OU Old代目前已使用空间 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 FGC 从应用程序启动到采样时old代(全gc)gc次数 FGCT 从应用程序启动到采样时old代(全gc)gc所用时间(s) GCT 从应用程序启动到采样时gc用的总时间(s)</p>
+<p>9、stat -gcoldcapacity <pid>: old代对象的信息及其占用量。</pid></p>
+<p>OGCMN old代中初始化(最小)的大小 (字节) OGCMX old代的最大容量(字节) OGC old代当前新生成的容量 (字节) OC Old代的容量 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 FGC 从应用程序启动到采样时old代(全gc)gc次数 FGCT 从应用程序启动到采样时old代(全gc)gc所用时间(s) GCT 从应用程序启动到采样时gc用的总时间(s)</p>
+<p>10、jstat -gcpermcapacity<pid>: perm对象的信息及其占用量。</pid></p>
+<p>PGCMN perm代中初始化(最小)的大小 (字节) PGCMX perm代的最大容量 (字节)<br>PGC perm代当前新生成的容量 (字节) PC Perm(持久代)的容量 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 FGC 从应用程序启动到采样时old代(全gc)gc次数 FGCT 从应用程序启动到采样时old代(全gc)gc所用时间(s) GCT 从应用程序启动到采样时gc用的总时间(s)</p>
+<p>11、jstat -printcompilation <pid>：当前VM执行的信息。</pid></p>
+<p>Compiled 编译任务的数目 Size 方法生成的字节码的大小 Type 编译类型 Method 类名和方法名用来标识编译的方法。类名使用/做为一个命名空间分隔符。方法名是给定类中的方法。上述格式是由-XX:+PrintComplation选项进行设置的</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/05/18/java-cmd01/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/05/18/java-cmd01/" itemprop="url">
+                  java-cmd01-jps
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-05-18T19:58:12+08:00">
+                2017-05-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="位置"><a href="#位置" class="headerlink" title="位置"></a>位置</h2><p>我们知道，很多Java命令都在jdk的JAVA_HOME/bin目录下面，jps也不例外，他就在bin目录下，所以，他是java自带的一个命令。</p>
+<h2 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h2><p>jps(Java Virtual Machine Process Status Tool)是JDK1.5提供的一个显示当前所有java进程pid的命令，简单实用，非常适合在linux/unix平台上简单察看当前java进程的一些简单情况。</p>
+<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>jdk中的jps命令可以显示当前运行的java进程以及相关参数，它的实现机制如下：<br>java程序在启动以后，会在java.io.tmpdir指定的目录下，就是临时文件夹里，生成一个类似于hsperfdata<em>User的文件夹，这个文件夹里（在Linux中为/tmp/hsperfdata</em>{userName}/），有几个文件，名字就是java进程的pid，因此列出当前运行的java进程，只是把这个目录里的文件名列一下而已。至于系统的参数什么，就可以解析这几个文件获得。</p>
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>-q 只显示pid，不显示class名称,jar文件名和传递给main 方法的参数<br>-m 输出传递给main 方法的参数，在嵌入式jvm上可能是null<br>-l 输出应用程序main class的完整package名 或者 应用程序的jar文件完整路径名<br>-v 输出传递给JVM的参数</p>
+<p>PS:jps命令有个地方很不好，似乎只能显示当前用户的java进程，要显示其他用户的还是只能用unix/linux的ps命令</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/05/11/jvm02/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/05/11/jvm02/" itemprop="url">
+                  GC algorithm
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-05-12T02:12:51+08:00">
+                2017-05-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>##1 按照基本回收策略分<br>标记-清除算法<br>算法分为“标记”和“清除”两个阶段：首先标记出所有需要回收的对象，在标记完成后统一回收所有被标记的对象，它的标记过程其实在前一节讲述对象标记判定时已经介绍过了。之所以说它是最基础的收集算法，是因为后续的收集算法都是基于这种思路并对其不足进行改进而得到的。<br>它的主要不足有两个：一个是效率问题，标记和清除两个过程的效率都不高；另一个是空间问题，标记清除之后会产生大量不连续的内存碎片，空间碎片太多可能会导致以后在程序运行过程中需要分配较大对象时，无法找到足够的连续内存而不得不提前触发另一次垃圾收集动作。 </p>
+<p>复制算法<br>为了解决效率问题，一种称为“复制”（Copying）的收集算法出现了，它将可用内存按容量划分为大小相等的两块，每次只使用其中的一块。 当这一块的内存用完了，就将还存活着的对象复制到另外一块上面，然后再把已使用过的内存空间一次清理掉。 这样使得每次都是对整个半区进行内存回收，内存分配时也就不用考虑内存碎片等复杂情况，只要移动堆顶指针，按顺序分配内存即可，实现简单，运行高效。 只是这种算法的代价是将内存缩小为了原来的一半，未免太高了一点。</p>
+<p>分代收集算法<br>当前商业虚拟机的垃圾收集都采用“分代收集”（Generational Collection）算法，这种算法并没有什么新的思想，只是根据对象存活周期的不同将内存划分为几块。一般是把Java堆分为新生代和老年代，这样就可以根据各个年代的特点采用最适当的收集算法。在新生代中，每次垃圾收集时都发现有大批对象死去，只有少量存活，那就选用复制算法，只需要付出少量存活对象的复制成本就可以完成收集。 而老年代中因为对象存活率高、没有额外空间对它进行分配担保，就必须使用“标记—清理”或者“标记—整理”算法来进行回收。</p>
+<p>分代垃圾回收详解:<br>分代的垃圾回收策略，是基于这样一个事实：不同的对象的生命周期是不一样的。因此，不同生命周期的对象可以采取不同的收集方式，以便提高回收效率。</p>
+<p>在Java程序运行的过程中，会产生大量的对象，其中有些对象是与业务信息相关，比如Http请求中的Session对象、线程、Socket连接，这类对象跟业务直接挂钩，因此生命周期比较长。但是还有一些对象，主要是程序运行过程中生成的临时变量，这些对象生命周期会比较短，比如：String对象，由于其不变类的特性，系统会产生大量的这些对象，有些对象甚至只用一次即可回收。</p>
+<p>试想，在不进行对象存活时间区分的情况下，每次垃圾回收都是对整个堆空间进行回收，花费时间相对会长，同时，因为每次回收都需要遍历所有存活对象，但实际上，对于生命周期长的对象而言，这种遍历是没有效果的，因为可能进行了很多次遍历，但是他们依旧存在。因此，分代垃圾回收采用分治的思想，进行代的划分，把不同生命周期的对象放在不同代上，不同代上采用最适合它的垃圾回收方式进行回收。</p>
+<p>虚拟机中的共划分为三个代：年轻代（Young Generation）、年老点（Old Generation）和持久代（Permanent Generation）。其中持久代主要存放的是Java类的类信息，与垃圾收集要收集的Java对象关系不大。年轻代和年老代的划分是对垃圾收集影响比较大的。</p>
+<p>年轻代:<br>       所有新生成的对象首先都是放在年轻代的。年轻代的目标就是尽可能快速的收集掉那些生命周期短的对象。年轻代分三个区。一个Eden区，两个Survivor区(一般而言)。大部分对象在Eden区中生成。当Eden区满时，还存活的对象将被复制到Survivor区（两个中的一个），当这个Survivor区满时，此区的存活对象将被复制到另外一个Survivor区，当这个Survivor区也满了的时候，从第一个Survivor区复制过来的并且此时还存活的对象，将被复制“年老区(Tenured)”。需要注意，Survivor的两个区是对称的，没先后关系，所以同一个区中可能同时存在从Eden复制过来 对象，和从前一个Survivor复制过来的对象，而复制到年老区的只有从第一个Survivor去过来的对象。而且，Survivor区总有一个是空的。同时，根据程序需要，Survivor区是可以配置为多个的（多于两个），这样可以增加对象在年轻代中的存在时间，减少被放到年老代的可能。</p>
+<p>年老代:<br>    在年轻代中经历了N次垃圾回收后仍然存活的对象，就会被放到年老代中。因此，可以认为年老代中存放的都是一些生命周期较长的对象。</p>
+<p>持久代:<br>    用于存放静态文件，如今Java类、方法等。持久代对垃圾回收没有显著影响，但是有些应用可能动态生成或者调用一些class，例如hibernate等，在这种时候需要设置一个比较大的持久代空间来存放这些运行过程中新增的类。持久代大小通过-XX:MaxPermSize=<n>进行设置。</n></p>
+<p>什么情况下触发垃圾回收<br>由于对象进行了分代处理，因此垃圾回收区域、时间也不一样。GC有两种类型：Scavenge GC和Full GC。</p>
+<p>Scavenge GC<br>    一般情况下，当新对象生成，并且在Eden申请空间失败时，就会触发Scavenge GC，对Eden区域进行GC，清除非存活对象，并且把尚且存活的对象移动到Survivor区。然后整理Survivor的两个区。这种方式的GC是对年轻代的Eden区进行，不会影响到年老代。因为大部分对象都是从Eden区开始的，同时Eden区不会分配的很大，所以Eden区的GC会频繁进行。因而，一般在这里需要使用速度快、效率高的算法，使Eden去能尽快空闲出来。</p>
+<p>Full GC<br>    对整个堆进行整理，包括Young、Tenured和Perm。Full GC因为需要对整个对进行回收，所以比Scavenge GC要慢，因此应该尽可能减少Full GC的次数。在对JVM调优的过程中，很大一部分工作就是对于FullGC的调节。有如下原因可能导致Full GC：<br>· 年老代（Tenured）被写满<br>· 持久代（Perm）被写满<br>· System.gc()被显示调用<br>·上一次GC之后Heap的各域分配策略动态变化</p>
+<p>##2 按分区对待的方式分<br>增量收集（IncrementalCollecting）:实时垃圾回收算法，即：在应用进行的同时进行垃圾回收。不知道什么原因JDK5.0中的收集器没有使用这种算法的。</p>
+<p>分代收集（Generational Collecting）:基于对对象生命周期分析后得出的垃圾回收算法。把对象分为年青代、年老代、持久代，对不同生命周期的对象使用不同的算法（上述方式中的一个）进行回收。现在的垃圾回收器（从J2SE1.2开始）都是使用此算法的。</p>
+<p>##3 按系统线程分<br>串行收集:串行收集使用单线程处理所有垃圾回收工作，因为无需多线程交互，实现容易，而且效率比较高。但是，其局限性也比较明显，即无法使用多处理器的优势，所以此收集适合单处理器机器。当然,此收集器也可以用在小数据量（100M左右）情况下的多处理器机器上。</p>
+<p>并行收集:并行收集使用多线程处理垃圾回收工作，因而速度快，效率高。而且理论上CPU数目越多，越能体现出并行收集器的优势。（串型收集的并发版本，需要暂停jvm）并行paralise指的是多个任务在多个cpu中一起并行执行，最后将结果合并。效率是N倍。</p>
+<p>并发收集:相对于串行收集和并行收集而言，前面两个在进行垃圾回收工作时，需要暂停整个运行环境，而只有垃圾回收程序在运行，因此，系统在垃圾回收时会有明显的暂停，而且暂停时间会因为堆越大而越长。（和并行收集不同，并发只有在开头和结尾会暂停jvm）并发concurrent指的是多个任务在一个cpu伪同步执行，但其实是串行调度的，效率并非直接是N倍。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/05/11/jvm01/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/05/11/jvm01/" itemprop="url">
+                  jvm01
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-05-11T20:44:16+08:00">
+                2017-05-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="阻塞io模型"><a href="#阻塞io模型" class="headerlink" title="阻塞io模型"></a>阻塞io模型</h2><p><img src="/2017/03/08/network/阻塞io模型.png" alt="阻塞io模型"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/04/24/java-multithread/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/04/24/java-multithread/" itemprop="url">
+                  java-multithread
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-04-25T05:11:45+08:00">
+                2017-04-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>##<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">test01</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">        <span class="class"><span class="keyword">class</span> <span class="title">Counter</span> </span>&#123;</div><div class="line">            <span class="keyword">private</span> <span class="keyword">int</span> count = <span class="number">0</span>;</div><div class="line"></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">incre</span><span class="params">()</span> </span>&#123;</div><div class="line">                count += <span class="number">1</span>;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getCount</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">return</span> count;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="keyword">final</span> Counter counter = <span class="keyword">new</span> Counter();</div><div class="line">        <span class="class"><span class="keyword">class</span> <span class="title">CountingThread</span> <span class="keyword">extends</span> <span class="title">Thread</span> </span>&#123;</div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">200000</span>; ++i) &#123;</div><div class="line">                    System.out.println(<span class="string">"thread id:"</span>+<span class="keyword">this</span>.getId());</div><div class="line">                    counter.incre();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        Thread thread1 = <span class="keyword">new</span> CountingThread();</div><div class="line">        Thread thread2 = <span class="keyword">new</span> CountingThread();</div><div class="line"></div><div class="line">        thread2.start();</div><div class="line">        thread1.start();</div><div class="line">        thread1.join();</div><div class="line">        thread2.join();</div><div class="line"></div><div class="line">        System.out.println(<span class="string">"counter: "</span>+counter.getCount());</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">counter: 399998</div></pre></td></tr></table></figure>
+<p>使用synchronized修饰方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">public synchronized void incre() &#123;</div><div class="line">    count += 1;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>使用synchronized修饰”关键区域”<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">public void incre() &#123;</div><div class="line">    synchronized (this) &#123;</div><div class="line">        count += 1;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>synchronized不能继承——也就是说，假如一个方法在基础类中是“ 同步”的，那么在衍生类过载版本中，它不会自动进入“同步”状态。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/04/20/elasticsearch01/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/04/20/elasticsearch01/" itemprop="url">
+                  elasticsearch01
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-04-21T03:49:13+08:00">
+                2017-04-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ElasticSearch/" itemprop="url" rel="index">
+                    <span itemprop="name">ElasticSearch</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>##<br>Elasticsearch是一个基于Apache Lucene(TM)的开源搜索引擎。无论在开源还是专有领域，Lucene可以被认为是迄今为止最先进、性能最好的、功能最全的搜索引擎库。<br>但是，Lucene只是一个库。想要使用它，你必须使用Java来作为开发语言并将其直接集成到你的应用中，更糟糕的是，Lucene非常复杂，你需要深入了解检索的相关知识来理解它是如何工作的。<br>Elasticsearch也使用Java开发并使用Lucene作为其核心来实现所有索引和搜索的功能，但是它的目的是通过简单的RESTful API来隐藏Lucene的复杂性，从而让全文搜索变得简单。<br>不过，Elasticsearch不仅仅是Lucene和全文搜索，我们还能这样去描述它：</p>
+<ul>
+<li>分布式的实时文件存储，每个字段都被索引并可被搜索</li>
+<li>分布式的实时分析搜索引擎</li>
+<li>可以扩展到上百台服务器，处理PB级结构化或非结构化数据<br>而且，所有的这些功能被集成到一个服务里面，你的应用可以通过简单的RESTful API、各种语言的客户端甚至命令行与之交互。</li>
+</ul>
+<p>可以用传统的关系数据库来作对比：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Relational DB -&gt; Databases -&gt; Tables -&gt; Rows -&gt; Columns</div><div class="line">Elasticsearch -&gt; Indices   -&gt; Types  -&gt; Documents -&gt; Fields</div></pre></td></tr></table></figure></p>
+<h2 id="如何安装"><a href="#如何安装" class="headerlink" title="如何安装"></a>如何安装</h2><p>1.安装jdk，我自己机器上的是jdk7<br>2.下载安装包<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">wget https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.3.4/elasticsearch-2.3.4.tar.gz</div></pre></td></tr></table></figure></p>
+<p>3.解压<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">tar -zxvf elasticsearch-2.3.4.tar.gz</div></pre></td></tr></table></figure></p>
+<p>4.启动服务<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./bin/elasticsearch</div></pre></td></tr></table></figure></p>
+<p>5.测试是否成功<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">curl &apos;http://localhost:9200/?pretty&apos;</div></pre></td></tr></table></figure></p>
+<p>如果输出下面的结果就大功告成了<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">  &quot;count&quot; : 3,</div><div class="line">  &quot;_shards&quot; : &#123;</div><div class="line">    &quot;total&quot; : 5,</div><div class="line">    &quot;successful&quot; : 5,</div><div class="line">    &quot;failed&quot; : 0</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h2 id="如何使用"><a href="#如何使用" class="headerlink" title="如何使用"></a>如何使用</h2><p>###让我们建立一个员工目录</p>
+<p>假设我们刚好在Megacorp工作，这时人力资源部门出于某种目的需要让我们创建一个员工目录，这个目录用于促进人文关怀和用于实时协同工作</p>
+<p>###索引员工文档<br>所以为了创建员工目录，我们将进行如下操作：<br><em>为每个员工的文档(document)建立索引，每个文档包含了相应员工的所有信息。
+</em>每个文档的类型为employee。<br><em>employee类型归属于索引megacorp。
+</em>megacorp索引存储在Elasticsearch集群中。</p>
+<p>我们看到path:/megacorp/employee/1包含三部分信息：<br>| 名字 | 说明 |<br>| ————- | ————- |<br>| megacorp | 索引名 |<br>| employee | 类型名 |<br>| 1 | 这个员工的ID |</p>
+<p>使用RESTful API，通过9200端口的与Elasticsearch进行通信<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line">curl -XPUT 'localhost:9200/megacorp/employee/1' -d '</div><div class="line">&#123;</div><div class="line">    "first_name" : "John",</div><div class="line">    "last_name" :  "Smith",</div><div class="line">    "age" :        25,</div><div class="line">    "about" :      "I love to go rock climbing",</div><div class="line">    "interests": [ "sports", "music" ]</div><div class="line">&#125;'</div><div class="line"></div><div class="line">curl -XPUT 'localhost:9200/megacorp/employee/2' -d '</div><div class="line">&#123;</div><div class="line">    "first_name" :  "Jane",</div><div class="line">    "last_name" :   "Smith",</div><div class="line">    "age" :         32,</div><div class="line">    "about" :       "I like to collect rock albums",</div><div class="line">    "interests":  [ "music" ]</div><div class="line">&#125;'</div><div class="line"></div><div class="line">curl -XPUT 'localhost:9200/megacorp/employee/3' -d '</div><div class="line">&#123;</div><div class="line">    "first_name" :  "Douglas",</div><div class="line">    "last_name" :   "Fir",</div><div class="line">    "age" :         35,</div><div class="line">    "about":        "I like to build cabinets",</div><div class="line">    "interests":  [ "forestry" ]</div><div class="line">&#125;'</div></pre></td></tr></table></figure></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/04/16/c-02-stlsort/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/04/16/c-02-stlsort/" itemprop="url">
+                  回顾C++之一-STL中的sort
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-04-17T02:50:00+08:00">
+                2017-04-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/C/" itemprop="url" rel="index">
+                    <span itemprop="name">C++</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="相等-or-等价"><a href="#相等-or-等价" class="headerlink" title="相等 or 等价"></a>相等 or 等价</h2><p>STL充满了比较对象是否有同样的值。比如，当你用find来定位区间中第一个有特定值的对象的位置，find必须可以比较两个对象，看看一个的值是否与另一个相等。同样，当你尝试向set中插入一个新元素时，set::insert必须可以判断那个元素的值是否已经在set中了。</p>
+<p>find算法和set的insert成员函数是很多必须判断两个值是否相同的函数的代表。但它们以不同的方式完成，find对“相同”的定义是相等，基于operator==。set::insert对“相同”的定义是等价，通常基于operator&lt;。等价是基于在一个有序区间中对象值的相对位置。等价一般在每种标准关联容器（比如，set、multiset、map和multimap）的一部分——排序顺序方面有意义。两个对象x和y如果在关联容器c的排序顺序中没有哪个排在另一个之前，那么它们关于c使用的排序顺序有等价的值。set<widget>的默认比较函数是less<widget>，而默认的less<widget>简单地对Widget调用operator&lt;，所以w1和w2关于operator&lt;有等价的值如果下面表达式为真：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">(w1 &lt; w2) // w1 &lt; w2时它非真</div><div class="line">&amp;&amp;        // 而且</div><div class="line">(w2&lt;w1)   // w2 &lt; w1时它非真</div></pre></td></tr></table></figure></widget></widget></widget></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/04/16/c-01-stlclear/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/04/16/c-01-stlclear/" itemprop="url">
+                  回顾C++之一-STL中的clear
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-04-17T02:50:00+08:00">
+                2017-04-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/C/" itemprop="url" rel="index">
+                    <span itemprop="name">C++</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>通常我们可能会写下这样的代码<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; v1;</div><div class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; ++i)</div><div class="line">&#123;</div><div class="line">	v1.push_back(i);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v1 before clear"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v1.size() = "</span>&lt;&lt;v1.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v1.capacity() = "</span>&lt;&lt;v1.capacity()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"></div><div class="line">v1.clear();</div><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v1 after clear"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v1.size() = "</span>&lt;&lt;v1.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v1.capacity() = "</span>&lt;&lt;v1.capacity()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"></div><div class="line"><span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; v2;</div><div class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; ++i)</div><div class="line">&#123;</div><div class="line">	v2.push_back(i);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>运行结果<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">v1 before clear--------------</div><div class="line">v1.size() = <span class="number">100</span></div><div class="line">v1.capacity() = <span class="number">128</span></div><div class="line">v1 after clear--------------</div><div class="line">v1.size() = <span class="number">0</span></div><div class="line">v1.capacity() = <span class="number">128</span></div></pre></td></tr></table></figure></p>
+<p>clear并没有释放掉内存，而仅仅是将size置为0，如果需要立即释放掉内存，可以用一个空的容器和其交换，修改后的代码如下：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v2 before swap"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v2.size() = "</span>&lt;&lt;v2.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v2.capacity() = "</span>&lt;&lt;v2.capacity()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"></div><div class="line"><span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;().swap(v2);</div><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v2 after swap--------------"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v2.size() = "</span>&lt;&lt;v2.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v2.capacity() = "</span>&lt;&lt;v2.capacity()&lt;&lt;<span class="built_in">endl</span>;</div></pre></td></tr></table></figure></p>
+<p>运行结果<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">v2 before swap--------------</div><div class="line">v2.size() = <span class="number">100</span></div><div class="line">v2.capacity() = <span class="number">128</span></div><div class="line">v2 after swap--------------</div><div class="line">v2.size() = <span class="number">0</span></div><div class="line">v2.capacity() = <span class="number">0</span></div></pre></td></tr></table></figure></p>
+<p>c++11中增加了新的方法shrink_to_fit，可以释放掉多余的内存<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; v3;</div><div class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; ++i)</div><div class="line">&#123;</div><div class="line">	v3.push_back(i);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v3 before shrink_to_fit--------------"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v3.size() = "</span>&lt;&lt;v3.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v3.capacity() = "</span>&lt;&lt;v3.capacity()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"></div><div class="line">v3.shrink_to_fit();</div><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v3 after shrink_to_fit--------------"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v3.size() = "</span>&lt;&lt;v3.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v3.capacity() = "</span>&lt;&lt;v3.capacity()&lt;&lt;<span class="built_in">endl</span>;</div></pre></td></tr></table></figure></p>
+<p>运行结果<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">v3 before shrink_to_fit--------------</div><div class="line">v3.size() = <span class="number">100</span></div><div class="line">v3.capacity() = <span class="number">128</span></div><div class="line">v3 after shrink_to_fit--------------</div><div class="line">v3.size() = <span class="number">100</span></div><div class="line">v3.capacity() = <span class="number">100</span></div></pre></td></tr></table></figure></p>
+<p><em>Question?</em><br>不理解这个方法的作用，设置capacity的本意是预留内存，下次插入元素时不用涉及耗时的内存分配，这样下次插入元素肯定会触发重新分配内存。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/04/11/lucence-01/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -515,1200 +1792,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/03/22/boost-coroutine/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/03/22/boost-coroutine/" itemprop="url">
-                  boost_coroutine
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-03-23T02:32:48+08:00">
-                2017-03-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/协程/" itemprop="url" rel="index">
-                    <span itemprop="name">协程</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="两个函数如何并发执行？"><a href="#两个函数如何并发执行？" class="headerlink" title="两个函数如何并发执行？"></a>两个函数如何并发执行？</h2><p><img src="/2017/03/22/boost-coroutine/coroutine01.png" alt="函数并发执行"></p>
-<h2 id="执行转移机制"><a href="#执行转移机制" class="headerlink" title="执行转移机制"></a>执行转移机制</h2><p><img src="/2017/03/22/boost-coroutine/coroutine02.png" alt="执行转移机制"></p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/coroutine/all.hpp&gt;</span></span></div><div class="line"></div><div class="line"><span class="keyword">typedef</span> boost::coroutines::asymmetric_coroutine&lt; <span class="keyword">void</span> &gt;::pull_type <span class="keyword">pull_coro_t</span>;</div><div class="line"><span class="keyword">typedef</span> boost::coroutines::asymmetric_coroutine&lt; <span class="keyword">void</span> &gt;::push_type <span class="keyword">push_coro_t</span>;</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">foo</span><span class="params">(<span class="keyword">push_coro_t</span> &amp; sink)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"1"</span>;</div><div class="line">    sink();</div><div class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"2"</span>;</div><div class="line">    sink();</div><div class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"3"</span>;</div><div class="line">    sink();</div><div class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"4"</span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[])</span></span></div><div class="line">&#123;</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">pull_coro_t</span> source(foo);</div><div class="line">        <span class="keyword">while</span> (source)</div><div class="line">        &#123;</div><div class="line">            <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"-"</span>;</div><div class="line">            source();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"\nDone"</span> &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</div><div class="line"></div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>运行输出<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">1-2-3-4</div></pre></td></tr></table></figure></p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/coroutine/all.hpp&gt;</span></span></div><div class="line"></div><div class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</div><div class="line"></div><div class="line"><span class="keyword">typedef</span> boost::coroutines::asymmetric_coroutine&lt; <span class="keyword">int</span> &gt;::pull_type pull_coro_t1;</div><div class="line"><span class="keyword">typedef</span> boost::coroutines::asymmetric_coroutine&lt; <span class="keyword">int</span> &gt;::push_type push_coro_t1;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">foo1</span><span class="params">(push_coro_t1&amp; sink1)</span></span></div><div class="line">&#123;</div><div class="line">	<span class="built_in">cout</span>&lt;&lt;<span class="string">"1"</span>;</div><div class="line">	sink1(<span class="number">10</span>);</div><div class="line">	<span class="built_in">cout</span>&lt;&lt;<span class="string">"2"</span>;</div><div class="line">	sink1(<span class="number">20</span>);</div><div class="line">	<span class="built_in">cout</span>&lt;&lt;<span class="string">"3"</span>;</div><div class="line">	sink1(<span class="number">30</span>);</div><div class="line">	<span class="built_in">cout</span>&lt;&lt;<span class="string">"4"</span>;</div><div class="line">	sink1(<span class="number">40</span>);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> <span class="keyword">const</span> *argv[])</span></span></div><div class="line">&#123;</div><div class="line">	&#123;</div><div class="line">		<span class="function">pull_coro_t1 <span class="title">source1</span><span class="params">(foo1)</span></span>;</div><div class="line">		<span class="keyword">while</span> (source1)</div><div class="line">		&#123;</div><div class="line">			<span class="keyword">int</span> ret = source1.get();</div><div class="line">			<span class="built_in">cout</span>&lt;&lt;<span class="string">"ret: "</span>&lt;&lt;ret&lt;&lt;<span class="built_in">endl</span>;</div><div class="line">			source1();</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="built_in">cout</span>&lt;&lt;<span class="string">"\nDone"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"></div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>运行输出<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">1ret: 10</div><div class="line">2ret: 20</div><div class="line">3ret: 30</div><div class="line">4ret: 40</div></pre></td></tr></table></figure></p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/coroutine/all.hpp&gt;</span></span></div><div class="line"></div><div class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</div><div class="line"></div><div class="line"><span class="keyword">typedef</span> boost::coroutines::asymmetric_coroutine&lt; <span class="keyword">int</span> &gt;::pull_type pull_coro_t1;</div><div class="line"><span class="keyword">typedef</span> boost::coroutines::asymmetric_coroutine&lt; <span class="keyword">int</span> &gt;::push_type push_coro_t1;</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">foo1</span><span class="params">(pull_coro_t1&amp; sink1)</span></span></div><div class="line">&#123;</div><div class="line">	<span class="built_in">cout</span>&lt;&lt;<span class="string">"1 "</span>&lt;&lt;source1.get();</div><div class="line">	sink1();</div><div class="line">	<span class="built_in">cout</span>&lt;&lt;<span class="string">"2 "</span>&lt;&lt;source1.get();</div><div class="line">	sink1();</div><div class="line">	<span class="built_in">cout</span>&lt;&lt;<span class="string">"3 "</span>&lt;&lt;source1.get();</div><div class="line">	sink1();</div><div class="line">	<span class="built_in">cout</span>&lt;&lt;<span class="string">"4 "</span>&lt;&lt;source1.get();</div><div class="line">	sink1();</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> <span class="keyword">const</span> *argv[])</span></span></div><div class="line">&#123;</div><div class="line">	&#123;</div><div class="line">		<span class="function">push_coro_t1 <span class="title">source1</span><span class="params">(foo1)</span></span>;</div><div class="line">		<span class="keyword">int</span> c = <span class="number">0</span>;</div><div class="line">		<span class="keyword">while</span> (source1)</div><div class="line">		&#123;</div><div class="line">			++c;</div><div class="line">			source1();</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="built_in">cout</span>&lt;&lt;<span class="string">"\nDone"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"></div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/03/22/network-io-model/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/03/22/network-io-model/" itemprop="url">
-                  network-io-model
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-03-22T20:07:55+08:00">
-                2017-03-22
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/network/" itemprop="url" rel="index">
-                    <span itemprop="name">network</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="阻塞io模型"><a href="#阻塞io模型" class="headerlink" title="阻塞io模型"></a>阻塞io模型</h2><p><img src="/2017/03/08/network/阻塞io模型.png" alt="阻塞io模型"></p>
-<h2 id="非阻塞io模型"><a href="#非阻塞io模型" class="headerlink" title="非阻塞io模型"></a>非阻塞io模型</h2><p><img src="/2017/03/08/network/非阻塞io模型.png" alt="阻塞io模型"></p>
-<h2 id="io复用模型"><a href="#io复用模型" class="headerlink" title="io复用模型"></a>io复用模型</h2><p><img src="/2017/03/08/network/io复用模型.png" alt="阻塞io模型"></p>
-<h2 id="信号驱动io模型"><a href="#信号驱动io模型" class="headerlink" title="信号驱动io模型"></a>信号驱动io模型</h2><p><img src="/2017/03/08/network/信号驱动io模型.png" alt="阻塞io模型"></p>
-<h2 id="异步io模型"><a href="#异步io模型" class="headerlink" title="异步io模型"></a>异步io模型</h2><p><img src="/2017/03/08/network/异步io.png" alt="阻塞io模型"></p>
-<p>多啰嗦几句：<br>a. <strong>阻塞和非阻塞</strong>描述的对象是函数，指调用这个函数后是否会block进程/线程。<br>b. <strong>同步/异步</strong>描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/03/19/network-send-recv/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/03/19/network-send-recv/" itemprop="url">
-                  network_send_recv
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-03-20T00:15:31+08:00">
-                2017-03-20
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/network/" itemprop="url" rel="index">
-                    <span itemprop="name">network</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="tcp发送"><a href="#tcp发送" class="headerlink" title="tcp发送"></a>tcp发送</h2><p><img src="/2017/03/08/network/tcp_send.png" alt="tcp发送过程"></p>
-<p>从写一个TCP套接字的write调用成功返回仅表示可以使用原来的应用进程缓冲区，并不表明对端的TCP或应用进程已接受到数据</p>
-<h2 id="udp发送"><a href="#udp发送" class="headerlink" title="udp发送"></a>udp发送</h2><p><img src="/2017/03/08/network/udp_send.png" alt="udp发送过程"></p>
-<p>udp是不可靠的，不会保存应用进程数据的一个副本，因此没有真正的发送缓冲区（数据被发送后，这个副本就被数据链路层丢弃）。</p>
-<p>udp的write调用成功返回表示所写的数据报或其所有片段已加入数据链路层的输出队列（如果空间不够，应用进程也不会知道）。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/03/08/network/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/03/08/network/" itemprop="url">
-                  network
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-03-09T03:49:00+08:00">
-                2017-03-09
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/network/" itemprop="url" rel="index">
-                    <span itemprop="name">network</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>tcp<br>使用分隔符<br>通过包头记录包的长度</p>
-<h2 id="tcp状态机"><a href="#tcp状态机" class="headerlink" title="tcp状态机"></a>tcp状态机</h2><p><img src="/2017/03/08/network/tcp_state_machine.png" alt="tcp状态机"></p>
-<h2 id="建立连接过程"><a href="#建立连接过程" class="headerlink" title="建立连接过程"></a>建立连接过程</h2><p>流程图<br><img src="/2017/03/08/network/connect.png" alt="三次握手流程图"></p>
-<p>tcpdump抓包(listen port 1234)<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo tcpdump -i lo tcp port 1234 and host 127.0.0.1</div></pre></td></tr></table></figure></p>
-<p>客户端代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">if(connect(sockfd,(struct sockaddr *)&amp;server,sizeof(server))==-1)&#123;</div><div class="line">       printf(&quot;connect()error\n&quot;);</div><div class="line">       exit(1);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>服务端代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">if((connectfd = accept(listenfd,(struct sockaddr*)&amp;client,&amp;addrlen))==-1) &#123;</div><div class="line">       perror(&quot;accept()error\n&quot;);</div><div class="line">       exit(1);</div><div class="line">&#125;</div><div class="line">else</div><div class="line">&#123;</div><div class="line">       printf(&quot;Yougot a connection from cient&apos;s ip is %s, prot is %d\n&quot;,inet_ntoa(client.sin_addr),htons(client.sin_port));</div><div class="line">&#125;</div><div class="line">sleep(30);</div></pre></td></tr></table></figure></p>
-<p>tcpdump抓包<br><img src="/2017/03/08/network/tcpdump_connect.png" alt="tcpdump三次握手"></p>
-<p>netstat查看连接状态<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">netstat -apn |grep 1234</div></pre></td></tr></table></figure></p>
-<p><img src="/2017/03/08/network/established.png" alt="established status"></p>
-<h2 id="关闭连接过程"><a href="#关闭连接过程" class="headerlink" title="关闭连接过程"></a>关闭连接过程</h2><p>为验证CLOSE_WAIT状态，服务端accpet后sleep，客户单立即调用close</p>
-<p>流程图<br><img src="/2017/03/08/network/close.png" alt="四次挥手流程图"></p>
-<p>客户端代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">close(sockfd);</div></pre></td></tr></table></figure></p>
-<p>服务端代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sleep(30);</div></pre></td></tr></table></figure></p>
-<p>tcpdump抓包<br><img src="/2017/03/08/network/tcpdump_close.png" alt="tcpdump四次挥手"></p>
-<p>netstat查看连接状态<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">netstat -apn |grep 1234</div></pre></td></tr></table></figure></p>
-<p><img src="/2017/03/08/network/close_wait.png" alt="established status"></p>
-<p>服务端sleep时间到后，此时客户端已close，read返回0后，服务端也调用close，进入TIME_WAIT状态。</p>
-<p>为什么需要TIME_WAIT?<br>a. 当发起关闭一方的最后一个ack丢失后，对方会重传FIN，如果没有直接关闭连接，发起发就收不到重传FIN。<br>b. 当被动关闭一方的最后一个FIN包超时重传，如果没有TIME_WAIT状态而且此时发起方用相同的ip和port建立了新的连接，这时候会收到这个重传的包，并认为他是新连接的包，就会导致严重错误。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/02/26/nginx-mem-manage/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/02/26/nginx-mem-manage/" itemprop="url">
-                  nginx内存管理
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-26T19:46:01+08:00">
-                2017-02-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Nginx/" itemprop="url" rel="index">
-                    <span itemprop="name">Nginx</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/02/23/linux-ipc/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/02/23/linux-ipc/" itemprop="url">
-                  linux-ipc
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-23T19:42:40+08:00">
-                2017-02-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux环境编程/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux环境编程</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>linux中的两种共享内存。一种是我们的IPC通信System V版本的共享内存，另外的一种是存储映射I/O（mmap函数）</p>
-<p>在说mmap之前我们先说一下普通的读写文件的原理，进程调用read或是write后会陷入内核，因为这两个函数都是系统调用，进入系统调用后，内核开始读写文件，假设内核在读取文件，内核首先把文件读入自己的内核空间，读完之后进程在内核回归用户态，内核把读入内核内存的数据再copy进入进程的用户态内存空间。实际上我们同一份文件内容相当于读了两次，先读入内核空间，再从内核空间读入用户空间。</p>
-<p>Linux提供了内存映射函数mmap, 它把文件内容映射到一段内存上(准确说是虚拟内存上),通过对这段内存的读取和修改, 实现对文件的读取和修改,mmap()系统调用使得进程之间可以通过映射一个普通的文件实现共享内存。普通文件映射到进程地址空间后，进程可以向访问内存的方式对文件进行访问，不需要其他系统调用(read,write)去操作。</p>
-<h2 id="共享内存-System-V"><a href="#共享内存-System-V" class="headerlink" title="共享内存-System V"></a>共享内存-System V</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/ipc.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/shm.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cstdio&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cstdlib&gt;</span></span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> ARRAY_SIZE   40000</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> MALLOC_SIZE  100000</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> SHM_SIZE  100000</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> SHM_MODE  (SHM_R | SHM_W)</span></div><div class="line"></div><div class="line"><span class="keyword">char</span> <span class="built_in">array</span>[ARRAY_SIZE];</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> shmid;</div><div class="line">	<span class="keyword">char</span> *ptr, *shmptr;</div><div class="line"></div><div class="line">	<span class="built_in">printf</span>(<span class="string">"array[] from %x to %x \n"</span>, &amp;<span class="built_in">array</span>[<span class="number">0</span>], &amp;<span class="built_in">array</span>[ARRAY_SIZE]);</div><div class="line">	<span class="built_in">printf</span>(<span class="string">"stack around %x \n"</span>, &amp;shmid);</div><div class="line"></div><div class="line">	<span class="keyword">if</span> (<span class="literal">NULL</span> == (ptr = (<span class="keyword">char</span>*)<span class="built_in">malloc</span>(MALLOC_SIZE)))</div><div class="line">	&#123;</div><div class="line">		<span class="built_in">printf</span>(<span class="string">"malloc error"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">-1</span>);</div><div class="line">	&#125;</div><div class="line">	<span class="built_in">printf</span>(<span class="string">"malloced from %x to %x \n"</span>, ptr, ptr+MALLOC_SIZE);</div><div class="line"></div><div class="line">	<span class="keyword">if</span> ((shmid = shmget(IPC_PRIVATE, SHM_SIZE, SHM_MODE)) &lt;<span class="number">0</span>)</div><div class="line">	&#123;</div><div class="line">		<span class="built_in">printf</span>(<span class="string">"shmget error"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">-1</span>);</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">if</span> ( (shmptr = (<span class="keyword">char</span>*)shmat(shmid, <span class="literal">NULL</span>, <span class="number">0</span>)) == (<span class="keyword">void</span>*)<span class="number">-1</span> )</div><div class="line">	&#123;</div><div class="line">		<span class="built_in">printf</span>(<span class="string">"shmat error"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">-1</span>);</div><div class="line">	&#125;</div><div class="line">	<span class="built_in">printf</span>(<span class="string">"shared memory attached from %x to %x \n"</span>,</div><div class="line">			shmptr, shmptr+SHM_SIZE);</div><div class="line"></div><div class="line">	<span class="keyword">if</span> (shmctl(shmid, IPC_RMID, <span class="number">0</span>) &lt;<span class="number">0</span>)</div><div class="line">	&#123;</div><div class="line">		<span class="built_in">printf</span>(<span class="string">"shmctl error"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">-1</span>);</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>内存布局<br><img src="/2017/03/23/linux-ipc/share_mem01.png" alt="程序内存布局"></p>
-<h2 id="mmap"><a href="#mmap" class="headerlink" title="mmap"></a>mmap</h2><p>####1. /dev/zero####<br>设备/dev/zero在读时，是0字节的无限资源。此设备也接收写向它的任何数据，但忽略此<br>数据。我们对此设备作为IPC的兴趣在于，当对其进行存储映射时，它具有一些特殊性质：<br>• 创建一个未名存储区，其长度是mmap的第二个参数，将其取整为系统上的最近页长。<br>• 存储区都初始化为 0。<br>• 如果多个进程的共同祖先进程对mmap指定了MAP_SHARED标志，则这些进程可共享此存储区。</p>
-<p>使用/dev/zero的优点是：在调用mmap创建映射区之前，无需存在一个实际文件。映射/dev/zero自动创建一个指定长度的映射区。<br>这种技术的缺点是：它只能由相关进程使用。如果在无关进程之间需要使用共享存储区，则必须使用shmXXX函数。</p>
-<p>example<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;fcntl.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/types.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/stat.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/mman.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;string.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></div><div class="line"></div><div class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</div><div class="line"></div><div class="line"><span class="keyword">struct</span> STU</div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> age;</div><div class="line">	<span class="keyword">char</span> name[<span class="number">20</span>];</div><div class="line">	<span class="keyword">char</span> sex;</div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="keyword">const</span> <span class="keyword">int</span> LOOP_TIMES = <span class="number">10</span>;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">update</span><span class="params">(<span class="keyword">uint64_t</span>* p)</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">return</span> (*p)++;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc,<span class="keyword">char</span> *argv[])</span> <span class="comment">//这个进程用于创建映射区进行写。</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> fd;</div><div class="line">	<span class="keyword">struct</span> STU *p = <span class="literal">NULL</span>;</div><div class="line">	<span class="keyword">pid_t</span> pid;</div><div class="line">	<span class="keyword">uint64_t</span>* incre = <span class="literal">NULL</span>;</div><div class="line"></div><div class="line">	fd = open(<span class="string">"/dev/zero"</span>, O_RDWR, <span class="number">0644</span>);</div><div class="line">	<span class="keyword">if</span>(fd &lt; <span class="number">0</span>)</div><div class="line">	&#123;</div><div class="line">		perror(<span class="string">"open"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">2</span>);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	incre = (<span class="keyword">uint64_t</span>*)mmap(<span class="literal">NULL</span>, </div><div class="line">							  <span class="keyword">sizeof</span>(<span class="keyword">uint64_t</span>),</div><div class="line">							  PROT_READ|PROT_WRITE,</div><div class="line">							  MAP_SHARED,</div><div class="line">							  fd,<span class="number">0</span></div><div class="line">							  );</div><div class="line">	<span class="keyword">if</span>(incre == MAP_FAILED)</div><div class="line">	&#123;</div><div class="line">		perror(<span class="string">"mmap"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">3</span>);</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	close(fd); <span class="comment">//关闭不用的文件描述符</span></div><div class="line"></div><div class="line">	pid = fork();</div><div class="line">	<span class="keyword">if</span> (pid &lt;  <span class="number">0</span>)</div><div class="line">	&#123;</div><div class="line">		perror(<span class="string">"fork"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">1</span>);</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">else</span> <span class="keyword">if</span> (pid &gt; <span class="number">0</span>)</div><div class="line">	&#123;</div><div class="line">		<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LOOP_TIMES; ++i)</div><div class="line">		&#123;</div><div class="line">			<span class="built_in">cout</span> &lt;&lt; <span class="string">"parent&gt;&gt;"</span></div><div class="line">				 &lt;&lt; <span class="string">" i="</span> &lt;&lt; i</div><div class="line">				 &lt;&lt; <span class="string">" ts="</span> &lt;&lt; time(<span class="literal">NULL</span>) </div><div class="line">				 &lt;&lt; <span class="string">" pid="</span> &lt;&lt; getpid() </div><div class="line">				 &lt;&lt; <span class="string">" incre="</span> &lt;&lt; update(incre)</div><div class="line">				 &lt;&lt; <span class="built_in">endl</span>;</div><div class="line">			<span class="comment">//sleep(1);</span></div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">else</span></div><div class="line">	&#123;</div><div class="line">		<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LOOP_TIMES; ++i)</div><div class="line">		&#123;</div><div class="line">			<span class="built_in">cout</span> &lt;&lt; <span class="string">"child&gt;&gt;"</span></div><div class="line">				 &lt;&lt; <span class="string">" i="</span> &lt;&lt; i</div><div class="line">				 &lt;&lt; <span class="string">" ts="</span> &lt;&lt; time(<span class="literal">NULL</span>) </div><div class="line">				 &lt;&lt; <span class="string">" pid="</span> &lt;&lt; getpid() </div><div class="line">				 &lt;&lt; <span class="string">" incre="</span> &lt;&lt; update(incre)</div><div class="line">				 &lt;&lt;<span class="built_in">endl</span>;</div><div class="line">			<span class="comment">//sleep(1);</span></div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>####2.匿名存储映射<br>4.3+BSD提供了一种类似于/dev/zero的施设，称为匿名存储映射。为了使用这种功能，在调用mmap时指定MAP_ A NON标志，并将描述符指定为－1。</p>
-<p>example<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;fcntl.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/types.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/stat.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/mman.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;string.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></div><div class="line"></div><div class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</div><div class="line"></div><div class="line"><span class="keyword">struct</span> STU</div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> age;</div><div class="line">	<span class="keyword">char</span> name[<span class="number">20</span>];</div><div class="line">	<span class="keyword">char</span> sex;</div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="keyword">const</span> <span class="keyword">int</span> LOOP_TIMES = <span class="number">10</span>;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">update</span><span class="params">(<span class="keyword">uint64_t</span>* p)</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">return</span> (*p)++;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc,<span class="keyword">char</span> *argv[])</span> <span class="comment">//这个进程用于创建映射区进行写。</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">struct</span> STU *p = <span class="literal">NULL</span>;</div><div class="line">	<span class="keyword">pid_t</span> pid;</div><div class="line">	<span class="keyword">uint64_t</span>* incre = <span class="literal">NULL</span>;</div><div class="line">	</div><div class="line">	incre = (<span class="keyword">uint64_t</span>*)mmap(<span class="literal">NULL</span>, </div><div class="line">							  <span class="keyword">sizeof</span>(<span class="keyword">uint64_t</span>),</div><div class="line">							  PROT_READ|PROT_WRITE,</div><div class="line">							  MAP_ANON|MAP_SHARED,</div><div class="line">							  <span class="number">-1</span>,<span class="number">0</span></div><div class="line">							  );</div><div class="line">	<span class="keyword">if</span>(incre == MAP_FAILED)</div><div class="line">	&#123;</div><div class="line">		perror(<span class="string">"mmap"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">3</span>);</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	pid = fork();</div><div class="line">	<span class="keyword">if</span> (pid &lt;  <span class="number">0</span>)</div><div class="line">	&#123;</div><div class="line">		perror(<span class="string">"fork"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">1</span>);</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">else</span> <span class="keyword">if</span> (pid &gt; <span class="number">0</span>)</div><div class="line">	&#123;</div><div class="line">		<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LOOP_TIMES; ++i)</div><div class="line">		&#123;</div><div class="line">			<span class="built_in">cout</span> &lt;&lt; <span class="string">"parent&gt;&gt;"</span></div><div class="line">				 &lt;&lt; <span class="string">" i="</span> &lt;&lt; i</div><div class="line">				 &lt;&lt; <span class="string">" ts="</span> &lt;&lt; time(<span class="literal">NULL</span>) </div><div class="line">				 &lt;&lt; <span class="string">" pid="</span> &lt;&lt; getpid() </div><div class="line">				 &lt;&lt; <span class="string">" incre="</span> &lt;&lt; update(incre)</div><div class="line">				 &lt;&lt; <span class="built_in">endl</span>;</div><div class="line">			<span class="comment">//sleep(1);</span></div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">else</span></div><div class="line">	&#123;</div><div class="line">		<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LOOP_TIMES; ++i)</div><div class="line">		&#123;</div><div class="line">			<span class="built_in">cout</span> &lt;&lt; <span class="string">"child&gt;&gt;"</span></div><div class="line">				 &lt;&lt; <span class="string">" i="</span> &lt;&lt; i</div><div class="line">				 &lt;&lt; <span class="string">" ts="</span> &lt;&lt; time(<span class="literal">NULL</span>) </div><div class="line">				 &lt;&lt; <span class="string">" pid="</span> &lt;&lt; getpid() </div><div class="line">				 &lt;&lt; <span class="string">" incre="</span> &lt;&lt; update(incre)</div><div class="line">				 &lt;&lt;<span class="built_in">endl</span>;</div><div class="line">			<span class="comment">//sleep(1);</span></div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/02/22/hello-world/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/02/22/hello-world/" itemprop="url">
-                  What is Hexo?
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-23T11:31:11+08:00">
-                2017-02-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Hexo/" itemprop="url" rel="index">
-                    <span itemprop="name">Hexo</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="1-Hexo简介"><a href="#1-Hexo简介" class="headerlink" title="1. Hexo简介"></a>1. Hexo简介</h2><p>Hexo 是一款基于 Node.js 的静态博客框架。Hexo 使用 Markdown 解析文章，用户在本地安装Hexo并进行写作，通过一条命令，Hexo即可利用靓丽的主题自动生成静态网页。<br>参考：Hexo Github地址     Hexo帮助文档(<a href="https://hexo.io/zh-cn/docs/" target="_blank" rel="external">https://hexo.io/zh-cn/docs/</a>)</p>
-<h2 id="2-如何使用Hexo搭建自己的博客"><a href="#2-如何使用Hexo搭建自己的博客" class="headerlink" title="2. 如何使用Hexo搭建自己的博客"></a>2. 如何使用Hexo搭建自己的博客</h2><h3 id="uninstall-old-version-of-nodejs-amp-npm"><a href="#uninstall-old-version-of-nodejs-amp-npm" class="headerlink" title="uninstall old version of nodejs &amp; npm"></a>uninstall old version of nodejs &amp; npm</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo apt-get purge nodejs npm</div></pre></td></tr></table></figure>
-<h3 id="update-gcc-g"><a href="#update-gcc-g" class="headerlink" title="update gcc g++"></a>update gcc g++</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">sudo add-apt-repository ppa:ubuntu-toolchain-r/<span class="built_in">test</span></div><div class="line">sudo apt-get update</div><div class="line">sudo apt-get install gcc-4.9</div><div class="line">sudo apt-get install g++-4.9</div><div class="line"></div><div class="line">update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 100</div><div class="line">update-alternatives --install /usr/bin/gcc gcc /usr/bin/g++-4.9 100</div></pre></td></tr></table></figure>
-<h3 id="install-nodejs"><a href="#install-nodejs" class="headerlink" title="install nodejs"></a>install nodejs</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ wget https://nodejs.org/dist/v6.9.5/node-v6.9.5.tar.gz</div><div class="line">$ tar xvf node-v6.9.5.tar.gz</div><div class="line">$ ./configure</div><div class="line">$ make </div><div class="line">$ make install</div></pre></td></tr></table></figure>
-<h3 id="install-npm"><a href="#install-npm" class="headerlink" title="install npm"></a>install npm</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ sudo apt-get install npm</div></pre></td></tr></table></figure>
-<h3 id="check-res"><a href="#check-res" class="headerlink" title="check res"></a>check res</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ node -v</div><div class="line">v6.9.5</div><div class="line"></div><div class="line">$ npm -v</div><div class="line">3.10.10</div></pre></td></tr></table></figure>
-<h3 id="安装并初始化Hexo"><a href="#安装并初始化Hexo" class="headerlink" title="安装并初始化Hexo"></a>安装并初始化Hexo</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ npm install -g hexo-cli</div><div class="line">$ hexo init</div></pre></td></tr></table></figure>
-<p>安装完成后，指定文件夹的目录如下：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">1 ├── _config.yml</div><div class="line">2 ├── package.json</div><div class="line">3 ├── scaffolds</div><div class="line">4 ├── <span class="built_in">source</span></div><div class="line">5 |   ├── _drafts</div><div class="line">6 |   └── _posts</div><div class="line">7 └── themes</div></pre></td></tr></table></figure></p>
-<p>其中_config.yml文件用于存放网站的配置信息，你可以在此配置大部分的参数；scaffolds是存放模板的文件夹，当新建文章时，Hexo 会根据scaffold来建立文件；source是资源文件夹，用于存放用户资源，themes是主题文件夹，存放博客主题，Hexo 会根据主题来生成静态页面。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new <span class="string">"My New Post"</span></div></pre></td></tr></table></figure>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo server</div></pre></td></tr></table></figure>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo generate</div></pre></td></tr></table></figure>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo deploy</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/02/22/redis-analysis/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/02/22/redis-analysis/" itemprop="url">
-                  redis-analysis
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-22T23:13:44+08:00">
-                2017-02-22
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Redis/" itemprop="url" rel="index">
-                    <span itemprop="name">Redis</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1756,7 +1839,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">22</span>
+                <span class="site-state-item-count">30</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>

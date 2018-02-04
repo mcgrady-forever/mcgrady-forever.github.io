@@ -4,10 +4,350 @@
   
     
     <entry>
+      <title><![CDATA[<<Linux多线程服务端编程-使用muduo c++网络库>>笔记（一）]]></title>
+      <url>http://hlei.io/2017/10/29/muduo-chapter01/</url>
+      <content type="html"><![CDATA[<p>##c++主要内存问题及解决方法<br>1、缓冲区溢出<br>solution：使用vector<char>、string或自己编写的BufferClass来管理缓冲区，记录缓冲区的长度，并通过成员函数而不是裸指针修改缓冲区。</char></p>
+<p>2、空悬指针/野指针<br>solution：shared_ptr/weak_ptr</p>
+<p>3、重复释放<br>solution：scoped_ptr，只在对象析构时候释放一次</p>
+<p>4、内存泄漏<br>solution：scoped_ptr，对象析构时候自动释放内存</p>
+<p>5、不配对的new[]/delete<br>solution：把new[]替换为vector/scoped_array</p>
+<p>6、内存碎片<br>solution：todo</p>
+<p>##shared_ptr是否线程安全<br>shared_ptr计数操作是线程安全的，release 1.33.0后在大多数系统中采用无锁的原子操作实现；但对于对象本身的访问不是线程安全的。对于shared_ptr的线程安全问题，boost官方文档中作了详细说明, <a href="http://www.boost.org/doc/libs/1_65_1/libs/smart_ptr/doc/html/smart_ptr.html#shared_ptr" target="_blank" rel="external">http://www.boost.org/doc/libs/1_65_1/libs/smart_ptr/doc/html/smart_ptr.html#shared_ptr</a><br>这里作了下总结：</p>
+<ol>
+<li>多个线程可以同时读一个shared_ptr实例</li>
+<li>不同的线程中可以对不同的shared_ptr实例进行“写操作”（包括operator=、reset、析构）</li>
+<li>一个shared_ptr实例被不同的线程同时读写是不安全的</li>
+</ol>
+<p>代码例子：<br>Reading a shared_ptr from two threads<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">shared_ptr</span>&lt;<span class="keyword">int</span>&gt; p(<span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">42</span>));</div><div class="line"></div><div class="line"><span class="comment">// thread A</span></div><div class="line"><span class="built_in">shared_ptr</span>&lt;<span class="keyword">int</span>&gt; p2(p); <span class="comment">// reads p</span></div><div class="line"></div><div class="line"><span class="comment">// thread B</span></div><div class="line"><span class="built_in">shared_ptr</span>&lt;<span class="keyword">int</span>&gt; p3(p); <span class="comment">// OK, multiple reads are safe</span></div></pre></td></tr></table></figure></p>
+<p>Writing different shared_ptr instances from two threads<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// thread A</span></div><div class="line">p.reset(<span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">1912</span>)); <span class="comment">// writes p</span></div><div class="line"></div><div class="line"><span class="comment">// thread B</span></div><div class="line">p2.reset(); <span class="comment">// OK, writes p2</span></div></pre></td></tr></table></figure></p>
+<p>Reading and writing a shared_ptr from two threads<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// thread A</span></div><div class="line">p = p3; <span class="comment">// reads p3, writes p</span></div><div class="line"></div><div class="line"><span class="comment">// thread B</span></div><div class="line">p3.reset(); <span class="comment">// writes p3; undefined, simultaneous read/write</span></div></pre></td></tr></table></figure></p>
+<p>Reading and destroying a shared_ptr from two threads<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// thread A</span></div><div class="line">p3 = p2; <span class="comment">// reads p2, writes p3</span></div><div class="line"></div><div class="line"><span class="comment">// thread B</span></div><div class="line"><span class="comment">// p2 goes out of scope: undefined, the destructor is considered a "write access"</span></div></pre></td></tr></table></figure></p>
+<p>Writing a shared_ptr from two threads<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// thread A</span></div><div class="line">p3.reset(<span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">1</span>));</div><div class="line"></div><div class="line"><span class="comment">// thread B</span></div><div class="line">p3.reset(<span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">2</span>)); <span class="comment">// undefined, multiple writes</span></div></pre></td></tr></table></figure></p>
+]]></content>
+    </entry>
+    
+    <entry>
+      <title><![CDATA[redis-rdb]]></title>
+      <url>http://hlei.io/2017/10/16/redis-rdb/</url>
+      <content type="html"><![CDATA[<p>Reids是一个内存型数据库，所有的数据都存放在内存中。这种模式的缺点就是一旦服务器关闭后会立刻丢失所有存储的数据，Redis当然要避免这种情况的发生，于是其提供了两种持久化机制：RDB和AOF。它们的功能都是将内存中存放的数据保存到磁盘文件上，等到服务器下次开启时能重载数据，以免数据丢失。今天，我们先来剖析一下RDB持久化机制。</p>
+<p>##RDB概述<br>开启一个redis-cli，执行添加数据操作如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">127.0.0.1:6379&gt; flushdb</div><div class="line">OK</div><div class="line">127.0.0.1:6379&gt; set name chris</div><div class="line">OK</div><div class="line">127.0.0.1:6379&gt; save</div><div class="line">OK</div></pre></td></tr></table></figure></p>
+<p>我先开启了一个Redis客户端，清空数据，然后依次添加了一个键值对到数据库，最后通过SAVE文件将数据库中的数据保存到rdb文件中，实现数据的持久化，服务器会显示数据已经存放在磁盘文件上。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">6228:M 17 Oct 05:15:16.846 * DB saved on disk</div></pre></td></tr></table></figure></p>
+<p>保存到磁盘的文件名为dump.rdb，利用od命令就能查看里面的数据<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~/software/redis-3.2.6/src$ od -c dump.rdb </div><div class="line">0000000   R   E   D   I   S   0   0   0   7 372  \t   r   e   d   i   s</div><div class="line">0000020   -   v   e   r 005   3   .   2   .   6 372  \n   r   e   d   i</div><div class="line">0000040   s   -   b   i   t   s 300   @ 372 005   c   t   i   m   e 302</div><div class="line">0000060   T 364 345   Y 372  \b   u   s   e   d   -   m   e   m 302 350</div><div class="line">0000100   H  \b  \0 376  \0 373 001  \0  \0 004   n   a   m   e 005   c</div><div class="line">0000120   h   r   i   s 376 002 373 001  \0  \0 004   n   a   m   e 005</div><div class="line">0000140   c   h   r   i   s 377 326 354   a   i 227   . 350   %</div><div class="line">0000156</div></pre></td></tr></table></figure></p>
+<p><em>RDB文件标识和版本号：REDIS0007
+</em>Redis版本：redis-ver 3.2.3<br><em>Redis系统位数（32位或64位）：redis-bits
+</em>系统时间：ctime<br><em>内存使用量：used-mem
+</em>一组键值对：name-chris</p>
+<p>##RDB文件结构<br>| REDIS | db_version | databases | EOF | checksum | </p>
+]]></content>
+    </entry>
+    
+    <entry>
+      <title><![CDATA[jvm04]]></title>
+      <url>http://hlei.io/2017/10/11/jvm04/</url>
+      <content type="html"><![CDATA[<p>jstat -gcutil 25354 500 3<br>  S0     S1     E      O      P     YGC     YGCT    FGC    FGCT     GCT<br> 96.48   0.00  29.45  57.62  89.07  17974  409.657    18    7.916  417.572<br> 96.48   0.00  30.32  57.62  89.07  17974  409.657    18    7.916  417.572<br> 96.48   0.00  31.14  57.62  89.07  17974  409.657    18    7.916  417.572</p>
+<p>after restart:<br> 3733 work      20   0 6525m 1.4g  18m S  9.3  2.3   1:45.08 java </p>
+<p> jstat -gcutil 3733 500 3<br>  S0     S1     E      O      P     YGC     YGCT    FGC    FGCT     GCT<br>  0.00  21.84  13.14  29.65  97.65     19    0.403     2    0.162    0.565<br>  0.00  21.84  14.02  29.65  97.65     19    0.403     2    0.162    0.565<br>  0.00  21.84  14.42  29.65  97.65     19    0.403     2    0.162    0.565</p>
+]]></content>
+    </entry>
+    
+    <entry>
+      <title><![CDATA[jvm03]]></title>
+      <url>http://hlei.io/2017/10/11/jvm03/</url>
+      <content type="html"><![CDATA[<p>Sun JVM参数选项的官方文档<br><a href="http://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html" target="_blank" rel="external">http://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html</a></p>
+]]></content>
+    </entry>
+    
+    <entry>
+      <title><![CDATA[docker(一)]]></title>
+      <url>http://hlei.io/2017/10/10/docker01-install/</url>
+      <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Docker是一个开源的引擎，可以轻松的为任何应用创建一个轻量级的、可移植的、自给自足的容器。开发者在笔记本上编译测试通过的容器可以批量地在生产环境中部署，包括VMs（虚拟机）、bare metal、OpenStack 集群和其他的基础应用平台。<br>Docker通常用于如下场景：</p>
+<ol>
+<li>web应用的自动化打包和发布；</li>
+<li>自动化测试和持续集成、发布；</li>
+<li>在服务型环境中部署和调整数据库或其他的后台应用；</li>
+<li>从头编译或者扩展现有的OpenShift或Cloud Foundry平台来搭建自己的PaaS环境。</li>
+</ol>
+<h2 id="docker-vs-虚拟机"><a href="#docker-vs-虚拟机" class="headerlink" title="docker vs 虚拟机"></a>docker vs 虚拟机</h2><pre><code>容器与虚拟机拥有着类似的使命：对应用程序及其关联性进行隔离，从而构建起一套能够随处运
+</code></pre><p>行的自容纳单元。此外，容器与虚拟机还摆脱了对物理硬件的需求，允许我们更为高效地使用计算资源，从而提升能源效率与成本效益。<br>　　<br>　　虚拟机会将虚拟硬件、内核（即操作系统）以及用户空间打包在新虚拟机当中，虚拟机能够利用“虚拟机管理程序”运行在物理设备之上。虚拟机依赖于hypervisor，其通常被安装在“裸金属”系统硬件之上，这导致hypervisor在某些方面被认为是一种操作系统。一旦 hypervisor安装完成， 就可以从系统可用计算资源当中分配虚拟机实例了，每台虚拟机都能够获得唯一的操作系统和负载(应用程序)。简言之，虚拟机先需要虚拟一个物理环境，然后构建一个完整的操作系统，再搭建一层Runtime，然后供应用程序运行。<br>　　<br>　　 对于容器环境来说，不需要安装主机操作系统，直接将容器层(比如LXC或libcontainer)安装在主机操作系统(通常是Linux变种)之上。在安装完容器层之后，就可以从系统可用计算资源当中分配容器实例了，并且企业应用可以被部署在容器当中。但是，每个容器化应用都会共享相同的操作系统(单个主机操作系统)。容器可以看成一个装好了一组特定应用的虚拟机，它直接利用了宿主机的内核，抽象层比虚拟机更少，更加轻量化，启动速度极快。</p>
+<p>　　相比于虚拟机，容器拥有更高的资源使用效率，因为它并不需要为每个应用分配单独的操作系统——实例规模更小、创建和迁移速度也更快。这意味相比于虚拟机，单个操作系统能够承载更多的容器。云提供商十分热衷于容器技术，因为在相同的硬件设备当中，可以部署数量更多的容器实例。此外，容器易于迁移，但是只能被迁移到具有兼容操作系统内核的其他服务器当中，这样就会给迁移选择带来限制。<br>　　<br>　　因为容器不像虚拟机那样同样对内核或者虚拟硬件进行打包，所以每套容器都拥有自己的隔离化用户空间，从而使得多套容器能够运行在同一主机系统之上。我们可以看到全部操作系统层级的架构都可实现跨容器共享，惟一需要独立构建的就是二进制文件与库。正因为如此，容器才拥有极为出色的轻量化特性。<br>　　<br>　　对Docker稍有接触的人应该都见过下图，无需更多解释，Docker减少Guest OS这一层级，所以更轻量和更高性能。 </p>
+<p>docker架构图<br><img src="/2017/10/10/docker01-install/virtual_machine.png" alt="virtual machine diagram"></p>
+<p>虚拟机架构图<br><img src="/2017/10/10/docker01-install/docker.png" alt="docker diagram"></p>
+]]></content>
+    </entry>
+    
+    <entry>
+      <title><![CDATA[java基础（一）-编译时类型和运行时类型]]></title>
+      <url>http://hlei.io/2017/10/09/java-basic01/</url>
+      <content type="html"><![CDATA[<p>Java的引用变量有两个类型，一个是编译时类型，一个是运行时类型，编译时类型由声明该变量时使用的类型决定，运行时类型由实际赋给该变量的对象决定。如果编译时类型和运行时类型不一致，会出现所谓的多态。因为子类其实是一种特殊的父类，因此java允许把一个子类对象直接赋值给一个父类引用变量，无须任何类型转换，或者被称为向上转型，由系统自动完成。</p>
+<pre><code class="Java"><span class="class"><span class="keyword">class</span> <span class="title">Base</span>
+</span>{
+    <span class="keyword">int</span> i = <span class="number">1</span>;
+    Base() {
+        System.out.println(<span class="keyword">this</span>.i);
+        System.out.println(<span class="keyword">this</span>.getClass());
+        <span class="keyword">this</span>.print();
+    }
+
+    <span class="function"><span class="keyword">void</span> <span class="title">print</span><span class="params">()</span> </span>{
+        System.out.println(<span class="string">"Base print:"</span>+i);
+    }
+}
+
+<span class="class"><span class="keyword">class</span> <span class="title">Derived</span> <span class="keyword">extends</span> <span class="title">Base</span>
+</span>{
+    <span class="keyword">int</span> i = <span class="number">2</span>;
+    <span class="function"><span class="keyword">void</span> <span class="title">print</span><span class="params">()</span> </span>{
+        System.out.println(<span class="string">"Derived print:"</span>+i);
+    }
+}
+
+<span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test02</span> </span>{
+    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>{
+        Derived d = <span class="keyword">new</span> Derived();
+    }
+}
+</code></pre>
+<p>运行结果</p>
+<pre><code>1(Base.i)
+class com.java_basic.test01.Derived
+Derived print:0(Derived.print)
+</code></pre><p>Java这里与c++不同之处是，c++的运行时多态依赖virtual关键字，c++中若在Base构造函数中调用print方法，是调用Base的print方法。</p>
+]]></content>
+    </entry>
+    
+    <entry>
+      <title><![CDATA[atomic variable]]></title>
+      <url>http://hlei.io/2017/09/25/linux-atomic-variable/</url>
+      <content type="html"><![CDATA[<p><a href="http://www.alexonlinux.com/multithreaded-simple-data-type-access-and-atomic-variables#table_of_contents" target="_blank" rel="external">http://www.alexonlinux.com/multithreaded-simple-data-type-access-and-atomic-variables#table_of_contents</a></p>
+<p>##How atomic variables workBACK TO TOC</p>
+<p>Intel的x86和x86_64架构当访问内存时，有锁住前端总线（FSB）的指令，前端总线是处理器和RAM通信的通道，锁住FSB可以阻止其它处理器或进程在当前处理器运行，也可以阻止访问RAM。</p>
+<p>##原子变量的字节数限制<br>Intel的专家建议并不用每次访问内存都要锁住FSB，Intel处理器允许memcpy() and memcmp()允许在一个处理器上执行，但锁住大块内存的代价太大。实际使用中，当访问1, 2, 4, 8字节的整数时可以锁住FSB，gcc支持int、long、long long的原子操作。</p>
+<p>##什么情况下不能使用原子变量<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">decrement_atomic_value();</div><div class="line"><span class="keyword">if</span> (atomic_value() == <span class="number">0</span>)</div><div class="line">    fire_a_gun();</div></pre></td></tr></table></figure></p>
+<p>##gcc支持的原子操作函数<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">type __sync_fetch_and_add (type *ptr, type value);</div><div class="line">type __sync_fetch_and_sub (type *ptr, type value);</div><div class="line">type __sync_fetch_and_or (type *ptr, type value);</div><div class="line">type __sync_fetch_and_and (type *ptr, type value);</div><div class="line">type __sync_fetch_and_xor (type *ptr, type value);</div><div class="line">type __sync_fetch_and_nand (type *ptr, type value);</div><div class="line"></div><div class="line">type __sync_add_and_fetch (type *ptr, type value);</div><div class="line">type __sync_sub_and_fetch (type *ptr, type value);</div><div class="line">type __sync_or_and_fetch (type *ptr, type value);</div><div class="line">type __sync_and_and_fetch (type *ptr, type value);</div><div class="line">type __sync_xor_and_fetch (type *ptr, type value);</div><div class="line">type __sync_nand_and_fetch (type *ptr, type value);</div></pre></td></tr></table></figure></p>
+<p>使用原子操作的例子</p>
+<pre><code class="cpp"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pthread.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sched.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;linux/unistd.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/syscall.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;errno.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span>
+
+<span class="meta">#<span class="meta-keyword">define</span> INC_TO 1000000 <span class="comment">// one million...</span></span>
+
+<span class="keyword">int</span> global_int = <span class="number">0</span>;
+
+<span class="keyword">pid_t</span> gettid( <span class="keyword">void</span> )
+{
+    <span class="keyword">return</span> syscall( __NR_gettid );
+}
+
+<span class="function"><span class="keyword">void</span> *<span class="title">thread_routine</span><span class="params">( <span class="keyword">void</span> *arg )</span>
+</span>{
+    <span class="keyword">int</span> i;
+    <span class="keyword">int</span> proc_num = (<span class="keyword">int</span>)(<span class="keyword">long</span>)arg;
+    <span class="keyword">cpu_set_t</span> <span class="built_in">set</span>;
+
+    CPU_ZERO( &amp;<span class="built_in">set</span> );
+    CPU_SET( proc_num, &amp;<span class="built_in">set</span> );
+
+    <span class="keyword">if</span> (sched_setaffinity( gettid(), <span class="keyword">sizeof</span>( <span class="keyword">cpu_set_t</span> ), &amp;<span class="built_in">set</span> ))
+    {
+        perror( <span class="string">"sched_setaffinity"</span> );
+        <span class="keyword">return</span> <span class="literal">NULL</span>;
+    }
+
+    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; INC_TO; i++)
+    {
+        global_int++;
+        <span class="comment">//__sync_fetch_and_add( &amp;global_int, 1 );</span>
+    }
+
+    <span class="keyword">return</span> <span class="literal">NULL</span>;
+}
+
+<span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span>
+</span>{
+    <span class="keyword">int</span> procs = <span class="number">0</span>;
+    <span class="keyword">int</span> i;
+    <span class="keyword">pthread_t</span> *thrs;
+
+    <span class="comment">// Getting number of CPUs</span>
+    procs = (<span class="keyword">int</span>)sysconf( _SC_NPROCESSORS_ONLN );
+    <span class="keyword">if</span> (procs &lt; <span class="number">0</span>)
+    {
+        perror( <span class="string">"sysconf"</span> );
+        <span class="keyword">return</span> <span class="number">-1</span>;
+    }
+    <span class="keyword">else</span>
+    {
+        <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"cpu nums:"</span> &lt;&lt; procs &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;
+    }
+
+    thrs = (<span class="keyword">pthread_t</span>*)<span class="built_in">malloc</span>( <span class="keyword">sizeof</span>( <span class="keyword">pthread_t</span> ) * procs );
+    <span class="keyword">if</span> (thrs == <span class="literal">NULL</span>)
+    {
+        perror( <span class="string">"malloc"</span> );
+        <span class="keyword">return</span> <span class="number">-1</span>;
+    }
+
+    <span class="built_in">printf</span>( <span class="string">"Starting %d threads...\n"</span>, procs );
+
+    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; procs; i++)
+    {
+        <span class="keyword">if</span> (pthread_create( &amp;thrs[i], <span class="literal">NULL</span>, thread_routine,
+            (<span class="keyword">void</span> *)(<span class="keyword">long</span>)i ))
+        {
+            perror( <span class="string">"pthread_create"</span> );
+            procs = i;
+            <span class="keyword">break</span>;
+        }
+    }
+
+    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; procs; i++)
+        pthread_join( thrs[i], <span class="literal">NULL</span> );
+
+    <span class="built_in">free</span>( thrs );
+
+    <span class="built_in">printf</span>( <span class="string">"After doing all the math, global_int value is: %d\n"</span>,
+        global_int );
+    <span class="built_in">printf</span>( <span class="string">"Expected value is: %d\n"</span>, INC_TO * procs );
+
+    <span class="keyword">return</span> <span class="number">0</span>;
+}
+</code></pre>
+<p>平均耗时90ms</p>
+<p>同样的逻辑使用互斥锁的例子</p>
+<pre><code class="cpp"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pthread.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sched.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;linux/unistd.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/syscall.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;errno.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span>  </span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span> </span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;time.h&gt;</span></span>
+<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/time.h&gt;</span></span>
+
+<span class="meta">#<span class="meta-keyword">define</span> INC_TO 1000000 <span class="comment">// one million...</span></span>
+
+<span class="keyword">int</span> global_int = <span class="number">0</span>;
+<span class="keyword">pthread_mutex_t</span> mutex;
+
+<span class="keyword">pid_t</span> gettid( <span class="keyword">void</span> )
+{
+    <span class="keyword">return</span> syscall( __NR_gettid );
+}
+
+<span class="keyword">uint64_t</span> get_time()
+{
+    <span class="keyword">struct</span> timeval tv;
+    gettimeofday(&amp;tv, <span class="literal">NULL</span>);
+    <span class="keyword">return</span> tv.tv_sec*<span class="number">1000</span> + tv.tv_usec/<span class="number">1000</span>;
+}
+
+<span class="function"><span class="keyword">void</span> *<span class="title">thread_routine</span><span class="params">( <span class="keyword">void</span> *arg )</span>
+</span>{
+    <span class="keyword">int</span> i;
+    <span class="keyword">int</span> proc_num = (<span class="keyword">int</span>)(<span class="keyword">long</span>)arg;
+    <span class="keyword">cpu_set_t</span> <span class="built_in">set</span>;
+
+    CPU_ZERO( &amp;<span class="built_in">set</span> );
+    CPU_SET( proc_num, &amp;<span class="built_in">set</span> );
+
+    <span class="keyword">if</span> (sched_setaffinity( gettid(), <span class="keyword">sizeof</span>( <span class="keyword">cpu_set_t</span> ), &amp;<span class="built_in">set</span> ))
+    {
+        perror( <span class="string">"sched_setaffinity"</span> );
+        <span class="keyword">return</span> <span class="literal">NULL</span>;
+    }
+
+    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; INC_TO; i++)
+    {
+        pthread_mutex_lock(&amp;mutex);
+        global_int++;
+        pthread_mutex_unlock(&amp;mutex);
+    }
+
+    <span class="keyword">return</span> <span class="literal">NULL</span>;
+}
+
+<span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span>
+</span>{
+    <span class="keyword">int</span> procs = <span class="number">0</span>;
+    <span class="keyword">int</span> i;
+    <span class="keyword">pthread_t</span> *thrs;
+
+    <span class="comment">// Getting number of CPUs</span>
+    procs = (<span class="keyword">int</span>)sysconf( _SC_NPROCESSORS_ONLN );
+    <span class="keyword">if</span> (procs &lt; <span class="number">0</span>)
+    {
+        perror( <span class="string">"sysconf"</span> );
+        <span class="keyword">return</span> <span class="number">-1</span>;
+    }
+    <span class="keyword">else</span>
+    {
+        <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"cpu nums:"</span> &lt;&lt; procs &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;
+    }
+
+    thrs = (<span class="keyword">pthread_t</span>*)<span class="built_in">malloc</span>( <span class="keyword">sizeof</span>( <span class="keyword">pthread_t</span> ) * procs );
+    <span class="keyword">if</span> (thrs == <span class="literal">NULL</span>)
+    {
+        perror( <span class="string">"malloc"</span> );
+        <span class="keyword">return</span> <span class="number">-1</span>;
+    }
+
+    <span class="built_in">printf</span>( <span class="string">"Starting %d threads...\n"</span>, procs );
+    <span class="keyword">uint64_t</span> begin_ts = get_time();
+    pthread_mutex_init(&amp;mutex, <span class="literal">NULL</span>);
+
+    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; procs; i++)
+    {
+        <span class="keyword">if</span> (pthread_create( &amp;thrs[i], <span class="literal">NULL</span>, thread_routine,
+            (<span class="keyword">void</span> *)(<span class="keyword">long</span>)i ))
+        {
+            perror( <span class="string">"pthread_create"</span> );
+            procs = i;
+            <span class="keyword">break</span>;
+        }
+    }
+
+    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; procs; i++)
+        pthread_join( thrs[i], <span class="literal">NULL</span> );
+
+    pthread_mutex_destroy(&amp;mutex);
+    <span class="keyword">uint64_t</span> end_ts = get_time();
+
+    <span class="built_in">printf</span>(<span class="string">"time costs:%lld\n"</span>, (<span class="keyword">long</span> <span class="keyword">long</span> <span class="keyword">int</span>)end_ts-begin_ts);
+    <span class="built_in">free</span>( thrs );
+
+    <span class="built_in">printf</span>( <span class="string">"After doing all the math, global_int value is: %d\n"</span>,
+        global_int );
+    <span class="built_in">printf</span>( <span class="string">"Expected value is: %d\n"</span>, INC_TO * procs );
+
+    <span class="keyword">return</span> <span class="number">0</span>;
+}
+</code></pre>
+<p>平均耗时400ms,可以看出原子操作相比互斥锁有很大的性能优势.</p>
+]]></content>
+    </entry>
+    
+    <entry>
+      <title><![CDATA[linux-memory-barrier]]></title>
+      <url>http://hlei.io/2017/09/05/linux-memory-barrier/</url>
+      <content type="html"></content>
+    </entry>
+    
+    <entry>
       <title><![CDATA[java-timer]]></title>
       <url>http://hlei.io/2017/08/21/java-timer/</url>
       <content type="html"><![CDATA[<h2 id="使用Timer类实现"><a href="#使用Timer类实现" class="headerlink" title="使用Timer类实现"></a>使用Timer类实现</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TimerTest</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">getStringDate</span><span class="params">()</span> </span>&#123;</div><div class="line">        Date currentTime = <span class="keyword">new</span> Date();</div><div class="line">        SimpleDateFormat formatter = <span class="keyword">new</span> SimpleDateFormat(<span class="string">"yyyy-MM-dd HH:mm:ss"</span>);</div><div class="line">        String dateString = formatter.format(currentTime);</div><div class="line">        <span class="keyword">return</span> dateString;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">        <span class="keyword">final</span> TimerTask timerTask1 = <span class="keyword">new</span> TimerTask() &#123;</div><div class="line">            <span class="meta">@Override</span></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">try</span> &#123;</div><div class="line">                    System.out.println(<span class="string">"task2 invoked!"</span>+Thread.currentThread().getId());</div><div class="line">                    System.out.println(<span class="string">"begin: "</span>+getStringDate());</div><div class="line">                    <span class="comment">//Thread.sleep(5000L);</span></div><div class="line">                &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">                    e.printStackTrace();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;;</div><div class="line"></div><div class="line">        <span class="keyword">final</span> TimerTask timerTask2 = <span class="keyword">new</span> TimerTask() &#123;</div><div class="line">            <span class="meta">@Override</span></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">try</span> &#123;</div><div class="line">                    System.out.println(<span class="string">"task2 invoked!"</span>+Thread.currentThread().getId());</div><div class="line">                    System.out.println(<span class="string">"begin: "</span>+getStringDate());</div><div class="line">                    <span class="comment">//Thread.sleep(5000L);</span></div><div class="line">                &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">                    e.printStackTrace();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;;</div><div class="line"></div><div class="line">        Timer timer = <span class="keyword">new</span> Timer();<span class="comment">// 实例化Timer</span></div><div class="line">        timer.schedule(timerTask1, <span class="number">8000</span>);</div><div class="line">        timer.schedule(timerTask2, <span class="number">10000</span>);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"></div></pre></td></tr></table></figure>]]></content>
+<p>Timer<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"></div></pre></td></tr></table></figure></p>
+]]></content>
     </entry>
     
     <entry>
@@ -16,17 +356,6 @@
       <content type="html"><![CDATA[<p>最近在使用pb时遇到了这么一个问题，还是废了不少时间去定位，出现coredump的场景类似下面的代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">Student stu;</div><div class="line">Teacher teacher;</div><div class="line"></div><div class="line">stu.CopyFrom(teacher);</div></pre></td></tr></table></figure></p>
 <p>奇怪的是这样居然可以编译通过，查了pb的源码发现类都是共同的基类Message，而有两个overload版本<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">void CopyFrom(const ::google::protobuf::Message&amp; from);</div><div class="line">void CopyFrom(const Student&amp; from);</div></pre></td></tr></table></figure></p>
 <p>终于恍然大悟了！！</p>
-]]></content>
-    </entry>
-    
-    <entry>
-      <title><![CDATA[java-cmd01-jps]]></title>
-      <url>http://hlei.io/2017/05/18/java-cmd01/</url>
-      <content type="html"><![CDATA[<h2 id="位置"><a href="#位置" class="headerlink" title="位置"></a>位置</h2><p>我们知道，很多Java命令都在jdk的JAVA_HOME/bin目录下面，jps也不例外，他就在bin目录下，所以，他是java自带的一个命令。</p>
-<h2 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h2><p>jps(Java Virtual Machine Process Status Tool)是JDK1.5提供的一个显示当前所有java进程pid的命令，简单实用，非常适合在linux/unix平台上简单察看当前java进程的一些简单情况。</p>
-<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>jdk中的jps命令可以显示当前运行的java进程以及相关参数，它的实现机制如下：<br>java程序在启动以后，会在java.io.tmpdir指定的目录下，就是临时文件夹里，生成一个类似于hsperfdata<em>User的文件夹，这个文件夹里（在Linux中为/tmp/hsperfdata</em>{userName}/），有几个文件，名字就是java进程的pid，因此列出当前运行的java进程，只是把这个目录里的文件名列一下而已。至于系统的参数什么，就可以解析这几个文件获得。</p>
-<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>-q 只显示pid，不显示class名称,jar文件名和传递给main 方法的参数<br>-m 输出传递给main 方法的参数，在嵌入式jvm上可能是null<br>-l 输出应用程序main class的完整package名 或者 应用程序的jar文件完整路径名<br>-v 输出传递给JVM的参数</p>
-<p>PS:jps命令有个地方很不好，似乎只能显示当前用户的java进程，要显示其他用户的还是只能用unix/linux的ps命令</p>
 ]]></content>
     </entry>
     
@@ -96,6 +425,38 @@
 </tr>
 </tbody>
 </table>
+<p>1、jstat –class <pid>: 显示加载class的数量，及所占空间等信息。<br>Loaded 装载的类的数量<br>Bytes 装载类所占用的字节数<br>Unloaded 卸载类的数量<br>Bytes 卸载类的字节数<br>Time 装载和卸载类所花费的时间</pid></p>
+<p>2、jstat -compiler <pid>: 显示VM实时编译的数量等信息。</pid></p>
+<p>Compiled 编译任务执行数量 Failed 编译任务执行失败数量 Invalid 编译任务执行失效数量 Time 编译任务消耗时间 FailedType 最后一个编译失败任务的类型 FailedMethod 最后一个编译失败任务所在的类及方法</p>
+<p>3、jstat -gc <pid>: 可以显示gc的信息，查看gc的次数，及时间。</pid></p>
+<p>S0C 年轻代中第一个survivor（幸存区）的容量 (字节) S1C 年轻代中第二个survivor（幸存区）的容量 (字节) S0U 年轻代中第一个survivor（幸存区）目前已使用空间 (字节) S1U 年轻代中第二个survivor（幸存区）目前已使用空间 (字节) EC 年轻代中Eden（伊甸园）的容量 (字节) EU 年轻代中Eden（伊甸园）目前已使用空间 (字节) OC Old代的容量 (字节) OU Old代目前已使用空间 (字节) PC Perm(持久代)的容量 (字节) PU Perm(持久代)目前已使用空间 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 YGCT 从应用程序启动到采样时年轻代中gc所用时间(s) FGC 从应用程序启动到采样时old代(全gc)gc次数 FGCT 从应用程序启动到采样时old代(全gc)gc所用时间(s) GCT 从应用程序启动到采样时gc用的总时间(s)</p>
+<p>4、jstat -gccapacity <pid>:可以显示，VM内存中三代（young,old,perm）对象的使用和占用大小</pid></p>
+<p>NGCMN 年轻代(young)中初始化(最小)的大小(字节) NGCMX 年轻代(young)的最大容量 (字节) NGC 年轻代(young)中当前的容量 (字节) S0C 年轻代中第一个survivor（幸存区）的容量 (字节) S1C 年轻代中第二个survivor（幸存区）的容量 (字节) EC 年轻代中Eden（伊甸园）的容量 (字节) OGCMN old代中初始化(最小)的大小 (字节) OGCMX old代的最大容量(字节) OGC old代当前新生成的容量 (字节) OC Old代的容量 (字节) PGCMN perm代中初始化(最小)的大小 (字节) PGCMX perm代的最大容量 (字节)<br>PGC perm代当前新生成的容量 (字节) PC Perm(持久代)的容量 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 FGC 从应用程序启动到采样时old代(全gc)gc次数</p>
+<p>5、jstat -gcutil <pid>:统计gc信息</pid></p>
+<p>S0 年轻代中第一个survivor（幸存区）已使用的占当前容量百分比 S1 年轻代中第二个survivor（幸存区）已使用的占当前容量百分比 E 年轻代中Eden（伊甸园）已使用的占当前容量百分比 O old代已使用的占当前容量百分比 P perm代已使用的占当前容量百分比 YGC 从应用程序启动到采样时年轻代中gc次数 YGCT 从应用程序启动到采样时年轻代中gc所用时间(s) FGC 从应用程序启动到采样时old代(全gc)gc次数 FGCT 从应用程序启动到采样时old代(全gc)gc所用时间(s) GCT 从应用程序启动到采样时gc用的总时间(s)</p>
+<p>6、jstat -gcnew <pid>:年轻代对象的信息。</pid></p>
+<p>S0C 年轻代中第一个survivor（幸存区）的容量 (字节) S1C 年轻代中第二个survivor（幸存区）的容量 (字节) S0U 年轻代中第一个survivor（幸存区）目前已使用空间 (字节) S1U 年轻代中第二个survivor（幸存区）目前已使用空间 (字节) TT 持有次数限制 MTT 最大持有次数限制 EC 年轻代中Eden（伊甸园）的容量 (字节) EU 年轻代中Eden（伊甸园）目前已使用空间 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 YGCT 从应用程序启动到采样时年轻代中gc所用时间(s)</p>
+<p>7、jstat -gcnewcapacity<pid>: 年轻代对象的信息及其占用量。</pid></p>
+<p>NGCMN 年轻代(young)中初始化(最小)的大小(字节) NGCMX 年轻代(young)的最大容量 (字节) NGC 年轻代(young)中当前的容量 (字节) S0CMX 年轻代中第一个survivor（幸存区）的最大容量 (字节) S0C 年轻代中第一个survivor（幸存区）的容量 (字节) S1CMX 年轻代中第二个survivor（幸存区）的最大容量 (字节) S1C 年轻代中第二个survivor（幸存区）的容量 (字节) ECMX 年轻代中Eden（伊甸园）的最大容量 (字节) EC 年轻代中Eden（伊甸园）的容量 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 FGC 从应用程序启动到采样时old代(全gc)gc次数</p>
+<p>8、jstat -gcold <pid>：old代对象的信息。</pid></p>
+<p>PC Perm(持久代)的容量 (字节) PU Perm(持久代)目前已使用空间 (字节) OC Old代的容量 (字节) OU Old代目前已使用空间 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 FGC 从应用程序启动到采样时old代(全gc)gc次数 FGCT 从应用程序启动到采样时old代(全gc)gc所用时间(s) GCT 从应用程序启动到采样时gc用的总时间(s)</p>
+<p>9、stat -gcoldcapacity <pid>: old代对象的信息及其占用量。</pid></p>
+<p>OGCMN old代中初始化(最小)的大小 (字节) OGCMX old代的最大容量(字节) OGC old代当前新生成的容量 (字节) OC Old代的容量 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 FGC 从应用程序启动到采样时old代(全gc)gc次数 FGCT 从应用程序启动到采样时old代(全gc)gc所用时间(s) GCT 从应用程序启动到采样时gc用的总时间(s)</p>
+<p>10、jstat -gcpermcapacity<pid>: perm对象的信息及其占用量。</pid></p>
+<p>PGCMN perm代中初始化(最小)的大小 (字节) PGCMX perm代的最大容量 (字节)<br>PGC perm代当前新生成的容量 (字节) PC Perm(持久代)的容量 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 FGC 从应用程序启动到采样时old代(全gc)gc次数 FGCT 从应用程序启动到采样时old代(全gc)gc所用时间(s) GCT 从应用程序启动到采样时gc用的总时间(s)</p>
+<p>11、jstat -printcompilation <pid>：当前VM执行的信息。</pid></p>
+<p>Compiled 编译任务的数目 Size 方法生成的字节码的大小 Type 编译类型 Method 类名和方法名用来标识编译的方法。类名使用/做为一个命名空间分隔符。方法名是给定类中的方法。上述格式是由-XX:+PrintComplation选项进行设置的</p>
+]]></content>
+    </entry>
+    
+    <entry>
+      <title><![CDATA[java-cmd01-jps]]></title>
+      <url>http://hlei.io/2017/05/18/java-cmd01/</url>
+      <content type="html"><![CDATA[<h2 id="位置"><a href="#位置" class="headerlink" title="位置"></a>位置</h2><p>我们知道，很多Java命令都在jdk的JAVA_HOME/bin目录下面，jps也不例外，他就在bin目录下，所以，他是java自带的一个命令。</p>
+<h2 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h2><p>jps(Java Virtual Machine Process Status Tool)是JDK1.5提供的一个显示当前所有java进程pid的命令，简单实用，非常适合在linux/unix平台上简单察看当前java进程的一些简单情况。</p>
+<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>jdk中的jps命令可以显示当前运行的java进程以及相关参数，它的实现机制如下：<br>java程序在启动以后，会在java.io.tmpdir指定的目录下，就是临时文件夹里，生成一个类似于hsperfdata<em>User的文件夹，这个文件夹里（在Linux中为/tmp/hsperfdata</em>{userName}/），有几个文件，名字就是java进程的pid，因此列出当前运行的java进程，只是把这个目录里的文件名列一下而已。至于系统的参数什么，就可以解析这几个文件获得。</p>
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>-q 只显示pid，不显示class名称,jar文件名和传递给main 方法的参数<br>-m 输出传递给main 方法的参数，在嵌入式jvm上可能是null<br>-l 输出应用程序main class的完整package名 或者 应用程序的jar文件完整路径名<br>-v 输出传递给JVM的参数</p>
+<p>PS:jps命令有个地方很不好，似乎只能显示当前用户的java进程，要显示其他用户的还是只能用unix/linux的ps命令</p>
 ]]></content>
     </entry>
     
@@ -144,7 +505,26 @@
     <entry>
       <title><![CDATA[elasticsearch01]]></title>
       <url>http://hlei.io/2017/04/20/elasticsearch01/</url>
-      <content type="html"><![CDATA[<h1 id="difference"><a href="#difference" class="headerlink" title="difference"></a>difference</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Relational DB -&gt; Databases -&gt; Tables -&gt; Rows -&gt; Columns</div><div class="line">Elasticsearch -&gt; Indices   -&gt; Types  -&gt; Documents -&gt; Fields</div></pre></td></tr></table></figure>]]></content>
+      <content type="html"><![CDATA[<p>##<br>Elasticsearch是一个基于Apache Lucene(TM)的开源搜索引擎。无论在开源还是专有领域，Lucene可以被认为是迄今为止最先进、性能最好的、功能最全的搜索引擎库。<br>但是，Lucene只是一个库。想要使用它，你必须使用Java来作为开发语言并将其直接集成到你的应用中，更糟糕的是，Lucene非常复杂，你需要深入了解检索的相关知识来理解它是如何工作的。<br>Elasticsearch也使用Java开发并使用Lucene作为其核心来实现所有索引和搜索的功能，但是它的目的是通过简单的RESTful API来隐藏Lucene的复杂性，从而让全文搜索变得简单。<br>不过，Elasticsearch不仅仅是Lucene和全文搜索，我们还能这样去描述它：</p>
+<ul>
+<li>分布式的实时文件存储，每个字段都被索引并可被搜索</li>
+<li>分布式的实时分析搜索引擎</li>
+<li>可以扩展到上百台服务器，处理PB级结构化或非结构化数据<br>而且，所有的这些功能被集成到一个服务里面，你的应用可以通过简单的RESTful API、各种语言的客户端甚至命令行与之交互。</li>
+</ul>
+<p>可以用传统的关系数据库来作对比：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Relational DB -&gt; Databases -&gt; Tables -&gt; Rows -&gt; Columns</div><div class="line">Elasticsearch -&gt; Indices   -&gt; Types  -&gt; Documents -&gt; Fields</div></pre></td></tr></table></figure></p>
+<h2 id="如何安装"><a href="#如何安装" class="headerlink" title="如何安装"></a>如何安装</h2><p>1.安装jdk，我自己机器上的是jdk7<br>2.下载安装包<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">wget https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.3.4/elasticsearch-2.3.4.tar.gz</div></pre></td></tr></table></figure></p>
+<p>3.解压<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">tar -zxvf elasticsearch-2.3.4.tar.gz</div></pre></td></tr></table></figure></p>
+<p>4.启动服务<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./bin/elasticsearch</div></pre></td></tr></table></figure></p>
+<p>5.测试是否成功<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">curl &apos;http://localhost:9200/?pretty&apos;</div></pre></td></tr></table></figure></p>
+<p>如果输出下面的结果就大功告成了<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">  &quot;count&quot; : 3,</div><div class="line">  &quot;_shards&quot; : &#123;</div><div class="line">    &quot;total&quot; : 5,</div><div class="line">    &quot;successful&quot; : 5,</div><div class="line">    &quot;failed&quot; : 0</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h2 id="如何使用"><a href="#如何使用" class="headerlink" title="如何使用"></a>如何使用</h2><p>###让我们建立一个员工目录</p>
+<p>假设我们刚好在Megacorp工作，这时人力资源部门出于某种目的需要让我们创建一个员工目录，这个目录用于促进人文关怀和用于实时协同工作</p>
+<p>###索引员工文档<br>所以为了创建员工目录，我们将进行如下操作：<br><em>为每个员工的文档(document)建立索引，每个文档包含了相应员工的所有信息。
+</em>每个文档的类型为employee。<br><em>employee类型归属于索引megacorp。
+</em>megacorp索引存储在Elasticsearch集群中。</p>
+<p>我们看到path:/megacorp/employee/1包含三部分信息：<br>| 名字 | 说明 |<br>| ————- | ————- |<br>| megacorp | 索引名 |<br>| employee | 类型名 |<br>| 1 | 这个员工的ID |</p>
+<p>使用RESTful API，通过9200端口的与Elasticsearch进行通信<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line">curl -XPUT 'localhost:9200/megacorp/employee/1' -d '</div><div class="line">&#123;</div><div class="line">    "first_name" : "John",</div><div class="line">    "last_name" :  "Smith",</div><div class="line">    "age" :        25,</div><div class="line">    "about" :      "I love to go rock climbing",</div><div class="line">    "interests": [ "sports", "music" ]</div><div class="line">&#125;'</div><div class="line"></div><div class="line">curl -XPUT 'localhost:9200/megacorp/employee/2' -d '</div><div class="line">&#123;</div><div class="line">    "first_name" :  "Jane",</div><div class="line">    "last_name" :   "Smith",</div><div class="line">    "age" :         32,</div><div class="line">    "about" :       "I like to collect rock albums",</div><div class="line">    "interests":  [ "music" ]</div><div class="line">&#125;'</div><div class="line"></div><div class="line">curl -XPUT 'localhost:9200/megacorp/employee/3' -d '</div><div class="line">&#123;</div><div class="line">    "first_name" :  "Douglas",</div><div class="line">    "last_name" :   "Fir",</div><div class="line">    "age" :         35,</div><div class="line">    "about":        "I like to build cabinets",</div><div class="line">    "interests":  [ "forestry" ]</div><div class="line">&#125;'</div></pre></td></tr></table></figure></p>
+]]></content>
     </entry>
     
     <entry>
@@ -198,11 +578,11 @@
     <entry>
       <title><![CDATA[network-io-model]]></title>
       <url>http://hlei.io/2017/03/22/network-io-model/</url>
-      <content type="html"><![CDATA[<h2 id="阻塞io模型"><a href="#阻塞io模型" class="headerlink" title="阻塞io模型"></a>阻塞io模型</h2><p><img src="/2017/03/08/network/阻塞io模型.png" alt="阻塞io模型"></p>
-<h2 id="非阻塞io模型"><a href="#非阻塞io模型" class="headerlink" title="非阻塞io模型"></a>非阻塞io模型</h2><p><img src="/2017/03/08/network/非阻塞io模型.png" alt="阻塞io模型"></p>
-<h2 id="io复用模型"><a href="#io复用模型" class="headerlink" title="io复用模型"></a>io复用模型</h2><p><img src="/2017/03/08/network/io复用模型.png" alt="阻塞io模型"></p>
-<h2 id="信号驱动io模型"><a href="#信号驱动io模型" class="headerlink" title="信号驱动io模型"></a>信号驱动io模型</h2><p><img src="/2017/03/08/network/信号驱动io模型.png" alt="阻塞io模型"></p>
-<h2 id="异步io模型"><a href="#异步io模型" class="headerlink" title="异步io模型"></a>异步io模型</h2><p><img src="/2017/03/08/network/异步io.png" alt="阻塞io模型"></p>
+      <content type="html"><![CDATA[<h2 id="阻塞io模型"><a href="#阻塞io模型" class="headerlink" title="阻塞io模型"></a>阻塞io模型</h2><p><img src="/2017/03/22/network-io-model/阻塞io模型.png" alt="阻塞io模型"></p>
+<h2 id="非阻塞io模型"><a href="#非阻塞io模型" class="headerlink" title="非阻塞io模型"></a>非阻塞io模型</h2><p><img src="/2017/03/22/network-io-model/非阻塞io模型.png" alt="非阻塞io模型"></p>
+<h2 id="io复用模型"><a href="#io复用模型" class="headerlink" title="io复用模型"></a>io复用模型</h2><p><img src="/2017/03/22/network-io-model/io复用模型.png" alt="io复用模型"></p>
+<h2 id="信号驱动io模型"><a href="#信号驱动io模型" class="headerlink" title="信号驱动io模型"></a>信号驱动io模型</h2><p><img src="/2017/03/22/network-io-model/信号驱动io模型.png" alt="信号驱动io模型"></p>
+<h2 id="异步io模型"><a href="#异步io模型" class="headerlink" title="异步io模型"></a>异步io模型</h2><p><img src="/2017/03/22/network-io-model/异步io.png" alt="异步io模型"></p>
 <p>多啰嗦几句：<br>a. <strong>阻塞和非阻塞</strong>描述的对象是函数，指调用这个函数后是否会block进程/线程。<br>b. <strong>同步/异步</strong>描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。</p>
 ]]></content>
     </entry>
@@ -210,9 +590,9 @@
     <entry>
       <title><![CDATA[network_send_recv]]></title>
       <url>http://hlei.io/2017/03/19/network-send-recv/</url>
-      <content type="html"><![CDATA[<h2 id="tcp发送"><a href="#tcp发送" class="headerlink" title="tcp发送"></a>tcp发送</h2><p><img src="/2017/03/08/network/tcp_send.png" alt="tcp发送过程"></p>
+      <content type="html"><![CDATA[<h2 id="tcp发送"><a href="#tcp发送" class="headerlink" title="tcp发送"></a>tcp发送</h2><p><img src="/2017/03/19/network-send-recv/tcp_send.png" alt="tcp发送过程"></p>
 <p>从写一个TCP套接字的write调用成功返回仅表示可以使用原来的应用进程缓冲区，并不表明对端的TCP或应用进程已接受到数据</p>
-<h2 id="udp发送"><a href="#udp发送" class="headerlink" title="udp发送"></a>udp发送</h2><p><img src="/2017/03/08/network/udp_send.png" alt="udp发送过程"></p>
+<h2 id="udp发送"><a href="#udp发送" class="headerlink" title="udp发送"></a>udp发送</h2><p><img src="/2017/03/19/network-send-recv/udp_send.png" alt="udp发送过程"></p>
 <p>udp是不可靠的，不会保存应用进程数据的一个副本，因此没有真正的发送缓冲区（数据被发送后，这个副本就被数据链路层丢弃）。</p>
 <p>udp的write调用成功返回表示所写的数据报或其所有片段已加入数据链路层的输出队列（如果空间不够，应用进程也不会知道）。</p>
 ]]></content>
@@ -221,8 +601,7 @@
     <entry>
       <title><![CDATA[network]]></title>
       <url>http://hlei.io/2017/03/08/network/</url>
-      <content type="html"><![CDATA[<p>tcp<br>使用分隔符<br>通过包头记录包的长度</p>
-<h2 id="tcp状态机"><a href="#tcp状态机" class="headerlink" title="tcp状态机"></a>tcp状态机</h2><p><img src="/2017/03/08/network/tcp_state_machine.png" alt="tcp状态机"></p>
+      <content type="html"><![CDATA[<h2 id="tcp状态机"><a href="#tcp状态机" class="headerlink" title="tcp状态机"></a>tcp状态机</h2><p><img src="/2017/03/08/network/tcp_state_machine.png" alt="tcp状态机"></p>
 <h2 id="建立连接过程"><a href="#建立连接过程" class="headerlink" title="建立连接过程"></a>建立连接过程</h2><p>流程图<br><img src="/2017/03/08/network/connect.png" alt="三次握手流程图"></p>
 <p>tcpdump抓包(listen port 1234)<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo tcpdump -i lo tcp port 1234 and host 127.0.0.1</div></pre></td></tr></table></figure></p>
 <p>客户端代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">if(connect(sockfd,(struct sockaddr *)&amp;server,sizeof(server))==-1)&#123;</div><div class="line">       printf(&quot;connect()error\n&quot;);</div><div class="line">       exit(1);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
@@ -256,10 +635,10 @@
 <p>Linux提供了内存映射函数mmap, 它把文件内容映射到一段内存上(准确说是虚拟内存上),通过对这段内存的读取和修改, 实现对文件的读取和修改,mmap()系统调用使得进程之间可以通过映射一个普通的文件实现共享内存。普通文件映射到进程地址空间后，进程可以向访问内存的方式对文件进行访问，不需要其他系统调用(read,write)去操作。</p>
 <h2 id="共享内存-System-V"><a href="#共享内存-System-V" class="headerlink" title="共享内存-System V"></a>共享内存-System V</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/ipc.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/shm.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cstdio&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cstdlib&gt;</span></span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> ARRAY_SIZE   40000</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> MALLOC_SIZE  100000</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> SHM_SIZE  100000</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> SHM_MODE  (SHM_R | SHM_W)</span></div><div class="line"></div><div class="line"><span class="keyword">char</span> <span class="built_in">array</span>[ARRAY_SIZE];</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> shmid;</div><div class="line">	<span class="keyword">char</span> *ptr, *shmptr;</div><div class="line"></div><div class="line">	<span class="built_in">printf</span>(<span class="string">"array[] from %x to %x \n"</span>, &amp;<span class="built_in">array</span>[<span class="number">0</span>], &amp;<span class="built_in">array</span>[ARRAY_SIZE]);</div><div class="line">	<span class="built_in">printf</span>(<span class="string">"stack around %x \n"</span>, &amp;shmid);</div><div class="line"></div><div class="line">	<span class="keyword">if</span> (<span class="literal">NULL</span> == (ptr = (<span class="keyword">char</span>*)<span class="built_in">malloc</span>(MALLOC_SIZE)))</div><div class="line">	&#123;</div><div class="line">		<span class="built_in">printf</span>(<span class="string">"malloc error"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">-1</span>);</div><div class="line">	&#125;</div><div class="line">	<span class="built_in">printf</span>(<span class="string">"malloced from %x to %x \n"</span>, ptr, ptr+MALLOC_SIZE);</div><div class="line"></div><div class="line">	<span class="keyword">if</span> ((shmid = shmget(IPC_PRIVATE, SHM_SIZE, SHM_MODE)) &lt;<span class="number">0</span>)</div><div class="line">	&#123;</div><div class="line">		<span class="built_in">printf</span>(<span class="string">"shmget error"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">-1</span>);</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">if</span> ( (shmptr = (<span class="keyword">char</span>*)shmat(shmid, <span class="literal">NULL</span>, <span class="number">0</span>)) == (<span class="keyword">void</span>*)<span class="number">-1</span> )</div><div class="line">	&#123;</div><div class="line">		<span class="built_in">printf</span>(<span class="string">"shmat error"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">-1</span>);</div><div class="line">	&#125;</div><div class="line">	<span class="built_in">printf</span>(<span class="string">"shared memory attached from %x to %x \n"</span>,</div><div class="line">			shmptr, shmptr+SHM_SIZE);</div><div class="line"></div><div class="line">	<span class="keyword">if</span> (shmctl(shmid, IPC_RMID, <span class="number">0</span>) &lt;<span class="number">0</span>)</div><div class="line">	&#123;</div><div class="line">		<span class="built_in">printf</span>(<span class="string">"shmctl error"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">-1</span>);</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>内存布局<br><img src="/2017/03/23/linux-ipc/share_mem01.png" alt="程序内存布局"></p>
-<h2 id="mmap"><a href="#mmap" class="headerlink" title="mmap"></a>mmap</h2><p>####1. /dev/zero####<br>设备/dev/zero在读时，是0字节的无限资源。此设备也接收写向它的任何数据，但忽略此<br>数据。我们对此设备作为IPC的兴趣在于，当对其进行存储映射时，它具有一些特殊性质：<br>• 创建一个未名存储区，其长度是mmap的第二个参数，将其取整为系统上的最近页长。<br>• 存储区都初始化为 0。<br>• 如果多个进程的共同祖先进程对mmap指定了MAP_SHARED标志，则这些进程可共享此存储区。</p>
+<h2 id="mmap"><a href="#mmap" class="headerlink" title="mmap"></a>mmap</h2><p>####a. /dev/zero####<br>设备/dev/zero在读时，是0字节的无限资源。此设备也接收写向它的任何数据，但忽略此<br>数据。我们对此设备作为IPC的兴趣在于，当对其进行存储映射时，它具有一些特殊性质：<br>• 创建一个未名存储区，其长度是mmap的第二个参数，将其取整为系统上的最近页长。<br>• 存储区都初始化为 0。<br>• 如果多个进程的共同祖先进程对mmap指定了MAP_SHARED标志，则这些进程可共享此存储区。</p>
 <p>使用/dev/zero的优点是：在调用mmap创建映射区之前，无需存在一个实际文件。映射/dev/zero自动创建一个指定长度的映射区。<br>这种技术的缺点是：它只能由相关进程使用。如果在无关进程之间需要使用共享存储区，则必须使用shmXXX函数。</p>
 <p>example<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;fcntl.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/types.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/stat.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/mman.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;string.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></div><div class="line"></div><div class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</div><div class="line"></div><div class="line"><span class="keyword">struct</span> STU</div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> age;</div><div class="line">	<span class="keyword">char</span> name[<span class="number">20</span>];</div><div class="line">	<span class="keyword">char</span> sex;</div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="keyword">const</span> <span class="keyword">int</span> LOOP_TIMES = <span class="number">10</span>;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">update</span><span class="params">(<span class="keyword">uint64_t</span>* p)</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">return</span> (*p)++;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc,<span class="keyword">char</span> *argv[])</span> <span class="comment">//这个进程用于创建映射区进行写。</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> fd;</div><div class="line">	<span class="keyword">struct</span> STU *p = <span class="literal">NULL</span>;</div><div class="line">	<span class="keyword">pid_t</span> pid;</div><div class="line">	<span class="keyword">uint64_t</span>* incre = <span class="literal">NULL</span>;</div><div class="line"></div><div class="line">	fd = open(<span class="string">"/dev/zero"</span>, O_RDWR, <span class="number">0644</span>);</div><div class="line">	<span class="keyword">if</span>(fd &lt; <span class="number">0</span>)</div><div class="line">	&#123;</div><div class="line">		perror(<span class="string">"open"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">2</span>);</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	incre = (<span class="keyword">uint64_t</span>*)mmap(<span class="literal">NULL</span>, </div><div class="line">							  <span class="keyword">sizeof</span>(<span class="keyword">uint64_t</span>),</div><div class="line">							  PROT_READ|PROT_WRITE,</div><div class="line">							  MAP_SHARED,</div><div class="line">							  fd,<span class="number">0</span></div><div class="line">							  );</div><div class="line">	<span class="keyword">if</span>(incre == MAP_FAILED)</div><div class="line">	&#123;</div><div class="line">		perror(<span class="string">"mmap"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">3</span>);</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	close(fd); <span class="comment">//关闭不用的文件描述符</span></div><div class="line"></div><div class="line">	pid = fork();</div><div class="line">	<span class="keyword">if</span> (pid &lt;  <span class="number">0</span>)</div><div class="line">	&#123;</div><div class="line">		perror(<span class="string">"fork"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">1</span>);</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">else</span> <span class="keyword">if</span> (pid &gt; <span class="number">0</span>)</div><div class="line">	&#123;</div><div class="line">		<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LOOP_TIMES; ++i)</div><div class="line">		&#123;</div><div class="line">			<span class="built_in">cout</span> &lt;&lt; <span class="string">"parent&gt;&gt;"</span></div><div class="line">				 &lt;&lt; <span class="string">" i="</span> &lt;&lt; i</div><div class="line">				 &lt;&lt; <span class="string">" ts="</span> &lt;&lt; time(<span class="literal">NULL</span>) </div><div class="line">				 &lt;&lt; <span class="string">" pid="</span> &lt;&lt; getpid() </div><div class="line">				 &lt;&lt; <span class="string">" incre="</span> &lt;&lt; update(incre)</div><div class="line">				 &lt;&lt; <span class="built_in">endl</span>;</div><div class="line">			<span class="comment">//sleep(1);</span></div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">else</span></div><div class="line">	&#123;</div><div class="line">		<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LOOP_TIMES; ++i)</div><div class="line">		&#123;</div><div class="line">			<span class="built_in">cout</span> &lt;&lt; <span class="string">"child&gt;&gt;"</span></div><div class="line">				 &lt;&lt; <span class="string">" i="</span> &lt;&lt; i</div><div class="line">				 &lt;&lt; <span class="string">" ts="</span> &lt;&lt; time(<span class="literal">NULL</span>) </div><div class="line">				 &lt;&lt; <span class="string">" pid="</span> &lt;&lt; getpid() </div><div class="line">				 &lt;&lt; <span class="string">" incre="</span> &lt;&lt; update(incre)</div><div class="line">				 &lt;&lt;<span class="built_in">endl</span>;</div><div class="line">			<span class="comment">//sleep(1);</span></div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>####2.匿名存储映射<br>4.3+BSD提供了一种类似于/dev/zero的施设，称为匿名存储映射。为了使用这种功能，在调用mmap时指定MAP_ A NON标志，并将描述符指定为－1。</p>
+<p>####b.匿名存储映射<br>4.3+BSD提供了一种类似于/dev/zero的施设，称为匿名存储映射。为了使用这种功能，在调用mmap时指定MAP_ A NON标志，并将描述符指定为－1。</p>
 <p>example<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdlib.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;fcntl.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/types.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/stat.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/mman.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;string.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></div><div class="line"></div><div class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</div><div class="line"></div><div class="line"><span class="keyword">struct</span> STU</div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> age;</div><div class="line">	<span class="keyword">char</span> name[<span class="number">20</span>];</div><div class="line">	<span class="keyword">char</span> sex;</div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="keyword">const</span> <span class="keyword">int</span> LOOP_TIMES = <span class="number">10</span>;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">update</span><span class="params">(<span class="keyword">uint64_t</span>* p)</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">return</span> (*p)++;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc,<span class="keyword">char</span> *argv[])</span> <span class="comment">//这个进程用于创建映射区进行写。</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">struct</span> STU *p = <span class="literal">NULL</span>;</div><div class="line">	<span class="keyword">pid_t</span> pid;</div><div class="line">	<span class="keyword">uint64_t</span>* incre = <span class="literal">NULL</span>;</div><div class="line">	</div><div class="line">	incre = (<span class="keyword">uint64_t</span>*)mmap(<span class="literal">NULL</span>, </div><div class="line">							  <span class="keyword">sizeof</span>(<span class="keyword">uint64_t</span>),</div><div class="line">							  PROT_READ|PROT_WRITE,</div><div class="line">							  MAP_ANON|MAP_SHARED,</div><div class="line">							  <span class="number">-1</span>,<span class="number">0</span></div><div class="line">							  );</div><div class="line">	<span class="keyword">if</span>(incre == MAP_FAILED)</div><div class="line">	&#123;</div><div class="line">		perror(<span class="string">"mmap"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">3</span>);</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	pid = fork();</div><div class="line">	<span class="keyword">if</span> (pid &lt;  <span class="number">0</span>)</div><div class="line">	&#123;</div><div class="line">		perror(<span class="string">"fork"</span>);</div><div class="line">		<span class="built_in">exit</span>(<span class="number">1</span>);</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">else</span> <span class="keyword">if</span> (pid &gt; <span class="number">0</span>)</div><div class="line">	&#123;</div><div class="line">		<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LOOP_TIMES; ++i)</div><div class="line">		&#123;</div><div class="line">			<span class="built_in">cout</span> &lt;&lt; <span class="string">"parent&gt;&gt;"</span></div><div class="line">				 &lt;&lt; <span class="string">" i="</span> &lt;&lt; i</div><div class="line">				 &lt;&lt; <span class="string">" ts="</span> &lt;&lt; time(<span class="literal">NULL</span>) </div><div class="line">				 &lt;&lt; <span class="string">" pid="</span> &lt;&lt; getpid() </div><div class="line">				 &lt;&lt; <span class="string">" incre="</span> &lt;&lt; update(incre)</div><div class="line">				 &lt;&lt; <span class="built_in">endl</span>;</div><div class="line">			<span class="comment">//sleep(1);</span></div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">else</span></div><div class="line">	&#123;</div><div class="line">		<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; LOOP_TIMES; ++i)</div><div class="line">		&#123;</div><div class="line">			<span class="built_in">cout</span> &lt;&lt; <span class="string">"child&gt;&gt;"</span></div><div class="line">				 &lt;&lt; <span class="string">" i="</span> &lt;&lt; i</div><div class="line">				 &lt;&lt; <span class="string">" ts="</span> &lt;&lt; time(<span class="literal">NULL</span>) </div><div class="line">				 &lt;&lt; <span class="string">" pid="</span> &lt;&lt; getpid() </div><div class="line">				 &lt;&lt; <span class="string">" incre="</span> &lt;&lt; update(incre)</div><div class="line">				 &lt;&lt;<span class="built_in">endl</span>;</div><div class="line">			<span class="comment">//sleep(1);</span></div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 ]]></content>
     </entry>

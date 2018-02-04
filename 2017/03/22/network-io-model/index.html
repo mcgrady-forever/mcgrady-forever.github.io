@@ -103,12 +103,12 @@ io复用模型
 信号驱动io模型
 异步io模型
 多啰嗦几句：a. 阻塞和非阻塞描述的对象是函数，指调用这个函数后是否会block进程/线程。b. 同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。">
-<meta property="og:image" content="http://hlei.io/2017/03/08/network/阻塞io模型.png">
-<meta property="og:image" content="http://hlei.io/2017/03/08/network/非阻塞io模型.png">
-<meta property="og:image" content="http://hlei.io/2017/03/08/network/io复用模型.png">
-<meta property="og:image" content="http://hlei.io/2017/03/08/network/信号驱动io模型.png">
-<meta property="og:image" content="http://hlei.io/2017/03/08/network/异步io.png">
-<meta property="og:updated_time" content="2017-03-28T02:42:10.128Z">
+<meta property="og:image" content="http://hlei.io/2017/03/22/network-io-model/阻塞io模型.png">
+<meta property="og:image" content="http://hlei.io/2017/03/22/network-io-model/非阻塞io模型.png">
+<meta property="og:image" content="http://hlei.io/2017/03/22/network-io-model/io复用模型.png">
+<meta property="og:image" content="http://hlei.io/2017/03/22/network-io-model/信号驱动io模型.png">
+<meta property="og:image" content="http://hlei.io/2017/03/22/network-io-model/异步io.png">
+<meta property="og:updated_time" content="2017-11-29T09:13:41.065Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="network-io-model">
 <meta name="twitter:description" content="阻塞io模型
@@ -117,7 +117,7 @@ io复用模型
 信号驱动io模型
 异步io模型
 多啰嗦几句：a. 阻塞和非阻塞描述的对象是函数，指调用这个函数后是否会block进程/线程。b. 同步/异步描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。">
-<meta name="twitter:image" content="http://hlei.io/2017/03/08/network/阻塞io模型.png">
+<meta name="twitter:image" content="http://hlei.io/2017/03/22/network-io-model/阻塞io模型.png">
 
 
 
@@ -398,11 +398,11 @@ io复用模型
       
 
       
-        <h2 id="阻塞io模型"><a href="#阻塞io模型" class="headerlink" title="阻塞io模型"></a>阻塞io模型</h2><p><img src="/2017/03/08/network/阻塞io模型.png" alt="阻塞io模型"></p>
-<h2 id="非阻塞io模型"><a href="#非阻塞io模型" class="headerlink" title="非阻塞io模型"></a>非阻塞io模型</h2><p><img src="/2017/03/08/network/非阻塞io模型.png" alt="阻塞io模型"></p>
-<h2 id="io复用模型"><a href="#io复用模型" class="headerlink" title="io复用模型"></a>io复用模型</h2><p><img src="/2017/03/08/network/io复用模型.png" alt="阻塞io模型"></p>
-<h2 id="信号驱动io模型"><a href="#信号驱动io模型" class="headerlink" title="信号驱动io模型"></a>信号驱动io模型</h2><p><img src="/2017/03/08/network/信号驱动io模型.png" alt="阻塞io模型"></p>
-<h2 id="异步io模型"><a href="#异步io模型" class="headerlink" title="异步io模型"></a>异步io模型</h2><p><img src="/2017/03/08/network/异步io.png" alt="阻塞io模型"></p>
+        <h2 id="阻塞io模型"><a href="#阻塞io模型" class="headerlink" title="阻塞io模型"></a>阻塞io模型</h2><p><img src="/2017/03/22/network-io-model/阻塞io模型.png" alt="阻塞io模型"></p>
+<h2 id="非阻塞io模型"><a href="#非阻塞io模型" class="headerlink" title="非阻塞io模型"></a>非阻塞io模型</h2><p><img src="/2017/03/22/network-io-model/非阻塞io模型.png" alt="非阻塞io模型"></p>
+<h2 id="io复用模型"><a href="#io复用模型" class="headerlink" title="io复用模型"></a>io复用模型</h2><p><img src="/2017/03/22/network-io-model/io复用模型.png" alt="io复用模型"></p>
+<h2 id="信号驱动io模型"><a href="#信号驱动io模型" class="headerlink" title="信号驱动io模型"></a>信号驱动io模型</h2><p><img src="/2017/03/22/network-io-model/信号驱动io模型.png" alt="信号驱动io模型"></p>
+<h2 id="异步io模型"><a href="#异步io模型" class="headerlink" title="异步io模型"></a>异步io模型</h2><p><img src="/2017/03/22/network-io-model/异步io.png" alt="异步io模型"></p>
 <p>多啰嗦几句：<br>a. <strong>阻塞和非阻塞</strong>描述的对象是函数，指调用这个函数后是否会block进程/线程。<br>b. <strong>同步/异步</strong>描述的是执行IO操作的主体是谁，同步是由用户进程自己去执行最终的IO操作。异步是用户进程自己不关系实际IO操作的过程，只需要由内核在IO完成后通知它既可，由内核进程来执行最终的IO操作。</p>
 
       
@@ -426,13 +426,13 @@ io复用模型
     <div id="QR" style="display: none;">
       
         <div id="wechat" style="display: inline-block">
-          <img id="wechat_qr" src="/themes/next/source/images/wechat.png" alt="He Lei WeChat Pay"/>
+          <img id="wechat_qr" src="/images/wechat.png" alt="He Lei WeChat Pay"/>
           <p>微信打赏</p>
         </div>
       
       
         <div id="alipay" style="display: inline-block">
-          <img id="alipay_qr" src="/themes/next/source/images/alipay.jpg" alt="He Lei Alipay"/>
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="He Lei Alipay"/>
           <p>支付宝打赏</p>
         </div>
       
@@ -537,7 +537,7 @@ io复用模型
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">22</span>
+                <span class="site-state-item-count">30</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>

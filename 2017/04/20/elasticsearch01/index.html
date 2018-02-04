@@ -87,16 +87,16 @@
 
 
 
-<meta name="description" content="difference12Relational DB -&amp;gt; Databases -&amp;gt; Tables -&amp;gt; Rows -&amp;gt; ColumnsElasticsearch -&amp;gt; Indices   -&amp;gt; Types  -&amp;gt; Documents -&amp;gt; Fields">
+<meta name="description" content="##Elasticsearch是一个基于Apache Lucene(TM)的开源搜索引擎。无论在开源还是专有领域，Lucene可以被认为是迄今为止最先进、性能最好的、功能最全的搜索引擎库。但是，Lucene只是一个库。想要使用它，你必须使用Java来作为开发语言并将其直接集成到你的应用中，更糟糕的是，Lucene非常复杂，你需要深入了解检索的相关知识来理解它是如何工作的。Elasticsearch">
 <meta property="og:type" content="article">
 <meta property="og:title" content="elasticsearch01">
 <meta property="og:url" content="http://hlei.io/2017/04/20/elasticsearch01/index.html">
 <meta property="og:site_name" content="HeLei Blog">
-<meta property="og:description" content="difference12Relational DB -&amp;gt; Databases -&amp;gt; Tables -&amp;gt; Rows -&amp;gt; ColumnsElasticsearch -&amp;gt; Indices   -&amp;gt; Types  -&amp;gt; Documents -&amp;gt; Fields">
-<meta property="og:updated_time" content="2017-04-21T10:50:51.681Z">
+<meta property="og:description" content="##Elasticsearch是一个基于Apache Lucene(TM)的开源搜索引擎。无论在开源还是专有领域，Lucene可以被认为是迄今为止最先进、性能最好的、功能最全的搜索引擎库。但是，Lucene只是一个库。想要使用它，你必须使用Java来作为开发语言并将其直接集成到你的应用中，更糟糕的是，Lucene非常复杂，你需要深入了解检索的相关知识来理解它是如何工作的。Elasticsearch">
+<meta property="og:updated_time" content="2017-10-12T07:23:38.224Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="elasticsearch01">
-<meta name="twitter:description" content="difference12Relational DB -&amp;gt; Databases -&amp;gt; Tables -&amp;gt; Rows -&amp;gt; ColumnsElasticsearch -&amp;gt; Indices   -&amp;gt; Types  -&amp;gt; Documents -&amp;gt; Fields">
+<meta name="twitter:description" content="##Elasticsearch是一个基于Apache Lucene(TM)的开源搜索引擎。无论在开源还是专有领域，Lucene可以被认为是迄今为止最先进、性能最好的、功能最全的搜索引擎库。但是，Lucene只是一个库。想要使用它，你必须使用Java来作为开发语言并将其直接集成到你的应用中，更糟糕的是，Lucene非常复杂，你需要深入了解检索的相关知识来理解它是如何工作的。Elasticsearch">
 
 
 
@@ -377,7 +377,26 @@
       
 
       
-        <h1 id="difference"><a href="#difference" class="headerlink" title="difference"></a>difference</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Relational DB -&gt; Databases -&gt; Tables -&gt; Rows -&gt; Columns</div><div class="line">Elasticsearch -&gt; Indices   -&gt; Types  -&gt; Documents -&gt; Fields</div></pre></td></tr></table></figure>
+        <p>##<br>Elasticsearch是一个基于Apache Lucene(TM)的开源搜索引擎。无论在开源还是专有领域，Lucene可以被认为是迄今为止最先进、性能最好的、功能最全的搜索引擎库。<br>但是，Lucene只是一个库。想要使用它，你必须使用Java来作为开发语言并将其直接集成到你的应用中，更糟糕的是，Lucene非常复杂，你需要深入了解检索的相关知识来理解它是如何工作的。<br>Elasticsearch也使用Java开发并使用Lucene作为其核心来实现所有索引和搜索的功能，但是它的目的是通过简单的RESTful API来隐藏Lucene的复杂性，从而让全文搜索变得简单。<br>不过，Elasticsearch不仅仅是Lucene和全文搜索，我们还能这样去描述它：</p>
+<ul>
+<li>分布式的实时文件存储，每个字段都被索引并可被搜索</li>
+<li>分布式的实时分析搜索引擎</li>
+<li>可以扩展到上百台服务器，处理PB级结构化或非结构化数据<br>而且，所有的这些功能被集成到一个服务里面，你的应用可以通过简单的RESTful API、各种语言的客户端甚至命令行与之交互。</li>
+</ul>
+<p>可以用传统的关系数据库来作对比：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Relational DB -&gt; Databases -&gt; Tables -&gt; Rows -&gt; Columns</div><div class="line">Elasticsearch -&gt; Indices   -&gt; Types  -&gt; Documents -&gt; Fields</div></pre></td></tr></table></figure></p>
+<h2 id="如何安装"><a href="#如何安装" class="headerlink" title="如何安装"></a>如何安装</h2><p>1.安装jdk，我自己机器上的是jdk7<br>2.下载安装包<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">wget https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.3.4/elasticsearch-2.3.4.tar.gz</div></pre></td></tr></table></figure></p>
+<p>3.解压<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">tar -zxvf elasticsearch-2.3.4.tar.gz</div></pre></td></tr></table></figure></p>
+<p>4.启动服务<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./bin/elasticsearch</div></pre></td></tr></table></figure></p>
+<p>5.测试是否成功<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">curl &apos;http://localhost:9200/?pretty&apos;</div></pre></td></tr></table></figure></p>
+<p>如果输出下面的结果就大功告成了<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">  &quot;count&quot; : 3,</div><div class="line">  &quot;_shards&quot; : &#123;</div><div class="line">    &quot;total&quot; : 5,</div><div class="line">    &quot;successful&quot; : 5,</div><div class="line">    &quot;failed&quot; : 0</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h2 id="如何使用"><a href="#如何使用" class="headerlink" title="如何使用"></a>如何使用</h2><p>###让我们建立一个员工目录</p>
+<p>假设我们刚好在Megacorp工作，这时人力资源部门出于某种目的需要让我们创建一个员工目录，这个目录用于促进人文关怀和用于实时协同工作</p>
+<p>###索引员工文档<br>所以为了创建员工目录，我们将进行如下操作：<br><em>为每个员工的文档(document)建立索引，每个文档包含了相应员工的所有信息。
+</em>每个文档的类型为employee。<br><em>employee类型归属于索引megacorp。
+</em>megacorp索引存储在Elasticsearch集群中。</p>
+<p>我们看到path:/megacorp/employee/1包含三部分信息：<br>| 名字 | 说明 |<br>| ————- | ————- |<br>| megacorp | 索引名 |<br>| employee | 类型名 |<br>| 1 | 这个员工的ID |</p>
+<p>使用RESTful API，通过9200端口的与Elasticsearch进行通信<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line">curl -XPUT 'localhost:9200/megacorp/employee/1' -d '</div><div class="line">&#123;</div><div class="line">    "first_name" : "John",</div><div class="line">    "last_name" :  "Smith",</div><div class="line">    "age" :        25,</div><div class="line">    "about" :      "I love to go rock climbing",</div><div class="line">    "interests": [ "sports", "music" ]</div><div class="line">&#125;'</div><div class="line"></div><div class="line">curl -XPUT 'localhost:9200/megacorp/employee/2' -d '</div><div class="line">&#123;</div><div class="line">    "first_name" :  "Jane",</div><div class="line">    "last_name" :   "Smith",</div><div class="line">    "age" :         32,</div><div class="line">    "about" :       "I like to collect rock albums",</div><div class="line">    "interests":  [ "music" ]</div><div class="line">&#125;'</div><div class="line"></div><div class="line">curl -XPUT 'localhost:9200/megacorp/employee/3' -d '</div><div class="line">&#123;</div><div class="line">    "first_name" :  "Douglas",</div><div class="line">    "last_name" :   "Fir",</div><div class="line">    "age" :         35,</div><div class="line">    "about":        "I like to build cabinets",</div><div class="line">    "interests":  [ "forestry" ]</div><div class="line">&#125;'</div></pre></td></tr></table></figure></p>
+
       
     </div>
 
@@ -399,13 +418,13 @@
     <div id="QR" style="display: none;">
       
         <div id="wechat" style="display: inline-block">
-          <img id="wechat_qr" src="/themes/next/source/images/wechat.png" alt="He Lei WeChat Pay"/>
+          <img id="wechat_qr" src="/images/wechat.png" alt="He Lei WeChat Pay"/>
           <p>微信打赏</p>
         </div>
       
       
         <div id="alipay" style="display: inline-block">
-          <img id="alipay_qr" src="/themes/next/source/images/alipay.jpg" alt="He Lei Alipay"/>
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="He Lei Alipay"/>
           <p>支付宝打赏</p>
         </div>
       
@@ -510,7 +529,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">22</span>
+                <span class="site-state-item-count">30</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -583,7 +602,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#difference"><span class="nav-number">1.</span> <span class="nav-text">difference</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#如何安装"><span class="nav-number">1.</span> <span class="nav-text">如何安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何使用"><span class="nav-number">2.</span> <span class="nav-text">如何使用</span></a></li></ol></div>
             
 
           </div>
