@@ -1,0 +1,905 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="1. 介绍整数集合（intset）是集合键底层实现之一。集合键另一实现是值为空的散列表（hash table），虽然使用散列表对集合的加入删除元素，判断元素是否存在等等操作时间复杂度为O(1)，但是当存储的元素是整型且元素数目较少时，如果使用散列表存储，就会比较浪费内存，因此整数集合（intset）类型因为节约内存就存在。
+散列表的实现123456789101112131415127.0.0.1:">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis源码剖析和注释（五）--- 整数集合(intset)">
+<meta property="og:url" content="http://hlei.io/2018/02/08/redis-analysis-intset/index.html">
+<meta property="og:site_name" content="HeLei Blog">
+<meta property="og:description" content="1. 介绍整数集合（intset）是集合键底层实现之一。集合键另一实现是值为空的散列表（hash table），虽然使用散列表对集合的加入删除元素，判断元素是否存在等等操作时间复杂度为O(1)，但是当存储的元素是整型且元素数目较少时，如果使用散列表存储，就会比较浪费内存，因此整数集合（intset）类型因为节约内存就存在。
+散列表的实现123456789101112131415127.0.0.1:">
+<meta property="og:updated_time" content="2018-02-08T12:01:06.220Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Redis源码剖析和注释（五）--- 整数集合(intset)">
+<meta name="twitter:description" content="1. 介绍整数集合（intset）是集合键底层实现之一。集合键另一实现是值为空的散列表（hash table），虽然使用散列表对集合的加入删除元素，判断元素是否存在等等操作时间复杂度为O(1)，但是当存储的元素是整型且元素数目较少时，如果使用散列表存储，就会比较浪费内存，因此整数集合（intset）类型因为节约内存就存在。
+散列表的实现123456789101112131415127.0.0.1:">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://hlei.io/2018/02/08/redis-analysis-intset/"/>
+
+
+
+
+
+  <title> Redis源码剖析和注释（五）--- 整数集合(intset) | HeLei Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">HeLei Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+    
+      <h1 class="site-subtitle" itemprop="description">不要因为走得太远，就忘记为什么而出发</h1>
+    
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/02/08/redis-analysis-intset/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                Redis源码剖析和注释（五）--- 整数集合(intset)
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-02-08T03:42:50+08:00">
+                2018-02-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Redis/" itemprop="url" rel="index">
+                    <span itemprop="name">Redis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="1-介绍"><a href="#1-介绍" class="headerlink" title="1. 介绍"></a>1. 介绍</h2><p>整数集合（intset）是集合键底层实现之一。集合键另一实现是值为空的散列表（hash table），虽然使用散列表对集合的加入删除元素，判断元素是否存在等等操作时间复杂度为O(1)，但是当存储的元素是整型且元素数目较少时，如果使用散列表存储，就会比较浪费内存，因此整数集合（intset）类型因为节约内存就存在。</p>
+<p>散列表的实现<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">127.0.0.1:6379&gt; SADD set1 1 2 3</div><div class="line">(integer) 3</div><div class="line">127.0.0.1:6379&gt; SADD set1 1</div><div class="line">(integer) 0</div><div class="line">127.0.0.1:6379&gt; SMEMBERS set1</div><div class="line">1) &quot;1&quot;</div><div class="line">2) &quot;2&quot;</div><div class="line">3) &quot;3&quot;</div><div class="line">127.0.0.1:6379&gt; SISMEMBER set1 2</div><div class="line">(integer) 1</div><div class="line">127.0.0.1:6379&gt; SREM set1 1</div><div class="line">(integer) 1</div><div class="line">127.0.0.1:6379&gt; SMEMBERS set1</div><div class="line">1) &quot;2&quot;</div><div class="line">2) &quot;3&quot;</div></pre></td></tr></table></figure></p>
+<h2 id="2-整数集合结构的实现"><a href="#2-整数集合结构的实现" class="headerlink" title="2. 整数集合结构的实现"></a>2. 整数集合结构的实现</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">redis根目录下的intset.h文件</div><div class="line"></div><div class="line">typedef struct intset &#123;</div><div class="line">    uint32_t encoding;  //编码格式，有如下三种格式，初始值默认为INTSET_ENC_INT16</div><div class="line">    uint32_t length;    //集合元素数量</div><div class="line">    int8_t contents[];  //保存元素的数组，元素类型并不一定是ini8_t类型，柔性数组不占intset结构体大小，并且数组中的元素从小到大排列。</div><div class="line">&#125; intset;               //整数集合结构</div><div class="line"></div><div class="line">#define INTSET_ENC_INT16 (sizeof(int16_t))   //16位，2个字节，表示范围-32,768~32,767</div><div class="line">#define INTSET_ENC_INT32 (sizeof(int32_t))   //32位，4个字节，表示范围-2,147,483,648~2,147,483,647</div><div class="line">#define INTSET_ENC_INT64 (sizeof(int64_t))   //64位，8个字节，表示范围-9,223,372,036,854,775</div></pre></td></tr></table></figure>
+<h2 id="3-升级"><a href="#3-升级" class="headerlink" title="3. 升级"></a>3. 升级</h2><p>intset整数集合之所以有三种表示编码格式的宏定义，是因为根据存储的元素数值大小，能够选取一个最”合适”的类型存储，”合适”可以理解为：既能够表示元素的大小，又可以节省空间。</p>
+<p>因此，当新添加的元素，例如：65535，超过当前集合编码格式所能表示的范围，就要进行升级操作。</p>
+<p>我们使用刚才命令中的集合，它在结构如下图：<br>[url01]</p>
+<h3 id="3-1获得新元素的编码格式"><a href="#3-1获得新元素的编码格式" class="headerlink" title="3.1获得新元素的编码格式"></a>3.1获得新元素的编码格式</h3><p>当前新元素要插入到集合中时，首先就要判获得新元素的编码格式，所以调用_intsetValueEncoding()来返回一个”适合”该元素的编码格式。65535的最”适合”的编码格式是INTSET_ENC_INT32。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">/* Return the required encoding for the provided value. */</div><div class="line">static uint8_t _intsetValueEncoding(int64_t v) &#123;    //返回合适v的编码方式</div><div class="line">    if (v &lt; INT32_MIN || v &gt; INT32_MAX)             //如果超出32位所能表示数值的范围则返回INTSET_ENC_INT64</div><div class="line">        return INTSET_ENC_INT64;</div><div class="line">    else if (v &lt; INT16_MIN || v &gt; INT16_MAX)        //如果超出16位所能表示数值的范围则返回INTSET_ENC_INT32</div><div class="line">        return INTSET_ENC_INT32;</div><div class="line">    else</div><div class="line">        return INTSET_ENC_INT16;                    //否则返回用16位表示的INTSET_ENC_INT16</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="3-2-调整内存空间"><a href="#3-2-调整内存空间" class="headerlink" title="3.2 调整内存空间"></a>3.2 调整内存空间</h3><p>当得到新元素的编码格式后，就要将集合中所有元素的编码格式都要变成升级后的编码格式，因此，需要调整集合数组contents的内存空间大小，调用intsetResize()函数。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">/* Resize the intset */</div><div class="line">static intset *intsetResize(intset *is, uint32_t len) &#123; //调整集合的内存空间大小</div><div class="line">    uint32_t size = len*intrev32ifbe(is-&gt;encoding);     //计算数组的大小</div><div class="line">    is = zrealloc(is,sizeof(intset)+size);  </div><div class="line">    //分配空间，如果新空间的大小比原来的空间大，那么数组的元素会被保留</div><div class="line">    return is;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<ul>
+<li>intrev32ifbe()是一个宏定义，定义和实现在redis根目录下的endianconv.h和endianconv.c中根据主机字节序用来做整数大小端的转换。<br>已经获知65535的编码格式，因此调整内存空间的大小等于编码格式的大小乘以集合元素的个数。如果图：<br>[url02]<br>注意：encoding成员已经发生变化，但是length并没有更新。</li>
+</ul>
+<h3 id="3-3-根据编码格式设置对应的值"><a href="#3-3-根据编码格式设置对应的值" class="headerlink" title="3.3 根据编码格式设置对应的值"></a>3.3 根据编码格式设置对应的值</h3><p>调整好内存空间后就根据编码格式来设置集合元素的值和最后将新元素添加到集合中，都调用_intsetSet()函数。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">/* Set the value at pos, using the configured encoding. */</div><div class="line">//根据集合is设置的编码方式，设置下标为pos的值为value</div><div class="line">static void _intsetSet(intset *is, int pos, int64_t value) &#123;    </div><div class="line">    uint32_t encoding = intrev32ifbe(is-&gt;encoding); //获取集合设置的编码方式</div><div class="line"></div><div class="line">    if (encoding == INTSET_ENC_INT64) &#123;             //如果是64位</div><div class="line">        ((int64_t*)is-&gt;contents)[pos] = value;      //设置下标pos的值为value</div><div class="line">        memrev64ifbe(((int64_t*)is-&gt;contents)+pos); //如果需要转换大小端</div><div class="line">    &#125; else if (encoding == INTSET_ENC_INT32) &#123;      //如果是32位</div><div class="line">        ((int32_t*)is-&gt;contents)[pos] = value;      //设置下标pos的值为value</div><div class="line">        memrev32ifbe(((int32_t*)is-&gt;contents)+pos); //如果需要转换大小端</div><div class="line">    &#125; else &#123;</div><div class="line">        ((int16_t*)is-&gt;contents)[pos] = value;      //设置下标pos的值为value</div><div class="line">        memrev16ifbe(((int16_t*)is-&gt;contents)+pos); //如果需要转换大小端</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<ul>
+<li>memrev16ifbe()是一个宏定义，定义和实现在redis根目录下的endianconv.h和endianconv.c中根据主机字节序用来做内存大小端的转换。</li>
+</ul>
+<p>将集合中原来的元素和新插入的元素以”合适”的编码格式INTSET_ENC_INT32写到数组中，顺序过程如下图：<br>[url03]</p>
+<p>最后要更新length。</p>
+<h3 id="3-4-升级实现源码"><a href="#3-4-升级实现源码" class="headerlink" title="3.4 升级实现源码"></a>3.4 升级实现源码</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line">/* Upgrades the intset to a larger encoding and inserts the given integer. */</div><div class="line">static intset *intsetUpgradeAndAdd(intset *is, int64_t value) &#123; //根据value的编码方式，对整数集合is的编码格式升级</div><div class="line">    uint8_t curenc = intrev32ifbe(is-&gt;encoding);    //当前集合的编码方式</div><div class="line">    uint8_t newenc = _intsetValueEncoding(value);   //得到value合适的编码方式</div><div class="line">    int length = intrev32ifbe(is-&gt;length);          //集合元素数量</div><div class="line">    int prepend = value &lt; 0 ? 1 : 0;                //如果value小于0，则要将value添加到数组最前端，因此为移动1个编码长度</div><div class="line">    //集合的编码格式要升级，也就是内存增大</div><div class="line">    //因为 value 的编码比集合原有的其他元素的编码都要大，所以value如果是负数，就是最小值，如果是正数则是最大值</div><div class="line">    //索引value要么放在数组集合的最前端，要么最后端，根据prepend判断</div><div class="line"></div><div class="line">    /* First set new encoding and resize */</div><div class="line">    is-&gt;encoding = intrev32ifbe(newenc);    //更新集合is的编码方式</div><div class="line">    is = intsetResize(is,intrev32ifbe(is-&gt;length)+1);   //根据新的编码方式重新设置内存空间大小</div><div class="line"></div><div class="line">    /* Upgrade back-to-front so we don&apos;t overwrite values.</div><div class="line">     * Note that the &quot;prepend&quot; variable is used to make sure we have an empty</div><div class="line">     * space at either the beginning or the end of the intset. */</div><div class="line">    //_intsetGetEncoded()得到下标为length的值</div><div class="line">    //_intsetSet设置下标为prepend+length的值为_intsetGetEncoded返回的值</div><div class="line">    //但是，编码格式已经发生改变，数组元素没变但是内存大小改变</div><div class="line">    while(length--)</div><div class="line">        _intsetSet(is,length+prepend,_intsetGetEncoded(is,length,curenc));</div><div class="line"></div><div class="line">    /* Set the value at the beginning or the end. */</div><div class="line">    if (prepend)    //value是负数，要放在最前端</div><div class="line">        _intsetSet(is,0,value); //设置下标为0的值为value</div><div class="line">    else</div><div class="line">        _intsetSet(is,intrev32ifbe(is-&gt;length),value);  //value为正数，设置最末尾+1的值为value</div><div class="line">    is-&gt;length = intrev32ifbe(intrev32ifbe(is-&gt;length)+1);  //数组元素加1</div><div class="line">    return is;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="3-5-升级的特点"><a href="#3-5-升级的特点" class="headerlink" title="3.5 升级的特点"></a>3.5 升级的特点</h3><ul>
+<li>提升灵活性：因为C语言是静态类型的语言，通常在在数组中只是用一种类型保存数据，例如，要么只用int16_t类型，要么只用int32_t类型。通过自动升级底层数组来适应不同类型的新元素，不必担心类型的错误。</li>
+<li>节约内存：整数集合既可以让集合保存三种不同类型的值，又可以确保升级操作只在有需要的时候进行，这样就节省了内存。</li>
+<li>不支持降级：一旦对数组进行升级，编码就会一直保存升级后的状态。</li>
+</ul>
+<h2 id="4-整数集合的其他操作"><a href="#4-整数集合的其他操作" class="headerlink" title="4.整数集合的其他操作"></a>4.整数集合的其他操作</h2><p>源代码注释下载：redis源码注释<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div><div class="line">171</div><div class="line">172</div><div class="line">173</div><div class="line">174</div><div class="line">175</div><div class="line">176</div><div class="line">177</div><div class="line">178</div><div class="line">179</div><div class="line">180</div><div class="line">181</div><div class="line">182</div><div class="line">183</div><div class="line">184</div><div class="line">185</div><div class="line">186</div><div class="line">187</div><div class="line">188</div><div class="line">189</div><div class="line">190</div><div class="line">191</div><div class="line">192</div><div class="line">193</div><div class="line">194</div><div class="line">195</div><div class="line">196</div><div class="line">197</div><div class="line">198</div><div class="line">199</div><div class="line">200</div><div class="line">201</div><div class="line">202</div><div class="line">203</div><div class="line">204</div><div class="line">205</div><div class="line">206</div><div class="line">207</div><div class="line">208</div><div class="line">209</div><div class="line">210</div><div class="line">211</div><div class="line">212</div><div class="line">213</div><div class="line">214</div><div class="line">215</div><div class="line">216</div><div class="line">217</div><div class="line">218</div><div class="line">219</div><div class="line">220</div><div class="line">221</div><div class="line">222</div><div class="line">223</div><div class="line">224</div><div class="line">225</div><div class="line">226</div><div class="line">227</div><div class="line">228</div><div class="line">229</div><div class="line">230</div><div class="line">231</div><div class="line">232</div><div class="line">233</div><div class="line">234</div><div class="line">235</div><div class="line">236</div><div class="line">237</div><div class="line">238</div><div class="line">239</div><div class="line">240</div><div class="line">241</div><div class="line">242</div><div class="line">243</div><div class="line">244</div><div class="line">245</div><div class="line">246</div><div class="line">247</div><div class="line">248</div><div class="line">249</div><div class="line">250</div><div class="line">251</div><div class="line">252</div><div class="line">253</div><div class="line">254</div><div class="line">255</div><div class="line">256</div><div class="line">257</div><div class="line">258</div><div class="line">259</div></pre></td><td class="code"><pre><div class="line">intset *intsetNew(void);    //创建一个空集合</div><div class="line">intset *intsetAdd(intset *is, int64_t value, uint8_t *success);//将value添加到is集合中，如果成功success被设置为1否则为0</div><div class="line">intset *intsetRemove(intset *is, int64_t value, int *success);//从集合中删除value，删除成功success设置为1，失败为0</div><div class="line">uint8_t intsetFind(intset *is, int64_t value);//返回1表示value是集合中的元素，否则返回0</div><div class="line">int64_t intsetRandom(intset *is);//随机返回一个元素</div><div class="line">uint8_t intsetGet(intset *is, uint32_t pos, int64_t *value);//获得下标为pos的值并保存在value中</div><div class="line">uint32_t intsetLen(intset *is);//返回集合的元素个数</div><div class="line">size_t intsetBlobLen(intset *is);//返回集合所占用的字节总量</div><div class="line"></div><div class="line">/* Return the required encoding for the provided value. */</div><div class="line">static uint8_t _intsetValueEncoding(int64_t v) &#123;    //返回合适v的编码方式</div><div class="line">    if (v &lt; INT32_MIN || v &gt; INT32_MAX)         //如果超出32位所能表示数值的范围则返回INTSET_ENC_INT64</div><div class="line">        return INTSET_ENC_INT64;</div><div class="line">    else if (v &lt; INT16_MIN || v &gt; INT16_MAX)    //如果超出16位所能表示数值的范围则返回INTSET_ENC_INT32</div><div class="line">        return INTSET_ENC_INT32;</div><div class="line">    else</div><div class="line">        return INTSET_ENC_INT16;                //返回用16位表示的INTSET_ENC_INT16</div><div class="line">&#125;</div><div class="line"></div><div class="line">/* Return the value at pos, given an encoding. */</div><div class="line">static int64_t _intsetGetEncoded(intset *is, int pos, uint8_t enc) &#123;    //根据编码方式enc，返回在集合is中下标为pos的元素</div><div class="line">    int64_t v64;</div><div class="line">    int32_t v32;</div><div class="line">    int16_t v16;</div><div class="line"></div><div class="line">    if (enc == INTSET_ENC_INT64) &#123;  //64位编码</div><div class="line">        memcpy(&amp;v64,((int64_t*)is-&gt;contents)+pos,sizeof(v64));  //从下标pos开始的内存空间拷贝64bit的数据到v64</div><div class="line">        memrev64ifbe(&amp;v64); //如果是大端序，就会转换成小端序</div><div class="line">        return v64;</div><div class="line">    &#125; else if (enc == INTSET_ENC_INT32) &#123;//32位编码</div><div class="line">        memcpy(&amp;v32,((int32_t*)is-&gt;contents)+pos,sizeof(v32));//从下标pos开始的内存空间拷贝32bit的数据到v32</div><div class="line">        memrev32ifbe(&amp;v32); //32位大小端转换</div><div class="line">        return v32;</div><div class="line">    &#125; else &#123;//16位编码</div><div class="line">        memcpy(&amp;v16,((int16_t*)is-&gt;contents)+pos,sizeof(v16));//从下标pos开始的内存空间拷贝16bit的数据到v16</div><div class="line">        memrev16ifbe(&amp;v16); //16位大小端转换</div><div class="line">        return v16;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">/* Return the value at pos, using the configured encoding. */</div><div class="line">static int64_t _intsetGet(intset *is, int pos) &#123;    //根据集合is设置的编码方式，返回下标为pos的值</div><div class="line">    return _intsetGetEncoded(is,pos,intrev32ifbe(is-&gt;encoding));</div><div class="line">    //intrev32ifbe()函数返回参数的编码格式并且根据需求转换大小端</div><div class="line">&#125;</div><div class="line"></div><div class="line">/* Set the value at pos, using the configured encoding. */</div><div class="line">static void _intsetSet(intset *is, int pos, int64_t value) &#123;    //根据集合is设置的编码方式，设置下标为pos的值为value</div><div class="line">    uint32_t encoding = intrev32ifbe(is-&gt;encoding); //获取集合设置的编码方式</div><div class="line"></div><div class="line">    if (encoding == INTSET_ENC_INT64) &#123;             //如果是64位</div><div class="line">        ((int64_t*)is-&gt;contents)[pos] = value;      //设置下标pos的值为value</div><div class="line">        memrev64ifbe(((int64_t*)is-&gt;contents)+pos); //如果需要转换大小端</div><div class="line">    &#125; else if (encoding == INTSET_ENC_INT32) &#123;      //如果是32位</div><div class="line">        ((int32_t*)is-&gt;contents)[pos] = value;      //设置下标pos的值为value</div><div class="line">        memrev32ifbe(((int32_t*)is-&gt;contents)+pos); //如果需要转换大小端</div><div class="line">    &#125; else &#123;</div><div class="line">        ((int16_t*)is-&gt;contents)[pos] = value;      //设置下标pos的值为value</div><div class="line">        memrev16ifbe(((int16_t*)is-&gt;contents)+pos); //如果需要转换大小端</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">/* Create an empty intset. */</div><div class="line">intset *intsetNew(void) &#123;           //创建一个空集合</div><div class="line">    intset *is = zmalloc(sizeof(intset));   //分配空间</div><div class="line">    is-&gt;encoding = intrev32ifbe(INTSET_ENC_INT16);  //设置编码方式</div><div class="line">    is-&gt;length = 0; //集合为空</div><div class="line">    return is;</div><div class="line">&#125;</div><div class="line"></div><div class="line">/* Resize the intset */</div><div class="line">static intset *intsetResize(intset *is, uint32_t len) &#123; //调整集合的内存空间大小</div><div class="line">    uint32_t size = len*intrev32ifbe(is-&gt;encoding); //计算数组的大小</div><div class="line">    is = zrealloc(is,sizeof(intset)+size);  //分配空间，如果新空间的大小比原来的空间大，那么数组的元素会被保留</div><div class="line">    return is;</div><div class="line">&#125;</div><div class="line"></div><div class="line">/* Search for the position of &quot;value&quot;. Return 1 when the value was found and</div><div class="line"> * sets &quot;pos&quot; to the position of the value within the intset. Return 0 when</div><div class="line"> * the value is not present in the intset and sets &quot;pos&quot; to the position</div><div class="line"> * where &quot;value&quot; can be inserted. */</div><div class="line">//找到is集合中值为value的下标，返回1，并保存在pos中，没有找到返回0，并将pos设置为value可以插入到数组的位置</div><div class="line">static uint8_t intsetSearch(intset *is, int64_t value, uint32_t *pos) &#123;</div><div class="line">    int min = 0, max = intrev32ifbe(is-&gt;length)-1, mid = -1;</div><div class="line">    int64_t cur = -1;</div><div class="line"></div><div class="line">    /* The value can never be found when the set is empty */</div><div class="line">    if (intrev32ifbe(is-&gt;length) == 0) &#123;    //如果为空集合</div><div class="line">        if (pos) *pos = 0;                  //pos设置为0</div><div class="line">        return 0;</div><div class="line">    &#125; else &#123;</div><div class="line">        /* Check for the case where we know we cannot find the value,</div><div class="line">         * but do know the insert position. */</div><div class="line">        if (value &gt; _intsetGet(is,intrev32ifbe(is-&gt;length)-1)) &#123;    //因为数组是有序的，如果value大于数组最大值</div><div class="line">            if (pos) *pos = intrev32ifbe(is-&gt;length);       //可以将pos设置为数组末尾</div><div class="line">            return 0;</div><div class="line">        &#125; else if (value &lt; _intsetGet(is,0)) &#123;  //如果小于数组的最小值</div><div class="line">            if (pos) *pos = 0;          //pos可以是下标为0的位置</div><div class="line">            return 0;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    while(max &gt;= min) &#123; //有序集合中进行二分查找</div><div class="line">        mid = ((unsigned int)min + (unsigned int)max) &gt;&gt; 1; //(min+max)/2，找到中间数的下标</div><div class="line">        cur = _intsetGet(is,mid);   //等到下标为mid的值cur</div><div class="line">        if (value &gt; cur) &#123;  //value大于当前值cur</div><div class="line">            min = mid+1;    //后一半找</div><div class="line">        &#125; else if (value &lt; cur) &#123;   //value小于当前值cur</div><div class="line">            max = mid-1;    //前一半找</div><div class="line">        &#125; else &#123;</div><div class="line">            break;  //找到退出循环</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    if (value == cur) &#123; //确认找到</div><div class="line">        if (pos) *pos = mid;    //设置pos为找到的位置，返回1</div><div class="line">        return 1;</div><div class="line">    &#125; else &#123;</div><div class="line">        if (pos) *pos = min;    //此时min和max相等，所以pos可以设置为min或max，返回0</div><div class="line">        return 0;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">/* Upgrades the intset to a larger encoding and inserts the given integer. */</div><div class="line">static intset *intsetUpgradeAndAdd(intset *is, int64_t value) &#123; //根据value的编码方式，对整数集合is的编码格式升级</div><div class="line">    uint8_t curenc = intrev32ifbe(is-&gt;encoding);    //当前集合的编码方式</div><div class="line">    uint8_t newenc = _intsetValueEncoding(value);   //得到value合适的编码方式</div><div class="line">    int length = intrev32ifbe(is-&gt;length);          //集合元素数量</div><div class="line">    int prepend = value &lt; 0 ? 1 : 0;                //如果value小于0，则要将value添加到数组最前端，因此为移动1个编码长度</div><div class="line">    //集合的编码格式要升级，也就是内存增大</div><div class="line">    //因为 value 的编码比集合原有的其他元素的编码都要大，所以value如果是负数，就是最小值，如果是正数则是最大值</div><div class="line">    //索引value要么放在数组集合的最前端，要么最后端，根据prepend判断</div><div class="line"></div><div class="line">    /* First set new encoding and resize */</div><div class="line">    is-&gt;encoding = intrev32ifbe(newenc);    //更新集合is的编码方式</div><div class="line">    is = intsetResize(is,intrev32ifbe(is-&gt;length)+1);   //根据新的编码方式重新设置内存空间大小</div><div class="line"></div><div class="line">    /* Upgrade back-to-front so we don&apos;t overwrite values.</div><div class="line">     * Note that the &quot;prepend&quot; variable is used to make sure we have an empty</div><div class="line">     * space at either the beginning or the end of the intset. */</div><div class="line">    //_intsetGetEncoded()得到下标为length的值</div><div class="line">    //_intsetSet设置下标为prepend+length的值为_intsetGetEncoded返回的值</div><div class="line">    //但是，编码格式已经发生改变，数组元素没变但是内存大小改变</div><div class="line">    while(length--)</div><div class="line">        _intsetSet(is,length+prepend,_intsetGetEncoded(is,length,curenc));</div><div class="line"></div><div class="line">    /* Set the value at the beginning or the end. */</div><div class="line">    if (prepend)    //value是负数，要放在最前端</div><div class="line">        _intsetSet(is,0,value); //设置下标为0的值为value</div><div class="line">    else</div><div class="line">        _intsetSet(is,intrev32ifbe(is-&gt;length),value);  //value为正数，设置最末尾+1的值为value</div><div class="line">    is-&gt;length = intrev32ifbe(intrev32ifbe(is-&gt;length)+1);  //数组元素加1</div><div class="line">    return is;</div><div class="line">&#125;</div><div class="line"></div><div class="line">static void intsetMoveTail(intset *is, uint32_t from, uint32_t to) &#123;    //向前或向后移动指定下标范围内的数组元素</div><div class="line">    void *src, *dst;</div><div class="line">    uint32_t bytes = intrev32ifbe(is-&gt;length)-from; //获得要移动的元素的个数</div><div class="line">    uint32_t encoding = intrev32ifbe(is-&gt;encoding); //获得集合is的默认编码方式</div><div class="line"></div><div class="line">    if (encoding == INTSET_ENC_INT64) &#123;         //判断不同的编码格式</div><div class="line">        src = (int64_t*)is-&gt;contents+from;      //获得要被移动范围的起始地址</div><div class="line">        dst = (int64_t*)is-&gt;contents+to;        //获得要被移动到的目的地址</div><div class="line">        bytes *= sizeof(int64_t);               //计算要移动多少个字节</div><div class="line">    &#125; else if (encoding == INTSET_ENC_INT32) &#123;</div><div class="line">        src = (int32_t*)is-&gt;contents+from;</div><div class="line">        dst = (int32_t*)is-&gt;contents+to;</div><div class="line">        bytes *= sizeof(int32_t);</div><div class="line">    &#125; else &#123;</div><div class="line">        src = (int16_t*)is-&gt;contents+from;</div><div class="line">        dst = (int16_t*)is-&gt;contents+to;</div><div class="line">        bytes *= sizeof(int16_t);</div><div class="line">    &#125;</div><div class="line">    memmove(dst,src,bytes); //从src开始移动bytes个字节到dst</div><div class="line">&#125;</div><div class="line"></div><div class="line">/* Insert an integer in the intset */</div><div class="line">intset *intsetAdd(intset *is, int64_t value, uint8_t *success) &#123;//将value添加到is集合中，如果成功success被设置为1否则为0</div><div class="line">    uint8_t valenc = _intsetValueEncoding(value);   //获得value适合的编码类型</div><div class="line">    uint32_t pos;</div><div class="line">    if (success) *success = 1;  //设置success默认为1</div><div class="line"></div><div class="line">    /* Upgrade encoding if necessary. If we need to upgrade, we know that</div><div class="line">     * this value should be either appended (if &gt; 0) or prepended (if &lt; 0),</div><div class="line">     * because it lies outside the range of existing values. */</div><div class="line">    if (valenc &gt; intrev32ifbe(is-&gt;encoding)) &#123;  //如果value的编码类型大于集合的编码类型</div><div class="line">        /* This always succeeds, so we don&apos;t need to curry *success. */</div><div class="line">        return intsetUpgradeAndAdd(is,value);   //升级集合，并且将value加入集合，一定成功</div><div class="line">    &#125; else &#123;</div><div class="line">        /* Abort if the value is already present in the set.</div><div class="line">         * This call will populate &quot;pos&quot; with the right position to insert</div><div class="line">         * the value when it cannot be found. */</div><div class="line">        if (intsetSearch(is,value,&amp;pos)) &#123;  //查找value，若果value已经存在，intsetSearch返回1,如果不存在，pos保存value可以插入的位置</div><div class="line">            if (success) *success = 0;  //value存在，success设置为0</div><div class="line">            return is;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        //value在集合中不存在，且pos保存可以插入的位置</div><div class="line">        is = intsetResize(is,intrev32ifbe(is-&gt;length)+1);   //调整集合大小</div><div class="line">        if (pos &lt; intrev32ifbe(is-&gt;length)) intsetMoveTail(is,pos,pos+1);   //如果pos不是在数组末尾则要移动调整集合</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    _intsetSet(is,pos,value);   //设置pos下标的值为value</div><div class="line">    is-&gt;length = intrev32ifbe(intrev32ifbe(is-&gt;length)+1);  //集合节点数量加1</div><div class="line">    return is;</div><div class="line">&#125;</div><div class="line"></div><div class="line">/* Delete integer from intset */</div><div class="line">intset *intsetRemove(intset *is, int64_t value, int *success) &#123; //从集合中删除value，删除成功success设置为1，失败为0</div><div class="line">    uint8_t valenc = _intsetValueEncoding(value);   //获得value适合的编码类型</div><div class="line">    uint32_t pos;</div><div class="line">    if (success) *success = 0;  //设置success默认为0</div><div class="line"></div><div class="line">    //如果value的编码格式小于集合的编码格式且value在集合中已存在，pos保存着下标</div><div class="line">    if (valenc &lt;= intrev32ifbe(is-&gt;encoding) &amp;&amp; intsetSearch(is,value,&amp;pos)) &#123;</div><div class="line">        uint32_t len = intrev32ifbe(is-&gt;length);    //备份当前集合元素数量</div><div class="line"></div><div class="line">        /* We know we can delete */</div><div class="line">        if (success) *success = 1;  //删除成功，设置success为1</div><div class="line"></div><div class="line">        /* Overwrite value with tail and update length */</div><div class="line">        if (pos &lt; (len-1)) intsetMoveTail(is,pos+1,pos);    //如果不是最后一个元素，则移动元素覆盖掉被删除的元素</div><div class="line">        is = intsetResize(is,len-1);    //缩小大小</div><div class="line">        is-&gt;length = intrev32ifbe(len-1);   //更新集合元素个数</div><div class="line">    &#125;</div><div class="line">    return is;</div><div class="line">&#125;</div><div class="line"></div><div class="line">/* Determine whether a value belongs to this set */</div><div class="line">uint8_t intsetFind(intset *is, int64_t value) &#123;     //返回1表示value是集合中的元素，否则返回0</div><div class="line">    uint8_t valenc = _intsetValueEncoding(value);   //获得value适合的编码类型</div><div class="line">    return valenc &lt;= intrev32ifbe(is-&gt;encoding) &amp;&amp; intsetSearch(is,value,NULL);</div><div class="line">    //如果value的编码格式小于集合的编码格式且value在集合中已存在，返回1，其中任何一个不成立返回0</div><div class="line">&#125;</div><div class="line"></div><div class="line">/* Return random member */</div><div class="line">int64_t intsetRandom(intset *is) &#123;  //随机返回一个元素</div><div class="line">    return _intsetGet(is,rand()%intrev32ifbe(is-&gt;length));  //随机生成一个下标，返回该下标的值</div><div class="line">&#125;</div><div class="line"></div><div class="line">/* Sets the value to the value at the given position. When this position is</div><div class="line"> * out of range the function returns 0, when in range it returns 1. */</div><div class="line">uint8_t intsetGet(intset *is, uint32_t pos, int64_t *value) &#123;   //获得下标为pos的值并保存在value中</div><div class="line">    if (pos &lt; intrev32ifbe(is-&gt;length)) &#123;   //如果pos小于数组长度</div><div class="line">        *value = _intsetGet(is,pos);        //返回pos下标的值，保存在value中</div><div class="line">        return 1;</div><div class="line">    &#125;</div><div class="line">    return 0;</div><div class="line">&#125;</div><div class="line"></div><div class="line">/* Return intset length */</div><div class="line">uint32_t intsetLen(intset *is) &#123;    //返回集合的元素个数</div><div class="line">    return intrev32ifbe(is-&gt;length);    //返回length成员</div><div class="line">&#125;</div><div class="line"></div><div class="line">/* Return intset blob size in bytes. */</div><div class="line">size_t intsetBlobLen(intset *is) &#123;  //返回集合所占用的字节总量</div><div class="line">    return sizeof(intset)+intrev32ifbe(is-&gt;length)*intrev32ifbe(is-&gt;encoding);  //编码格式×元素个数+集合大小</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/wechat.png" alt="He Lei WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.png" alt="He Lei Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/02/05/redis-analysis-skiplist/" rel="next" title="Redis源码剖析和注释（六）--- 压缩列表(ziplist)">
+                <i class="fa fa-chevron-left"></i> Redis源码剖析和注释（六）--- 压缩列表(ziplist)
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/02/08/redis-analysis-ziplist/" rel="prev" title="Redis源码剖析和注释（六）--- 压缩列表(ziplist)">
+                Redis源码剖析和注释（六）--- 压缩列表(ziplist) <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="He Lei" />
+          <p class="site-author-name" itemprop="name">He Lei</p>
+          <p class="site-description motion-element" itemprop="description">c/c++/python | redis | recommend algorithm | search engine</p>
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">68</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/mcgrady-forever" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/wuxubj" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-介绍"><span class="nav-number">1.</span> <span class="nav-text">1. 介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-整数集合结构的实现"><span class="nav-number">2.</span> <span class="nav-text">2. 整数集合结构的实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-升级"><span class="nav-number">3.</span> <span class="nav-text">3. 升级</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1获得新元素的编码格式"><span class="nav-number">3.1.</span> <span class="nav-text">3.1获得新元素的编码格式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-调整内存空间"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 调整内存空间</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-根据编码格式设置对应的值"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 根据编码格式设置对应的值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-升级实现源码"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 升级实现源码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-5-升级的特点"><span class="nav-number">3.5.</span> <span class="nav-text">3.5 升级的特点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-整数集合的其他操作"><span class="nav-number">4.</span> <span class="nav-text">4.整数集合的其他操作</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">He Lei</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+      search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+      $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = $( "entry", xmlResponse ).map(function() {
+            return {
+              title: $( "title", this ).text(),
+              content: $("content",this).text(),
+              url: $( "url" , this).text()
+            };
+          }).get();
+          var $input = document.getElementById(search_id);
+          var $resultContent = document.getElementById(content_id);
+          $input.addEventListener('input', function(){
+            var matchcounts = 0;
+            var str='<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length > 1) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var content_index = [];
+                var data_title = data.title.trim().toLowerCase();
+                var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                var data_url = decodeURIComponent(data.url);
+                var index_title = -1;
+                var index_content = -1;
+                var first_occur = -1;
+                // only match artiles with not empty titles and contents
+                if(data_title != '') {
+                  keywords.forEach(function(keyword, i) {
+                    index_title = data_title.indexOf(keyword);
+                    index_content = data_content.indexOf(keyword);
+                    if( index_title >= 0 || index_content >= 0 ){
+                      isMatch = true;
+                      if (i == 0) {
+                        first_occur = index_content;
+                      }
+                    }
+
+                  });
+                }
+                // show search results
+                if (isMatch) {
+                  matchcounts += 1;
+                  str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                  var content = data.content.trim().replace(/<[^>]+>/g,"");
+                  if (first_occur >= 0) {
+                    // cut out 100 characters
+                    var start = first_occur - 20;
+                    var end = first_occur + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if(start == 0){
+                      end = 50;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    var match_content = content.substring(start, end);
+                    // highlight all keywords
+                    keywords.forEach(function(keyword){
+                      var regS = new RegExp(keyword, "gi");
+                      match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                    });
+
+                    str += "<p class=\"search-result\">" + match_content +"...</p>"
+                  }
+                  str += "</li>";
+                }
+              })};
+            str += "</ul>";
+            if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+            if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+            $resultContent.innerHTML = str;
+          });
+          proceedsearch();
+        }
+      });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

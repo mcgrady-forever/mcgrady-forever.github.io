@@ -281,7 +281,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/10/29/muduo-chapter01/">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/04/11/c-new/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="He Lei">
@@ -306,8 +306,8 @@
             
               
                 
-                <a class="post-title-link" href="/2017/10/29/muduo-chapter01/" itemprop="url">
-                  <<Linux多线程服务端编程-使用muduo c++网络库>>笔记（一）
+                <a class="post-title-link" href="/2018/04/11/c-new/" itemprop="url">
+                  new，operate new和placement new
                 </a>
               
             
@@ -323,1425 +323,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-10-30T04:33:54+08:00">
-                2017-10-30
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>##c++主要内存问题及解决方法<br>1、缓冲区溢出<br>solution：使用vector<char>、string或自己编写的BufferClass来管理缓冲区，记录缓冲区的长度，并通过成员函数而不是裸指针修改缓冲区。</char></p>
-<p>2、空悬指针/野指针<br>solution：shared_ptr/weak_ptr</p>
-<p>3、重复释放<br>solution：scoped_ptr，只在对象析构时候释放一次</p>
-<p>4、内存泄漏<br>solution：scoped_ptr，对象析构时候自动释放内存</p>
-<p>5、不配对的new[]/delete<br>solution：把new[]替换为vector/scoped_array</p>
-<p>6、内存碎片<br>solution：todo</p>
-<p>##shared_ptr是否线程安全<br>shared_ptr计数操作是线程安全的，release 1.33.0后在大多数系统中采用无锁的原子操作实现；但对于对象本身的访问不是线程安全的。对于shared_ptr的线程安全问题，boost官方文档中作了详细说明, <a href="http://www.boost.org/doc/libs/1_65_1/libs/smart_ptr/doc/html/smart_ptr.html#shared_ptr" target="_blank" rel="external">http://www.boost.org/doc/libs/1_65_1/libs/smart_ptr/doc/html/smart_ptr.html#shared_ptr</a><br>这里作了下总结：</p>
-<ol>
-<li>多个线程可以同时读一个shared_ptr实例</li>
-<li>不同的线程中可以对不同的shared_ptr实例进行“写操作”（包括operator=、reset、析构）</li>
-<li>一个shared_ptr实例被不同的线程同时读写是不安全的</li>
-</ol>
-<p>代码例子：<br>Reading a shared_ptr from two threads<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">shared_ptr</span>&lt;<span class="keyword">int</span>&gt; p(<span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">42</span>));</div><div class="line"></div><div class="line"><span class="comment">// thread A</span></div><div class="line"><span class="built_in">shared_ptr</span>&lt;<span class="keyword">int</span>&gt; p2(p); <span class="comment">// reads p</span></div><div class="line"></div><div class="line"><span class="comment">// thread B</span></div><div class="line"><span class="built_in">shared_ptr</span>&lt;<span class="keyword">int</span>&gt; p3(p); <span class="comment">// OK, multiple reads are safe</span></div></pre></td></tr></table></figure></p>
-<p>Writing different shared_ptr instances from two threads<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// thread A</span></div><div class="line">p.reset(<span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">1912</span>)); <span class="comment">// writes p</span></div><div class="line"></div><div class="line"><span class="comment">// thread B</span></div><div class="line">p2.reset(); <span class="comment">// OK, writes p2</span></div></pre></td></tr></table></figure></p>
-<p>Reading and writing a shared_ptr from two threads<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// thread A</span></div><div class="line">p = p3; <span class="comment">// reads p3, writes p</span></div><div class="line"></div><div class="line"><span class="comment">// thread B</span></div><div class="line">p3.reset(); <span class="comment">// writes p3; undefined, simultaneous read/write</span></div></pre></td></tr></table></figure></p>
-<p>Reading and destroying a shared_ptr from two threads<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// thread A</span></div><div class="line">p3 = p2; <span class="comment">// reads p2, writes p3</span></div><div class="line"></div><div class="line"><span class="comment">// thread B</span></div><div class="line"><span class="comment">// p2 goes out of scope: undefined, the destructor is considered a "write access"</span></div></pre></td></tr></table></figure></p>
-<p>Writing a shared_ptr from two threads<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// thread A</span></div><div class="line">p3.reset(<span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">1</span>));</div><div class="line"></div><div class="line"><span class="comment">// thread B</span></div><div class="line">p3.reset(<span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">2</span>)); <span class="comment">// undefined, multiple writes</span></div></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/10/16/redis-rdb/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/10/16/redis-rdb/" itemprop="url">
-                  redis-rdb
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-10-17T05:20:47+08:00">
-                2017-10-17
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Reids是一个内存型数据库，所有的数据都存放在内存中。这种模式的缺点就是一旦服务器关闭后会立刻丢失所有存储的数据，Redis当然要避免这种情况的发生，于是其提供了两种持久化机制：RDB和AOF。它们的功能都是将内存中存放的数据保存到磁盘文件上，等到服务器下次开启时能重载数据，以免数据丢失。今天，我们先来剖析一下RDB持久化机制。</p>
-<p>##RDB概述<br>开启一个redis-cli，执行添加数据操作如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">127.0.0.1:6379&gt; flushdb</div><div class="line">OK</div><div class="line">127.0.0.1:6379&gt; set name chris</div><div class="line">OK</div><div class="line">127.0.0.1:6379&gt; save</div><div class="line">OK</div></pre></td></tr></table></figure></p>
-<p>我先开启了一个Redis客户端，清空数据，然后依次添加了一个键值对到数据库，最后通过SAVE文件将数据库中的数据保存到rdb文件中，实现数据的持久化，服务器会显示数据已经存放在磁盘文件上。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">6228:M 17 Oct 05:15:16.846 * DB saved on disk</div></pre></td></tr></table></figure></p>
-<p>保存到磁盘的文件名为dump.rdb，利用od命令就能查看里面的数据<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~/software/redis-3.2.6/src$ od -c dump.rdb </div><div class="line">0000000   R   E   D   I   S   0   0   0   7 372  \t   r   e   d   i   s</div><div class="line">0000020   -   v   e   r 005   3   .   2   .   6 372  \n   r   e   d   i</div><div class="line">0000040   s   -   b   i   t   s 300   @ 372 005   c   t   i   m   e 302</div><div class="line">0000060   T 364 345   Y 372  \b   u   s   e   d   -   m   e   m 302 350</div><div class="line">0000100   H  \b  \0 376  \0 373 001  \0  \0 004   n   a   m   e 005   c</div><div class="line">0000120   h   r   i   s 376 002 373 001  \0  \0 004   n   a   m   e 005</div><div class="line">0000140   c   h   r   i   s 377 326 354   a   i 227   . 350   %</div><div class="line">0000156</div></pre></td></tr></table></figure></p>
-<p><em>RDB文件标识和版本号：REDIS0007
-</em>Redis版本：redis-ver 3.2.3<br><em>Redis系统位数（32位或64位）：redis-bits
-</em>系统时间：ctime<br><em>内存使用量：used-mem
-</em>一组键值对：name-chris</p>
-<p>##RDB文件结构<br>| REDIS | db_version | databases | EOF | checksum | </p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/10/11/jvm04/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/10/11/jvm04/" itemprop="url">
-                  jvm04
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-10-11T23:43:26+08:00">
-                2017-10-11
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>jstat -gcutil 25354 500 3<br>  S0     S1     E      O      P     YGC     YGCT    FGC    FGCT     GCT<br> 96.48   0.00  29.45  57.62  89.07  17974  409.657    18    7.916  417.572<br> 96.48   0.00  30.32  57.62  89.07  17974  409.657    18    7.916  417.572<br> 96.48   0.00  31.14  57.62  89.07  17974  409.657    18    7.916  417.572</p>
-<p>after restart:<br> 3733 work      20   0 6525m 1.4g  18m S  9.3  2.3   1:45.08 java </p>
-<p> jstat -gcutil 3733 500 3<br>  S0     S1     E      O      P     YGC     YGCT    FGC    FGCT     GCT<br>  0.00  21.84  13.14  29.65  97.65     19    0.403     2    0.162    0.565<br>  0.00  21.84  14.02  29.65  97.65     19    0.403     2    0.162    0.565<br>  0.00  21.84  14.42  29.65  97.65     19    0.403     2    0.162    0.565</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/10/11/jvm03/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/10/11/jvm03/" itemprop="url">
-                  jvm03
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-10-11T20:07:21+08:00">
-                2017-10-11
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Sun JVM参数选项的官方文档<br><a href="http://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html" target="_blank" rel="external">http://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/10/10/docker01-install/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/10/10/docker01-install/" itemprop="url">
-                  docker(一)
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-10-11T00:24:11+08:00">
-                2017-10-11
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Docker是一个开源的引擎，可以轻松的为任何应用创建一个轻量级的、可移植的、自给自足的容器。开发者在笔记本上编译测试通过的容器可以批量地在生产环境中部署，包括VMs（虚拟机）、bare metal、OpenStack 集群和其他的基础应用平台。<br>Docker通常用于如下场景：</p>
-<ol>
-<li>web应用的自动化打包和发布；</li>
-<li>自动化测试和持续集成、发布；</li>
-<li>在服务型环境中部署和调整数据库或其他的后台应用；</li>
-<li>从头编译或者扩展现有的OpenShift或Cloud Foundry平台来搭建自己的PaaS环境。</li>
-</ol>
-<h2 id="docker-vs-虚拟机"><a href="#docker-vs-虚拟机" class="headerlink" title="docker vs 虚拟机"></a>docker vs 虚拟机</h2><pre><code>容器与虚拟机拥有着类似的使命：对应用程序及其关联性进行隔离，从而构建起一套能够随处运
-</code></pre><p>行的自容纳单元。此外，容器与虚拟机还摆脱了对物理硬件的需求，允许我们更为高效地使用计算资源，从而提升能源效率与成本效益。<br>　　<br>　　虚拟机会将虚拟硬件、内核（即操作系统）以及用户空间打包在新虚拟机当中，虚拟机能够利用“虚拟机管理程序”运行在物理设备之上。虚拟机依赖于hypervisor，其通常被安装在“裸金属”系统硬件之上，这导致hypervisor在某些方面被认为是一种操作系统。一旦 hypervisor安装完成， 就可以从系统可用计算资源当中分配虚拟机实例了，每台虚拟机都能够获得唯一的操作系统和负载(应用程序)。简言之，虚拟机先需要虚拟一个物理环境，然后构建一个完整的操作系统，再搭建一层Runtime，然后供应用程序运行。<br>　　<br>　　 对于容器环境来说，不需要安装主机操作系统，直接将容器层(比如LXC或libcontainer)安装在主机操作系统(通常是Linux变种)之上。在安装完容器层之后，就可以从系统可用计算资源当中分配容器实例了，并且企业应用可以被部署在容器当中。但是，每个容器化应用都会共享相同的操作系统(单个主机操作系统)。容器可以看成一个装好了一组特定应用的虚拟机，它直接利用了宿主机的内核，抽象层比虚拟机更少，更加轻量化，启动速度极快。</p>
-<p>　　相比于虚拟机，容器拥有更高的资源使用效率，因为它并不需要为每个应用分配单独的操作系统——实例规模更小、创建和迁移速度也更快。这意味相比于虚拟机，单个操作系统能够承载更多的容器。云提供商十分热衷于容器技术，因为在相同的硬件设备当中，可以部署数量更多的容器实例。此外，容器易于迁移，但是只能被迁移到具有兼容操作系统内核的其他服务器当中，这样就会给迁移选择带来限制。<br>　　<br>　　因为容器不像虚拟机那样同样对内核或者虚拟硬件进行打包，所以每套容器都拥有自己的隔离化用户空间，从而使得多套容器能够运行在同一主机系统之上。我们可以看到全部操作系统层级的架构都可实现跨容器共享，惟一需要独立构建的就是二进制文件与库。正因为如此，容器才拥有极为出色的轻量化特性。<br>　　<br>　　对Docker稍有接触的人应该都见过下图，无需更多解释，Docker减少Guest OS这一层级，所以更轻量和更高性能。 </p>
-<p>docker架构图<br><img src="/2017/10/10/docker01-install/virtual_machine.png" alt="virtual machine diagram"></p>
-<p>虚拟机架构图<br><img src="/2017/10/10/docker01-install/docker.png" alt="docker diagram"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/10/09/java-basic01/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/10/09/java-basic01/" itemprop="url">
-                  java基础（一）-编译时类型和运行时类型
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-10-09T20:18:41+08:00">
-                2017-10-09
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Java的引用变量有两个类型，一个是编译时类型，一个是运行时类型，编译时类型由声明该变量时使用的类型决定，运行时类型由实际赋给该变量的对象决定。如果编译时类型和运行时类型不一致，会出现所谓的多态。因为子类其实是一种特殊的父类，因此java允许把一个子类对象直接赋值给一个父类引用变量，无须任何类型转换，或者被称为向上转型，由系统自动完成。</p>
-<pre><code class="Java"><span class="class"><span class="keyword">class</span> <span class="title">Base</span>
-</span>{
-    <span class="keyword">int</span> i = <span class="number">1</span>;
-    Base() {
-        System.out.println(<span class="keyword">this</span>.i);
-        System.out.println(<span class="keyword">this</span>.getClass());
-        <span class="keyword">this</span>.print();
-    }
-
-    <span class="function"><span class="keyword">void</span> <span class="title">print</span><span class="params">()</span> </span>{
-        System.out.println(<span class="string">"Base print:"</span>+i);
-    }
-}
-
-<span class="class"><span class="keyword">class</span> <span class="title">Derived</span> <span class="keyword">extends</span> <span class="title">Base</span>
-</span>{
-    <span class="keyword">int</span> i = <span class="number">2</span>;
-    <span class="function"><span class="keyword">void</span> <span class="title">print</span><span class="params">()</span> </span>{
-        System.out.println(<span class="string">"Derived print:"</span>+i);
-    }
-}
-
-<span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test02</span> </span>{
-    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>{
-        Derived d = <span class="keyword">new</span> Derived();
-    }
-}
-</code></pre>
-<p>运行结果</p>
-<pre><code>1(Base.i)
-class com.java_basic.test01.Derived
-Derived print:0(Derived.print)
-</code></pre><p>Java这里与c++不同之处是，c++的运行时多态依赖virtual关键字，c++中若在Base构造函数中调用print方法，是调用Base的print方法。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/09/25/linux-atomic-variable/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/09/25/linux-atomic-variable/" itemprop="url">
-                  atomic variable
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-09-26T04:59:06+08:00">
-                2017-09-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><a href="http://www.alexonlinux.com/multithreaded-simple-data-type-access-and-atomic-variables#table_of_contents" target="_blank" rel="external">http://www.alexonlinux.com/multithreaded-simple-data-type-access-and-atomic-variables#table_of_contents</a></p>
-<p>##How atomic variables workBACK TO TOC</p>
-<p>Intel的x86和x86_64架构当访问内存时，有锁住前端总线（FSB）的指令，前端总线是处理器和RAM通信的通道，锁住FSB可以阻止其它处理器或进程在当前处理器运行，也可以阻止访问RAM。</p>
-<p>##原子变量的字节数限制<br>Intel的专家建议并不用每次访问内存都要锁住FSB，Intel处理器允许memcpy() and memcmp()允许在一个处理器上执行，但锁住大块内存的代价太大。实际使用中，当访问1, 2, 4, 8字节的整数时可以锁住FSB，gcc支持int、long、long long的原子操作。</p>
-<p>##什么情况下不能使用原子变量<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">decrement_atomic_value();</div><div class="line"><span class="keyword">if</span> (atomic_value() == <span class="number">0</span>)</div><div class="line">    fire_a_gun();</div></pre></td></tr></table></figure></p>
-<p>##gcc支持的原子操作函数<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">type __sync_fetch_and_add (type *ptr, type value);</div><div class="line">type __sync_fetch_and_sub (type *ptr, type value);</div><div class="line">type __sync_fetch_and_or (type *ptr, type value);</div><div class="line">type __sync_fetch_and_and (type *ptr, type value);</div><div class="line">type __sync_fetch_and_xor (type *ptr, type value);</div><div class="line">type __sync_fetch_and_nand (type *ptr, type value);</div><div class="line"></div><div class="line">type __sync_add_and_fetch (type *ptr, type value);</div><div class="line">type __sync_sub_and_fetch (type *ptr, type value);</div><div class="line">type __sync_or_and_fetch (type *ptr, type value);</div><div class="line">type __sync_and_and_fetch (type *ptr, type value);</div><div class="line">type __sync_xor_and_fetch (type *ptr, type value);</div><div class="line">type __sync_nand_and_fetch (type *ptr, type value);</div></pre></td></tr></table></figure></p>
-<p>使用原子操作的例子</p>
-<pre><code class="cpp"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pthread.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sched.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;linux/unistd.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/syscall.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;errno.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span>
-
-<span class="meta">#<span class="meta-keyword">define</span> INC_TO 1000000 <span class="comment">// one million...</span></span>
-
-<span class="keyword">int</span> global_int = <span class="number">0</span>;
-
-<span class="keyword">pid_t</span> gettid( <span class="keyword">void</span> )
-{
-    <span class="keyword">return</span> syscall( __NR_gettid );
-}
-
-<span class="function"><span class="keyword">void</span> *<span class="title">thread_routine</span><span class="params">( <span class="keyword">void</span> *arg )</span>
-</span>{
-    <span class="keyword">int</span> i;
-    <span class="keyword">int</span> proc_num = (<span class="keyword">int</span>)(<span class="keyword">long</span>)arg;
-    <span class="keyword">cpu_set_t</span> <span class="built_in">set</span>;
-
-    CPU_ZERO( &amp;<span class="built_in">set</span> );
-    CPU_SET( proc_num, &amp;<span class="built_in">set</span> );
-
-    <span class="keyword">if</span> (sched_setaffinity( gettid(), <span class="keyword">sizeof</span>( <span class="keyword">cpu_set_t</span> ), &amp;<span class="built_in">set</span> ))
-    {
-        perror( <span class="string">"sched_setaffinity"</span> );
-        <span class="keyword">return</span> <span class="literal">NULL</span>;
-    }
-
-    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; INC_TO; i++)
-    {
-        global_int++;
-        <span class="comment">//__sync_fetch_and_add( &amp;global_int, 1 );</span>
-    }
-
-    <span class="keyword">return</span> <span class="literal">NULL</span>;
-}
-
-<span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span>
-</span>{
-    <span class="keyword">int</span> procs = <span class="number">0</span>;
-    <span class="keyword">int</span> i;
-    <span class="keyword">pthread_t</span> *thrs;
-
-    <span class="comment">// Getting number of CPUs</span>
-    procs = (<span class="keyword">int</span>)sysconf( _SC_NPROCESSORS_ONLN );
-    <span class="keyword">if</span> (procs &lt; <span class="number">0</span>)
-    {
-        perror( <span class="string">"sysconf"</span> );
-        <span class="keyword">return</span> <span class="number">-1</span>;
-    }
-    <span class="keyword">else</span>
-    {
-        <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"cpu nums:"</span> &lt;&lt; procs &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;
-    }
-
-    thrs = (<span class="keyword">pthread_t</span>*)<span class="built_in">malloc</span>( <span class="keyword">sizeof</span>( <span class="keyword">pthread_t</span> ) * procs );
-    <span class="keyword">if</span> (thrs == <span class="literal">NULL</span>)
-    {
-        perror( <span class="string">"malloc"</span> );
-        <span class="keyword">return</span> <span class="number">-1</span>;
-    }
-
-    <span class="built_in">printf</span>( <span class="string">"Starting %d threads...\n"</span>, procs );
-
-    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; procs; i++)
-    {
-        <span class="keyword">if</span> (pthread_create( &amp;thrs[i], <span class="literal">NULL</span>, thread_routine,
-            (<span class="keyword">void</span> *)(<span class="keyword">long</span>)i ))
-        {
-            perror( <span class="string">"pthread_create"</span> );
-            procs = i;
-            <span class="keyword">break</span>;
-        }
-    }
-
-    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; procs; i++)
-        pthread_join( thrs[i], <span class="literal">NULL</span> );
-
-    <span class="built_in">free</span>( thrs );
-
-    <span class="built_in">printf</span>( <span class="string">"After doing all the math, global_int value is: %d\n"</span>,
-        global_int );
-    <span class="built_in">printf</span>( <span class="string">"Expected value is: %d\n"</span>, INC_TO * procs );
-
-    <span class="keyword">return</span> <span class="number">0</span>;
-}
-</code></pre>
-<p>平均耗时90ms</p>
-<p>同样的逻辑使用互斥锁的例子</p>
-<pre><code class="cpp"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pthread.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sched.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;linux/unistd.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/syscall.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;errno.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span>  </span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span> </span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;time.h&gt;</span></span>
-<span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/time.h&gt;</span></span>
-
-<span class="meta">#<span class="meta-keyword">define</span> INC_TO 1000000 <span class="comment">// one million...</span></span>
-
-<span class="keyword">int</span> global_int = <span class="number">0</span>;
-<span class="keyword">pthread_mutex_t</span> mutex;
-
-<span class="keyword">pid_t</span> gettid( <span class="keyword">void</span> )
-{
-    <span class="keyword">return</span> syscall( __NR_gettid );
-}
-
-<span class="keyword">uint64_t</span> get_time()
-{
-    <span class="keyword">struct</span> timeval tv;
-    gettimeofday(&amp;tv, <span class="literal">NULL</span>);
-    <span class="keyword">return</span> tv.tv_sec*<span class="number">1000</span> + tv.tv_usec/<span class="number">1000</span>;
-}
-
-<span class="function"><span class="keyword">void</span> *<span class="title">thread_routine</span><span class="params">( <span class="keyword">void</span> *arg )</span>
-</span>{
-    <span class="keyword">int</span> i;
-    <span class="keyword">int</span> proc_num = (<span class="keyword">int</span>)(<span class="keyword">long</span>)arg;
-    <span class="keyword">cpu_set_t</span> <span class="built_in">set</span>;
-
-    CPU_ZERO( &amp;<span class="built_in">set</span> );
-    CPU_SET( proc_num, &amp;<span class="built_in">set</span> );
-
-    <span class="keyword">if</span> (sched_setaffinity( gettid(), <span class="keyword">sizeof</span>( <span class="keyword">cpu_set_t</span> ), &amp;<span class="built_in">set</span> ))
-    {
-        perror( <span class="string">"sched_setaffinity"</span> );
-        <span class="keyword">return</span> <span class="literal">NULL</span>;
-    }
-
-    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; INC_TO; i++)
-    {
-        pthread_mutex_lock(&amp;mutex);
-        global_int++;
-        pthread_mutex_unlock(&amp;mutex);
-    }
-
-    <span class="keyword">return</span> <span class="literal">NULL</span>;
-}
-
-<span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span>
-</span>{
-    <span class="keyword">int</span> procs = <span class="number">0</span>;
-    <span class="keyword">int</span> i;
-    <span class="keyword">pthread_t</span> *thrs;
-
-    <span class="comment">// Getting number of CPUs</span>
-    procs = (<span class="keyword">int</span>)sysconf( _SC_NPROCESSORS_ONLN );
-    <span class="keyword">if</span> (procs &lt; <span class="number">0</span>)
-    {
-        perror( <span class="string">"sysconf"</span> );
-        <span class="keyword">return</span> <span class="number">-1</span>;
-    }
-    <span class="keyword">else</span>
-    {
-        <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"cpu nums:"</span> &lt;&lt; procs &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;
-    }
-
-    thrs = (<span class="keyword">pthread_t</span>*)<span class="built_in">malloc</span>( <span class="keyword">sizeof</span>( <span class="keyword">pthread_t</span> ) * procs );
-    <span class="keyword">if</span> (thrs == <span class="literal">NULL</span>)
-    {
-        perror( <span class="string">"malloc"</span> );
-        <span class="keyword">return</span> <span class="number">-1</span>;
-    }
-
-    <span class="built_in">printf</span>( <span class="string">"Starting %d threads...\n"</span>, procs );
-    <span class="keyword">uint64_t</span> begin_ts = get_time();
-    pthread_mutex_init(&amp;mutex, <span class="literal">NULL</span>);
-
-    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; procs; i++)
-    {
-        <span class="keyword">if</span> (pthread_create( &amp;thrs[i], <span class="literal">NULL</span>, thread_routine,
-            (<span class="keyword">void</span> *)(<span class="keyword">long</span>)i ))
-        {
-            perror( <span class="string">"pthread_create"</span> );
-            procs = i;
-            <span class="keyword">break</span>;
-        }
-    }
-
-    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; procs; i++)
-        pthread_join( thrs[i], <span class="literal">NULL</span> );
-
-    pthread_mutex_destroy(&amp;mutex);
-    <span class="keyword">uint64_t</span> end_ts = get_time();
-
-    <span class="built_in">printf</span>(<span class="string">"time costs:%lld\n"</span>, (<span class="keyword">long</span> <span class="keyword">long</span> <span class="keyword">int</span>)end_ts-begin_ts);
-    <span class="built_in">free</span>( thrs );
-
-    <span class="built_in">printf</span>( <span class="string">"After doing all the math, global_int value is: %d\n"</span>,
-        global_int );
-    <span class="built_in">printf</span>( <span class="string">"Expected value is: %d\n"</span>, INC_TO * procs );
-
-    <span class="keyword">return</span> <span class="number">0</span>;
-}
-</code></pre>
-<p>平均耗时400ms,可以看出原子操作相比互斥锁有很大的性能优势.</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/09/05/linux-memory-barrier/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/09/05/linux-memory-barrier/" itemprop="url">
-                  linux-memory-barrier
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-09-05T18:36:12+08:00">
-                2017-09-05
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/08/21/java-timer/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/08/21/java-timer/" itemprop="url">
-                  java-timer
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-08-21T15:28:45+08:00">
-                2017-08-21
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="使用Timer类实现"><a href="#使用Timer类实现" class="headerlink" title="使用Timer类实现"></a>使用Timer类实现</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TimerTest</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">getStringDate</span><span class="params">()</span> </span>&#123;</div><div class="line">        Date currentTime = <span class="keyword">new</span> Date();</div><div class="line">        SimpleDateFormat formatter = <span class="keyword">new</span> SimpleDateFormat(<span class="string">"yyyy-MM-dd HH:mm:ss"</span>);</div><div class="line">        String dateString = formatter.format(currentTime);</div><div class="line">        <span class="keyword">return</span> dateString;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">        <span class="keyword">final</span> TimerTask timerTask1 = <span class="keyword">new</span> TimerTask() &#123;</div><div class="line">            <span class="meta">@Override</span></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">try</span> &#123;</div><div class="line">                    System.out.println(<span class="string">"task2 invoked!"</span>+Thread.currentThread().getId());</div><div class="line">                    System.out.println(<span class="string">"begin: "</span>+getStringDate());</div><div class="line">                    <span class="comment">//Thread.sleep(5000L);</span></div><div class="line">                &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">                    e.printStackTrace();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;;</div><div class="line"></div><div class="line">        <span class="keyword">final</span> TimerTask timerTask2 = <span class="keyword">new</span> TimerTask() &#123;</div><div class="line">            <span class="meta">@Override</span></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">try</span> &#123;</div><div class="line">                    System.out.println(<span class="string">"task2 invoked!"</span>+Thread.currentThread().getId());</div><div class="line">                    System.out.println(<span class="string">"begin: "</span>+getStringDate());</div><div class="line">                    <span class="comment">//Thread.sleep(5000L);</span></div><div class="line">                &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">                    e.printStackTrace();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;;</div><div class="line"></div><div class="line">        Timer timer = <span class="keyword">new</span> Timer();<span class="comment">// 实例化Timer</span></div><div class="line">        timer.schedule(timerTask1, <span class="number">8000</span>);</div><div class="line">        timer.schedule(timerTask2, <span class="number">10000</span>);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>Timer<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"></div></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/06/21/pb-CopyFrom/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/06/21/pb-CopyFrom/" itemprop="url">
-                  Protocal Buffer trap 1-CopyFrom
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-06-22T04:22:38+08:00">
-                2017-06-22
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-11T11:48:54+08:00">
+                2018-04-11
               </time>
             
 
@@ -1800,9 +383,1752 @@ Derived print:0(Derived.print)
       
         
           
-            <p>最近在使用pb时遇到了这么一个问题，还是废了不少时间去定位，出现coredump的场景类似下面的代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">Student stu;</div><div class="line">Teacher teacher;</div><div class="line"></div><div class="line">stu.CopyFrom(teacher);</div></pre></td></tr></table></figure></p>
-<p>奇怪的是这样居然可以编译通过，查了pb的源码发现类都是共同的基类Message，而有两个overload版本<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">void CopyFrom(const ::google::protobuf::Message&amp; from);</div><div class="line">void CopyFrom(const Student&amp; from);</div></pre></td></tr></table></figure></p>
-<p>终于恍然大悟了！！</p>
+            <ul>
+<li>new：不能被重载，其行为总是一致的。先调用operator</li>
+<li>new分配内存，然后调用构造函数初始化那段内存。</li>
+<li>operator new：要实现不同的内存分配行为，应该重载operator new，而不是new。</li>
+</ul>
+<p>placement new：只是operator new重载的一个版本。它并不分配内存，只是返回指向已经分配好的某段内存的一个指针。因此在删除该对象时，需要调用对象的析构函数。</p>
+<p>下面重点讲placement new:</p>
+<p>placement new 是重载operator new的一个标准、全局的版本，它不能被自定义的版本代替（不像普通的operator new和operator delete能够被替换成用户自定义的版本）。</p>
+<p>它的原型如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">void *operator new( size_t, void *p ) throw() &#123; return p; &#125;</div></pre></td></tr></table></figure></p>
+<p>首先我们区分下几个容易混淆的关键词：new、operator new、placement new<br>new和delete操作符我们应该都用过，它们是对堆中的内存进行申请和释放，而这两个都是不能被重载的。要实现不同的内存分配行为，需要重载operator new，而不是new和delete。</p>
+<p>看如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">class MyClass &#123;…&#125;;</div><div class="line">MyClass * p=new MyClass;</div></pre></td></tr></table></figure></p>
+<p>这里的new实际上是执行如下3个过程：</p>
+<ol>
+<li>调用operator new分配内存；</li>
+<li>调用构造函数生成类对象；</li>
+<li>返回相应指针。</li>
+</ol>
+<p>operator new就像operator+一样，是可以重载的。如果类中没有重载operator new，那么调用的就是全局的::operator new来完成堆的分配。同理，operator new[]、operator delete、operator delete[]也是可以重载的，一般你重载的其中一个，那么最后把其余的三个都重载一遍。</p>
+<p>至于placement new才是本文的重点。其实它也只是operator new的一个重载的版本，只是我们很少用到它。如果你想在已经分配的内存中创建一个对象，使用new时行不通的。也就是说placement new允许你在一个已经分配好的内存中（栈或者堆中）构造一个新的对象。原型中void*p实际上就是指向一个已经分配好的内存缓冲区的的首地址。</p>
+<p>我们知道使用new操作符分配内存需要在堆中查找足够大的剩余空间，这个操作速度是很慢的，而且有可能出现无法分配 内存的异常（空间不够）。 placement new就可以解决这个问题。我们构造对象都是在一个预先准备好了的内存缓冲区中进行，不需要查找内存，内存分配的时间是常数；而且不会出现在程序运行中途 出现内存不足的异常。所以，placement new非常适合那些对时间要求比较高，长时间运行不希望被打断的应用程序。</p>
+<p>使用方法如下：</p>
+<ol>
+<li><p>缓冲区提前分配<br>可以使用堆的空间，也可以使用栈的空间，所以分配方式有如下两种：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">class MyClass &#123;…&#125;;</div><div class="line">char *buf=new char[N*sizeof(MyClass)+sizeof(int)];或者char buf[N*sizeof(MyClass)+sizeof(int)];</div></pre></td></tr></table></figure>
+</li>
+<li><p>对象的构造</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">MyClass * pClass=new(buf) MyClass;</div></pre></td></tr></table></figure>
+</li>
+<li><p>对象的销毁<br>一旦这个对象使用完毕，你必须显式的调用类的析构函数进行销毁对象。但此时内存空间不会被释放，以便其他的对象的构造。<br>pClass-&gt;~MyClass();</p>
+</li>
+<li><p>内存的释放<br>如果缓冲区在堆中，那么调用delete[] buf;进行内存的释放；如果在栈中，那么在其作用域内有效，跳出作用域，内存自动释放。</p>
+</li>
+</ol>
+<h1 id="注意："><a href="#注意：" class="headerlink" title="注意："></a>注意：</h1><p>在C++标准中，对于placement operator new []有如下的说明： placement operator new[] needs implementation-defined amount of additional storage to save a size of array. 所以我们必须申请比原始对象大小多出sizeof(int)个字节来存放对象的个数，或者说数组的大小。<br>使用方法第二步中的new才是placement new，其实是没有申请内存的，只是调用了构造函数，返回一个指向已经分配好的内存的一个指针，所以对象销毁的时候不需要调用delete释放空间，但必须调用析构函数销毁对象。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/04/09/linux-atomic-instructions/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/04/09/linux-atomic-instructions/" itemprop="url">
+                  原子操作剖析
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-09T18:07:55+08:00">
+                2018-04-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>我们都知道多核编程常用锁避免多个线程在修改同一个数据时产生<a href="http://en.wikipedia.org/wiki/Race_condition" target="_blank" rel="external">race condition</a>。当锁成为性能瓶颈时，我们又总想试着绕开它，而不可避免地接触了原子指令。但在实践中，用原子指令写出正确的代码是一件非常困难的事，琢磨不透的race condition、<a href="https://en.wikipedia.org/wiki/ABA_problem" target="_blank" rel="external">ABA problem</a>、<a href="https://en.wikipedia.org/wiki/Memory_barrier" target="_blank" rel="external">memory fence</a>很烧脑，这篇文章试图通过介绍<a href="http://en.wikipedia.org/wiki/Symmetric_multiprocessing" target="_blank" rel="external">SMP</a>架构下的原子指令帮助大家入门。C++11正式引入了<a href="http://en.cppreference.com/w/cpp/atomic/atomic" target="_blank" rel="external">原子指令</a>，我们就以其语法描述。</p>
+<p>顾名思义，原子指令是<strong>对软件</strong>不可再分的指令，比如x.fetch_add(n)指原子地给x加上n，这个指令<strong>对软件</strong>要么没做，要么完成，不会观察到中间状态。常见的原子指令有：</p>
+<table>
+<thead>
+<tr>
+<th>原子指令 (x均为std::atomic<int>)</int></th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>x.load()</td>
+<td>返回x的值。</td>
+</tr>
+<tr>
+<td>x.store(n)</td>
+<td>把x设为n，什么都不返回。</td>
+</tr>
+<tr>
+<td>x.exchange(n)</td>
+<td>把x设为n，返回设定之前的值。</td>
+</tr>
+<tr>
+<td>x.compare_exchange_strong(expected_ref, desired)</td>
+<td>若x等于expected_ref，则设为desired，返回成功；否则把最新值写入expected_ref，返回失败。</td>
+</tr>
+<tr>
+<td>x.compare_exchange_weak(expected_ref, desired)</td>
+<td>相比compare_exchange_strong可能有<a href="http://en.wikipedia.org/wiki/Spurious_wakeup" target="_blank" rel="external">spurious wakeup</a>。</td>
+</tr>
+<tr>
+<td>x.fetch_add(n), x.fetch_sub(n)</td>
+<td>原子地做x += n, x-= n，返回修改之前的值。</td>
+</tr>
+</tbody>
+</table>
+<p>你已经可以用这些指令做原子计数，比如多个线程同时累加一个原子变量，以统计这些线程对一些资源的操作次数。但是，这可能会有两个问题：</p>
+<ul>
+<li>这个操作没有你想象地快。</li>
+<li>如果你尝试通过看似简单的原子操作控制对一些资源的访问，你的程序有很大几率会crash。</li>
+</ul>
+<h1 id="Cacheline"><a href="#Cacheline" class="headerlink" title="Cacheline"></a>Cacheline</h1><p>没有任何竞争或只被一个线程访问的原子操作是比较快的，“竞争”指的是多个线程同时访问同一个<a href="https://en.wikipedia.org/wiki/CPU_cache#Cache_entries" target="_blank" rel="external">cacheline</a>。现代CPU为了以低价格获得高性能，大量使用了cache，并把cache分了多级。常见的Intel E5-2620拥有32K的L1 dcache和icache，256K的L2 cache和15M的L3 cache。其中L1和L2 cache为每个核心独有，L3则所有核心共享。一个核心写入自己的L1 cache是极快的(4 cycles, ~2ns)，但当另一个核心读或写同一处内存时，它得确认看到其他核心中对应的cacheline。对于软件来说，这个过程是原子的，不能在中间穿插其他代码，只能等待CPU完成<a href="https://en.wikipedia.org/wiki/Cache_coherence" target="_blank" rel="external">一致性同步</a>，这个复杂的硬件算法使得原子操作会变得很慢，在E5-2620上竞争激烈时fetch_add会耗费700纳秒左右。访问被多个线程频繁共享的内存往往是比较慢的。比如像一些场景临界区看着很小，但保护它的spinlock性能不佳，因为spinlock使用的exchange, fetch_add等指令必须等待最新的cacheline，看上去只有几条指令，花费若干微秒并不奇怪。</p>
+<p>要提高性能，就要避免让CPU频繁同步cacheline。这不单和原子指令本身的性能有关，还会影响到程序的整体性能。最有效的解决方法很直白：<strong>尽量避免共享</strong>。</p>
+<ul>
+<li>一个依赖全局多生产者多消费者队列(MPMC)的程序难有很好的多核扩展性，因为这个队列的极限吞吐取决于同步cache的延时，而不是核心的个数。最好是用多个SPMC或多个MPSC队列，甚至多个SPSC队列代替，在源头就规避掉竞争。</li>
+<li>另一个例子是计数器，如果所有线程都频繁修改一个计数器，性能就会很差，原因同样在于不同的核心在不停地同步同一个cacheline。如果这个计数器只是用作打打日志之类的，那我们完全可以让每个线程修改thread-local变量，在需要时再合并所有线程中的值，性能可能有<a href="bvar.md">几十倍的差别</a>。</li>
+</ul>
+<p>一个相关的编程陷阱是false sharing：对那些不怎么被修改甚至只读变量的访问，由于同一个cacheline中的其他变量被频繁修改，而不得不经常等待cacheline同步而显著变慢了。多线程中的变量尽量按访问规律排列，频繁被其他线程修改的变量要放在独立的cacheline中。要让一个变量或结构体按cacheline对齐，可以include \<butil macros.h\="">后使用BAIDU_CACHELINE_ALIGNMENT宏，请自行grep brpc的代码了解用法。</butil></p>
+<h1 id="Memory-fence"><a href="#Memory-fence" class="headerlink" title="Memory fence"></a>Memory fence</h1><p>仅靠原子技术实现不了对资源的访问控制，即使简单如<a href="https://en.wikipedia.org/wiki/Spinlock" target="_blank" rel="external">spinlock</a>或<a href="https://en.wikipedia.org/wiki/Reference_counting" target="_blank" rel="external">引用计数</a>，看上去正确的代码也可能会crash。这里的关键在于<strong>重排指令</strong>导致了读写顺序的变化。只要没有依赖，代码中在后面的指令就可能跑到前面去，<a href="http://preshing.com/20120625/memory-ordering-at-compile-time/" target="_blank" rel="external">编译器</a>和<a href="https://en.wikipedia.org/wiki/Out-of-order_execution" target="_blank" rel="external">CPU</a>都会这么做。</p>
+<p>这么做的动机非常自然，CPU要尽量塞满每个cycle，在单位时间内运行尽量多的指令。如上节中提到的，访存指令在等待cacheline同步时要花费数百纳秒，最高效地自然是同时同步多个cacheline，而不是一个个做。一个线程在代码中对多个变量的依次修改，可能会以不同的次序同步到另一个线程所在的核心上。不同线程对数据的需求不同，按需同步也会导致cacheline的读序和写序不同。</p>
+<p>如果其中第一个变量扮演了开关的作用，控制对后续变量的访问。那么当这些变量被一起同步到其他核心时，更新顺序可能变了，第一个变量未必是第一个更新的，然而其他线程还认为它代表着其他变量有效，去访问了实际已被删除的变量，从而导致未定义的行为。比如下面的代码片段：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Thread 1</span></div><div class="line"><span class="comment">// ready was initialized to false</span></div><div class="line">p.init();</div><div class="line">ready = <span class="literal">true</span>;</div></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Thread2</span></div><div class="line"><span class="keyword">if</span> (ready) &#123;</div><div class="line">    p.bar();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>从人的角度，这是对的，因为线程2在ready为true时才会访问p，按线程1的逻辑，此时p应该初始化好了。但对多核机器而言，这段代码可能难以正常运行：</p>
+<ul>
+<li>线程1中的ready = true可能会被编译器或cpu重排到p.init()之前，从而使线程2看到ready为true时，p仍然未初始化。这种情况同样也会在线程2中发生，p.bar()中的一些代码可能被重排到检查ready之前。</li>
+<li>即使没有重排，ready和p的值也会独立地同步到线程2所在核心的cache，线程2仍然可能在看到ready为true时看到未初始化的p。</li>
+</ul>
+<p>注：x86/x64的load带acquire语意，store带release语意，上面的代码刨除编译器和CPU因素可以正确运行。</p>
+<p>通过这个简单例子，你可以窥见原子指令编程的复杂性了吧。为了解决这个问题，CPU和编译器提供了<a href="http://en.wikipedia.org/wiki/Memory_barrier" target="_blank" rel="external">memory fence</a>，让用户可以声明访存指令间的可见性(visibility)关系，boost和C++11对memory fence做了抽象，总结为如下几种<a href="http://en.cppreference.com/w/cpp/atomic/memory_order" target="_blank" rel="external">memory order</a>.</p>
+<table>
+<thead>
+<tr>
+<th>memory order</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>memory_order_relaxed</td>
+<td>没有fencing作用</td>
+</tr>
+<tr>
+<td>memory_order_consume</td>
+<td>后面依赖此原子变量的访存指令勿重排至此条指令之前</td>
+</tr>
+<tr>
+<td>memory_order_acquire</td>
+<td>后面访存指令勿重排至此条指令之前</td>
+</tr>
+<tr>
+<td>memory_order_release</td>
+<td>前面访存指令勿重排至此条指令之后。当此条指令的结果对其他线程可见后，之前的所有指令都可见</td>
+</tr>
+<tr>
+<td>memory_order_acq_rel</td>
+<td>acquire + release语意</td>
+</tr>
+<tr>
+<td>memory_order_seq_cst</td>
+<td>acq_rel语意外加所有使用seq_cst的指令有严格地全序关系</td>
+</tr>
+</tbody>
+</table>
+<p>有了memory order，上面的例子可以这么更正：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Thread1</span></div><div class="line"><span class="comment">// ready was initialized to false</span></div><div class="line">p.init();</div><div class="line">ready.store(<span class="literal">true</span>, <span class="built_in">std</span>::memory_order_release);</div></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Thread2</span></div><div class="line"><span class="keyword">if</span> (ready.load(<span class="built_in">std</span>::memory_order_acquire)) &#123;</div><div class="line">    p.bar();</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>线程2中的acquire和线程1的release配对，确保线程2在看到ready==true时能看到线程1 release之前所有的访存操作。</p>
+<p>注意，memory fence不等于可见性，即使线程2恰好在线程1在把ready设置为true后读取了ready也不意味着它能看到true，因为同步cache是有延时的。memory fence保证的是可见性的顺序：“假如我看到了a的最新值，那么我一定也得看到b的最新值”。</p>
+<p>一个相关问题是：如何知道看到的值是新还是旧？一般分两种情况：</p>
+<ul>
+<li>值是特殊的。比如在上面的例子中，ready=true是个特殊值，只要线程2看到ready为true就意味着更新了。只要设定了特殊值，读到或没有读到特殊值都代表了一种含义。</li>
+<li>总是累加。一些场景下没有特殊值，那我们就用fetch_add之类的指令累加一个变量，只要变量的值域足够大，在很长一段时间内，新值和之前所有的旧值都会不相同，我们就能区分彼此了。</li>
+</ul>
+<p>原子指令的例子可以看boost.atomic的<a href="http://www.boost.org/doc/libs/1_56_0/doc/html/atomic/usage_examples.html" target="_blank" rel="external">Example</a>，atomic的官方描述可以看<a href="http://en.cppreference.com/w/cpp/atomic/atomic" target="_blank" rel="external">这里</a>。</p>
+<h1 id="wait-free-amp-lock-free"><a href="#wait-free-amp-lock-free" class="headerlink" title="wait-free &amp; lock-free"></a>wait-free &amp; lock-free</h1><p>原子指令能为我们的服务赋予两个重要属性：<a href="http://en.wikipedia.org/wiki/Non-blocking_algorithm#Wait-freedom" target="_blank" rel="external">wait-free</a>和<a href="http://en.wikipedia.org/wiki/Non-blocking_algorithm#Lock-freedom" target="_blank" rel="external">lock-free</a>。前者指不管OS如何调度线程，每个线程都始终在做有用的事；后者比前者弱一些，指不管OS如何调度线程，至少有一个线程在做有用的事。如果我们的服务中使用了锁，那么OS可能把一个刚获得锁的线程切换出去，这时候所有依赖这个锁的线程都在等待，而没有做有用的事，所以用了锁就不是lock-free，更不会是wait-free。为了确保一件事情总在确定时间内完成，实时系统的关键代码至少是lock-free的。在百度广泛又多样的在线服务中，对时效性也有着严苛的要求，如果RPC中最关键的部分满足wait-free或lock-free，就可以提供更稳定的服务质量。事实上，brpc中的读写都是wait-free的。</p>
+<p>值得提醒的是，常见想法是lock-free或wait-free的算法会更快，但事实可能相反，因为：</p>
+<ul>
+<li>lock-free和wait-free必须处理更多更复杂的race condition和ABA problem，完成相同目的的代码比用锁更复杂。代码越多，耗时就越长。</li>
+<li>使用mutex的算法变相带“后退”效果。后退(backoff)指出现竞争时尝试另一个途径以临时避免竞争，mutex出现竞争时会使调用者睡眠，使拿到锁的那个线程可以很快地独占完成一系列流程，总体吞吐可能反而高了。</li>
+</ul>
+<p>mutex导致低性能往往是因为临界区过大（限制了并发度），或竞争过于激烈（上下文切换开销变得突出）。lock-free/wait-free算法的价值在于其保证了一个或所有线程始终在做有用的事，而不是绝对的高性能。但在一种情况下lock-free和wait-free算法的性能多半更高：就是算法本身可以用少量原子指令实现。实现锁也是要用原子指令的，当算法本身用一两条指令就能完成的时候，相比额外用锁肯定是更快了。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/04/03/redis-persistence/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/04/03/redis-persistence/" itemprop="url">
+                  深入理解Redis持久化
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-03T15:17:09+08:00">
+                2018-04-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Redis/" itemprop="url" rel="index">
+                    <span itemprop="name">Redis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="Redis-持久化"><a href="#Redis-持久化" class="headerlink" title="Redis 持久化"></a>Redis 持久化</h1><p>Redis 提供了多种不同级别的持久化方式：</p>
+<p>RDB 持久化可以在指定的时间间隔内生成数据集的时间点快照（point-in-time snapshot）。<br>AOF 持久化记录服务器执行的所有写操作命令，并在服务器启动时，通过重新执行这些命令来还原数据集。 AOF 文件中的命令全部以 Redis 协议的格式来保存，新命令会被追加到文件的末尾。 Redis 还可以在后台对 AOF 文件进行重写（rewrite），使得 AOF 文件的体积不会超出保存数据集状态所需的实际大小。<br>Redis 还可以同时使用 AOF 持久化和 RDB 持久化。 在这种情况下， 当 Redis 重启时， 它会优先使用 AOF 文件来还原数据集， 因为 AOF 文件保存的数据集通常比 RDB 文件所保存的数据集更完整。<br>你甚至可以关闭持久化功能，让数据只在服务器运行时存在。<br>了解 RDB 持久化和 AOF 持久化之间的异同是非常重要的， 以下几个小节将详细地介绍这这两种持久化功能， 并对它们的相同和不同之处进行说明。</p>
+<h1 id="RDB-的优点"><a href="#RDB-的优点" class="headerlink" title="RDB 的优点"></a>RDB 的优点</h1><p>RDB 是一个非常紧凑（compact）的文件，它保存了 Redis 在某个时间点上的数据集。 这种文件非常适合用于进行备份： 比如说，你可以在最近的 24 小时内，每小时备份一次 RDB 文件，并且在每个月的每一天，也备份一个 RDB 文件。 这样的话，即使遇上问题，也可以随时将数据集还原到不同的版本。</p>
+<p>RDB 非常适用于灾难恢复（disaster recovery）：它只有一个文件，并且内容都非常紧凑，可以（在加密后）将它传送到别的数据中心，或者亚马逊 S3 中。</p>
+<p>RDB 可以最大化 Redis 的性能：父进程在保存 RDB 文件时唯一要做的就是 fork 出一个子进程，然后这个子进程就会处理接下来的所有保存工作，父进程无须执行任何磁盘 I/O 操作。</p>
+<p>RDB 在恢复大数据集时的速度比 AOF 的恢复速度要快。</p>
+<h1 id="RDB-的缺点"><a href="#RDB-的缺点" class="headerlink" title="RDB 的缺点"></a>RDB 的缺点</h1><p>如果你需要尽量避免在服务器故障时丢失数据，那么 RDB 不适合你。 虽然 Redis 允许你设置不同的保存点（save point）来控制保存 RDB 文件的频率， 但是， 因为RDB 文件需要保存整个数据集的状态， 所以它并不是一个轻松的操作。 因此你可能会至少 5 分钟才保存一次 RDB 文件。 在这种情况下， 一旦发生故障停机， 你就可能会丢失好几分钟的数据。</p>
+<p>每次保存 RDB 的时候，Redis 都要 fork() 出一个子进程，并由子进程来进行实际的持久化工作。 在数据集比较庞大时， fork() 可能会非常耗时，造成服务器在某某毫秒内停止处理客户端； 如果数据集非常巨大，并且 CPU 时间非常紧张的话，那么这种停止时间甚至可能会长达整整一秒。 虽然 AOF 重写也需要进行 fork() ，但无论 AOF 重写的执行间隔有多长，数据的耐久性都不会有任何损失。</p>
+<h1 id="AOF-的优点"><a href="#AOF-的优点" class="headerlink" title="AOF 的优点"></a>AOF 的优点</h1><p>使用 AOF 持久化会让 Redis 变得非常耐久（much more durable）：你可以设置不同的 fsync策略，比如无 fsync，每秒钟一次 fsync，或者每次执行写入命令时 fsync 。</p>
+<p>AOF 的默认策略为每秒钟 fsync 一次，在这种配置下，Redis 仍然可以保持良好的性能，并且就算发生故障停机，也最多只会丢失一秒钟的数据（ fsync<br>会在后台线程执行，所以主线程可以继续努力地处理命令请求）。</p>
+<p>AOF 文件是一个只进行追加操作的日志文件（append only log）， 因此对 AOF 文件的写入不需要进行 seek， 即使日志因为某些原因而包含了未写入完整的命令（比如写入时磁盘已满，写入中途停机，等等）， redis-check-aof<br>工具也可以轻易地修复这种问题。</p>
+<p>Redis 可以在 AOF 文件体积变得过大时，自动地在后台对 AOF 进行重写： 重写后的新 AOF 文件包含了恢复当前数据集所需的最小命令集合。 整个重写操作是绝对安全的，因为 Redis 在创建新 AOF 文件的过程中，会继续将命令追加到现有的 AOF 文件里面，即使重写过程中发生停机，现有的 AOF 文件也不会丢失。 而一旦新 AOF 文件创建完毕，Redis 就会从旧 AOF 文件切换到新 AOF 文件，并开始对新 AOF 文件进行追加操作。</p>
+<p>AOF 文件有序地保存了对数据库执行的所有写入操作， 这些写入操作以 Redis 协议的格式保存， 因此 AOF 文件的内容非常容易被人读懂， 对文件进行分析（parse）也很轻松。 导出（export） AOF 文件也非常简单： 举个例子， 如果你不小心执行了 FLUSHALL 命令， 但只要 AOF 文件未被重写， 那么只要停止服务器， 移除 AOF 文件末尾的 FLUSHALL 命令， 并重启 Redis ， 就可以将数据集恢复到 FLUSHALL 执行之前的状态。</p>
+<h1 id="AOF-的缺点"><a href="#AOF-的缺点" class="headerlink" title="AOF 的缺点"></a>AOF 的缺点</h1><p>对于相同的数据集来说，AOF 文件的体积通常要大于 RDB 文件的体积。<br>根据所使用的 fsync策略，AOF 的速度可能会慢于 RDB 。 在一般情况下， 每秒 fsync的性能依然非常高， 而关闭 fsync可以让 AOF 的速度和 RDB 一样快， 即使在高负荷之下也是如此。 不过在处理巨大的写入载入时，RDB 可以提供更有保证的最大延迟时间（latency）。</p>
+<p>AOF 在过去曾经发生过这样的 bug ： 因为个别命令的原因，导致 AOF 文件在重新载入时，无法将数据集恢复成保存时的原样。 （举个例子，阻塞命令 BRPOPLPUSH 就曾经引起过这样的 bug 。） 测试套件里为这种情况添加了测试： 它们会自动生成随机的、复杂的数据集， 并通过重新载入这些数据来确保一切正常。 虽然这种 bug 在 AOF 文件中并不常见， 但是对比来说， RDB 几乎是不可能出现这种 bug 的。</p>
+<h1 id="RDB-和-AOF-，我应该用哪一个？"><a href="#RDB-和-AOF-，我应该用哪一个？" class="headerlink" title="RDB 和 AOF ，我应该用哪一个？"></a>RDB 和 AOF ，我应该用哪一个？</h1><p>一般来说， 如果想达到足以媲美 PostgreSQL 的数据安全性， 你应该同时使用两种持久化功能。</p>
+<p>如果你非常关心你的数据， 但仍然可以承受数分钟以内的数据丢失， 那么你可以只使用 RDB 持久化。</p>
+<p>有很多用户都只使用 AOF 持久化， 但我们并不推荐这种方式： 因为定时生成 RDB 快照（snapshot）非常便于进行数据库备份， 并且 RDB 恢复数据集的速度也要比 AOF 恢复的速度要快， 除此之外， 使用 RDB 还可以避免之前提到的 AOF 程序的 bug 。</p>
+<p>因为以上提到的种种原因， 未来我们可能会将 AOF 和 RDB 整合成单个持久化模型。 （这是一个长期计划。）<br>接下来的几个小节将介绍 RDB 和 AOF 的更多细节。</p>
+<h1 id="RDB-快照"><a href="#RDB-快照" class="headerlink" title="RDB 快照"></a>RDB 快照</h1><p>在默认情况下， Redis 将数据库快照保存在名字为 dump.rdb的二进制文件中。</p>
+<p>你可以对 Redis 进行设置， 让它在“ N秒内数据集至少有 M个改动”这一条件被满足时， 自动保存一次数据集。</p>
+<p>你也可以通过调用 SAVE 或者 BGSAVE ， 手动让 Redis 进行数据集保存操作。</p>
+<p>比如说， 以下设置会让 Redis 在满足“ 60秒内有至少有 1000个键被改动”这一条件时， 自动保存一次数据集：<br>save 60 1000</p>
+<p>这种持久化方式被称为快照（snapshot）。</p>
+<h1 id="快照的运作方式"><a href="#快照的运作方式" class="headerlink" title="快照的运作方式"></a>快照的运作方式</h1><p>当 Redis 需要保存 dump.rdb 文件时， 服务器执行以下操作：</p>
+<p>Redis 调用 fork() ，同时拥有父进程和子进程。<br>子进程将数据集写入到一个临时 RDB 文件中。<br>当子进程完成对新 RDB 文件的写入时，Redis 用新 RDB 文件替换原来的 RDB 文件，并删除旧的 RDB 文件。<br>这种工作方式使得 Redis 可以从写时复制（copy-on-write）机制中获益。</p>
+<h1 id="只进行追加操作的文件（append-only-file，AOF）"><a href="#只进行追加操作的文件（append-only-file，AOF）" class="headerlink" title="只进行追加操作的文件（append-only file，AOF）"></a>只进行追加操作的文件（append-only file，AOF）</h1><p>快照功能并不是非常耐久（durable）： 如果 Redis 因为某些原因而造成故障停机， 那么服务器将丢失最近写入、且仍未保存到快照中的那些数据。</p>
+<p>尽管对于某些程序来说， 数据的耐久性并不是最重要的考虑因素， 但是对于那些追求完全耐久能力（full durability）的程序来说， 快照功能就不太适用了。</p>
+<p>从 1.1 版本开始， Redis 增加了一种完全耐久的持久化方式： AOF 持久化。</p>
+<p>你可以通过修改配置文件来打开 AOF 功能：</p>
+<p>appendonly yes</p>
+<p>从现在开始， 每当 Redis 执行一个改变数据集的命令时（比如 SET）， 这个命令就会被追加到 AOF 文件的末尾。</p>
+<p>这样的话， 当 Redis 重新启时， 程序就可以通过重新执行 AOF 文件中的命令来达到重建数据集的目的。</p>
+<h1 id="AOF-重写"><a href="#AOF-重写" class="headerlink" title="AOF 重写"></a>AOF 重写</h1><p>因为 AOF 的运作方式是不断地将命令追加到文件的末尾， 所以随着写入命令的不断增加， AOF 文件的体积也会变得越来越大。</p>
+<p>举个例子， 如果你对一个计数器调用了 100 次 INCR ， 那么仅仅是为了保存这个计数器的当前值， AOF 文件就需要使用 100 条记录（entry）。</p>
+<p>然而在实际上， 只使用一条 SET 命令已经足以保存计数器的当前值了， 其余 99 条记录实际上都是多余的。</p>
+<p>为了处理这种情况， Redis 支持一种有趣的特性： 可以在不打断服务客户端的情况下， 对 AOF 文件进行重建（rebuild）。</p>
+<p>执行 BGREWRITEAOF 命令， Redis 将生成一个新的 AOF 文件， 这个文件包含重建当前数据集所需的最少命令。</p>
+<p>Redis 2.2 需要自己手动执行 BGREWRITEAOF 命令； Redis 2.4 则可以自动触发 AOF 重写， 具体信息请查看 2.4 的示例配置文件</p>
+<h1 id="AOF-有多耐久？"><a href="#AOF-有多耐久？" class="headerlink" title="AOF 有多耐久？"></a>AOF 有多耐久？</h1><p>你可以配置 Redis 多久才将数据 fsync 到磁盘一次。</p>
+<p>有三个选项：</p>
+<p>每次有新命令追加到 AOF 文件时就执行一次 fsync ：非常慢，也非常安全。<br>每秒 fsync 一次：足够快（和使用 RDB 持久化差不多），并且在故障时只会丢失 1 秒钟的数据。<br>从不 fsync ：将数据交给操作系统来处理。更快，也更不安全的选择。<br>推荐（并且也是默认）的措施为每秒 fsync 一次， 这种 fsync 策略可以兼顾速度和安全性。</p>
+<p>总是 fsync 的策略在实际使用中非常慢， 即使在 Redis 2.0 对相关的程序进行了改进之后仍是如此 —— 频繁调用 fsync 注定了这种策略不可能快得起来。</p>
+<h1 id="如果-AOF-文件出错了，怎么办？-http-doc-redisfans-com-topic-persistence-html-id9"><a href="#如果-AOF-文件出错了，怎么办？-http-doc-redisfans-com-topic-persistence-html-id9" class="headerlink" title="如果 AOF 文件出错了，怎么办？(http://doc.redisfans.com/topic/persistence.html#id9)"></a>如果 AOF 文件出错了，怎么办？(<a href="http://doc.redisfans.com/topic/persistence.html#id9" target="_blank" rel="external">http://doc.redisfans.com/topic/persistence.html#id9</a>)</h1><p>服务器可能在程序正在对 AOF 文件进行写入时停机， 如果停机造成了 AOF 文件出错（corrupt）， 那么 Redis 在重启时会拒绝载入这个 AOF 文件， 从而确保数据的一致性不会被破坏。</p>
+<p>当发生这种情况时， 可以用以下方法来修复出错的 AOF 文件：</p>
+<p>为现有的 AOF 文件创建一个备份。<br>使用 Redis 附带的 redis-check-aof 程序，对原来的 AOF 文件进行修复。<br> $ redis-check-aof –fix</p>
+<p>（可选）使用 diff -u 对比修复后的 AOF 文件和原始 AOF 文件的备份，查看两个文件之间的不同之处。<br>重启 Redis 服务器，等待服务器载入修复后的 AOF 文件，并进行数据恢复。</p>
+<h1 id="AOF-的运作方式"><a href="#AOF-的运作方式" class="headerlink" title="AOF 的运作方式"></a>AOF 的运作方式</h1><p>AOF 重写和 RDB 创建快照一样，都巧妙地利用了写时复制机制。</p>
+<p>以下是 AOF 重写的执行步骤：</p>
+<p>Redis 执行 fork() ，现在同时拥有父进程和子进程。</p>
+<p>子进程开始将新 AOF 文件的内容写入到临时文件。</p>
+<p>对于所有新执行的写入命令，父进程一边将它们累积到一个内存缓存中，一边将这些改动追加到现有 AOF 文件的末尾： 这样即使在重写的中途发生停机，现有的 AOF 文件也还是安全的。</p>
+<p>当子进程完成重写工作时，它给父进程发送一个信号，父进程在接收到信号之后，将内存缓存中的所有数据追加到新 AOF 文件的末尾。</p>
+<p>搞定！现在 Redis 原子地用新文件替换旧文件，之后所有命令都会直接追加到新 AOF 文件的末尾。</p>
+<h1 id="怎么从-RDB-持久化切换到-AOF-持久化"><a href="#怎么从-RDB-持久化切换到-AOF-持久化" class="headerlink" title="怎么从 RDB 持久化切换到 AOF 持久化"></a>怎么从 RDB 持久化切换到 AOF 持久化</h1><p>在 Redis 2.2 或以上版本，可以在不重启的情况下，从 RDB 切换到 AOF ：</p>
+<p>为最新的 dump.rdb 文件创建一个备份。<br>将备份放到一个安全的地方。<br>执行以下两条命令：<br> redis-cli&gt; CONFIG SET appendonly yes<br> redis-cli&gt; CONFIG SET save “”</p>
+<p>确保命令执行之后，数据库的键的数量没有改变。<br>确保写命令会被正确地追加到 AOF 文件的末尾。<br>步骤 3 执行的第一条命令开启了 AOF 功能： Redis 会阻塞直到初始 AOF 文件创建完成为止， 之后 Redis 会继续处理命令请求， 并开始将写入命令追加到 AOF 文件末尾。</p>
+<p>步骤 3 执行的第二条命令用于关闭 RDB 功能。 这一步是可选的， 如果你愿意的话， 也可以同时使用 RDB 和 AOF 这两种持久化功能。</p>
+<h1 id="RDB-和-AOF-之间的相互作用"><a href="#RDB-和-AOF-之间的相互作用" class="headerlink" title="RDB 和 AOF 之间的相互作用"></a>RDB 和 AOF 之间的相互作用</h1><p>在版本号大于等于 2.4 的 Redis 中， BGSAVE 执行的过程中， 不可以执行 BGREWRITEAOF 。 反过来说， 在 BGREWRITEAOF 执行的过程中， 也不可以执行 BGSAVE 。</p>
+<p>这可以防止两个 Redis 后台进程同时对磁盘进行大量的 I/O 操作。</p>
+<p>如果 BGSAVE 正在执行， 并且用户显示地调用 BGREWRITEAOF 命令， 那么服务器将向用户回复一个 OK状态， 并告知用户，BGREWRITEAOF 已经被预定执行： 一旦 BGSAVE 执行完毕， BGREWRITEAOF 就会正式开始。</p>
+<p>当 Redis 启动时， 如果 RDB 持久化和 AOF 持久化都被打开了， 那么程序会优先使用 AOF 文件来恢复数据集， 因为 AOF 文件所保存的数据通常是最完整的。</p>
+<h1 id="备份-Redis-数据"><a href="#备份-Redis-数据" class="headerlink" title="备份 Redis 数据"></a>备份 Redis 数据</h1><p>在阅读这个小节前， 先将下面这句话铭记于心： 一定要备份你的数据库！</p>
+<p>磁盘故障， 节点失效， 诸如此类的问题都可能让你的数据消失不见， 不进行备份是非常危险的。</p>
+<p>Redis 对于数据备份是非常友好的， 因为你可以在服务器运行的时候对 RDB 文件进行复制： RDB 文件一旦被创建， 就不会进行任何修改。 当服务器要创建一个新的 RDB 文件时， 它先将文件的内容保存在一个临时文件里面， 当临时文件写入完毕时， 程序才使用 rename(2) 原子地用临时文件替换原来的 RDB 文件。</p>
+<p>这也就是说， 无论何时， 复制 RDB 文件都是绝对安全的。</p>
+<p>以下是我们的建议：</p>
+<p>创建一个定期任务（cron job）， 每小时将一个 RDB 文件备份到一个文件夹， 并且每天将一个 RDB 文件备份到另一个文件夹。<br>确保快照的备份都带有相应的日期和时间信息， 每次执行定期任务脚本时， 使用 find 命令来删除过期的快照： 比如说， 你可以保留最近 48 小时内的每小时快照， 还可以保留最近一两个月的每日快照。<br>至少每天一次， 将 RDB 备份到你的数据中心之外， 或者至少是备份到你运行 Redis 服务器的物理机器之外。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/30/linux-signal/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/30/linux-signal/" itemprop="url">
+                  signal
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-30T16:30:12+08:00">
+                2018-03-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h1><p>信号是软件中断。很多比较重要的应用程序都需处理信号。首先，每个信号都有一个名字。这些名字都以三个字符 SIG 开头。在头文件 <signal.h> 中，这些信号都被定义为正整数（信号编号）。</signal.h></p>
+<h1 id="所有信号名称"><a href="#所有信号名称" class="headerlink" title="所有信号名称"></a>所有信号名称</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~/myspace/myblog$ kill -l</div><div class="line"> 1) SIGHUP	 2) SIGINT	 3) SIGQUIT	 4) SIGILL	 5) SIGTRAP</div><div class="line"> 6) SIGABRT	 7) SIGBUS	 8) SIGFPE	 9) SIGKILL	10) SIGUSR1</div><div class="line">11) SIGSEGV	12) SIGUSR2	13) SIGPIPE	14) SIGALRM	15) SIGTERM</div><div class="line">16) SIGSTKFLT	17) SIGCHLD	18) SIGCONT	19) SIGSTOP	20) SIGTSTP</div><div class="line">21) SIGTTIN	22) SIGTTOU	23) SIGURG	24) SIGXCPU	25) SIGXFSZ</div><div class="line">26) SIGVTALRM	27) SIGPROF	28) SIGWINCH	29) SIGIO	30) SIGPWR</div><div class="line">31) SIGSYS	34) SIGRTMIN	35) SIGRTMIN+1	36) SIGRTMIN+2	37) SIGRTMIN+3</div><div class="line">38) SIGRTMIN+4	39) SIGRTMIN+5	40) SIGRTMIN+6	41) SIGRTMIN+7	42) SIGRTMIN+8</div><div class="line">43) SIGRTMIN+9	44) SIGRTMIN+10	45) SIGRTMIN+11	46) SIGRTMIN+12	47) SIGRTMIN+13</div><div class="line">48) SIGRTMIN+14	49) SIGRTMIN+15	50) SIGRTMAX-14	51) SIGRTMAX-13	52) SIGRTMAX-12</div><div class="line">53) SIGRTMAX-11	54) SIGRTMAX-10	55) SIGRTMAX-9	56) SIGRTMAX-8	57) SIGRTMAX-7</div><div class="line">58) SIGRTMAX-6	59) SIGRTMAX-5	60) SIGRTMAX-4	61) SIGRTMAX-3	62) SIGRTMAX-2</div><div class="line">63) SIGRTMAX-1	64) SIGRTMAX</div></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/30/linux-max-fd/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/30/linux-max-fd/" itemprop="url">
+                  Linux最大文件数限制
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-30T11:00:13+08:00">
+                2018-03-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>要知道,在linux的世界里,一切皆文件.因此要实现大的并发量的第一步,修改linux系统的文件标识符限制数,也就是文件打开数量的限制</p>
+<h1 id="内核级的总限制-fs-file-max"><a href="#内核级的总限制-fs-file-max" class="headerlink" title="内核级的总限制 fs.file-max"></a>内核级的总限制 fs.file-max</h1><p>man proc 里有这么一段话<br><img src="/2018/03/30/linux-max-fd/linux_max_fd01.png" alt="img01"></p>
+<ul>
+<li><p>查看限制数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~/myspace/myblog$ sysctl fs.file-max</div><div class="line">fs.file-max = 3000000</div></pre></td></tr></table></figure>
+</li>
+<li><p>修改限制数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~/myspace/myblog$ sudo sysctl -w fs.file-max=3000000</div><div class="line">[sudo] password for chris: </div><div class="line">fs.file-max = 3000000</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>需要永久生效则<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">echo &quot;fs.file-max=3000000&quot; &gt;&gt;/etc/sysctl.conf</div></pre></td></tr></table></figure></p>
+<ul>
+<li>查看使用情况<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~$ sysctl fs.file-nr</div><div class="line">fs.file-nr = 6816	0	3000000</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>其中第一个数表示当前系统已分配使用的打开文件描述符数，第二个数为分配后已释放的（目前已不再使用），第三个数等于file-max。</p>
+<h1 id="用户级进程级的限制"><a href="#用户级进程级的限制" class="headerlink" title="用户级进程级的限制"></a>用户级进程级的限制</h1><h2 id="查看资源硬限制数"><a href="#查看资源硬限制数" class="headerlink" title="查看资源硬限制数"></a>查看资源硬限制数</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~$ ulimit -Hn</div><div class="line">4096</div></pre></td></tr></table></figure>
+<h2 id="查看资源软限制数"><a href="#查看资源软限制数" class="headerlink" title="查看资源软限制数"></a>查看资源软限制数</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~$ ulimit -Sn</div><div class="line">1024</div></pre></td></tr></table></figure>
+<pre><code>通过ulimit -Sn设置最大打开文件描述符数的soft limit，注意soft limit不能大于hard limit（ulimit -Hn可查看hard limit），另外ulimit -n默认查看的是soft limit，但是 ulimit -n 204800 则会同时设置soft limit和hard limit。对于非root用户只能设置比原来小的hard limit
+</code></pre><p>若要使修改永久有效，则需要在/etc/security/limits.conf中进行设置，可添加如下两行。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">@work       hard    nofile  6000000</div><div class="line">@work       soft    nofile  4000000</div><div class="line">@work	    soft    core    4000000</div><div class="line">@work	    hard    core    4000000</div><div class="line">@work       hard    nproc   6000000</div><div class="line">@work       soft    nproc   4000000</div></pre></td></tr></table></figure></p>
+<pre><code>以上设置需要注销之后重新登录才能生效：
+设置nofile的hard limit还有一点要注意的就是hard limit不能大于/proc/sys/fs/nr_open，假如hard limit大于nr_open，注销后无法正常登录。可以修改nr_open的值： echo 2000000 &gt; /proc/sys/fs/nr_open
+</code></pre>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/27/debug-memory/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/27/debug-memory/" itemprop="url">
+                  内存问题定位
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-27T14:16:03+08:00">
+                2018-03-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Debug/" itemprop="url" rel="index">
+                    <span itemprop="name">Debug</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="使用glibc的MALLOCCHECK"><a href="#使用glibc的MALLOCCHECK" class="headerlink" title="使用glibc的MALLOCCHECK"></a>使用glibc的MALLOC<em>CHECK</em></h2><p>因为是一个内存问题，考虑使用一些内存调试工具来定位问题。因为OB内部对于内存块有自己的缓存，需要去除它的影响。修改OB内存分配器，让它每次都直接调用c库的malloc和free等，不做缓存。然后，可以使用glibc内置的内存块完整性检查功能。</p>
+<p>使用这一特性，程序无需重新编译，只需要在运行的时候设置环境变量MALLOC<em>CHECK</em>（注意结尾的下划线）。每当在程序运行过程free内存给glibc时，glibc会检查其隐藏的元数据的完整性，如果发现错误就会立即abort。</p>
+<p>用类似下面的命令行启动server程序：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">export MALLOC_CHECK_=2</div><div class="line">./test</div></pre></td></tr></table></figure></p>
+<p>MALLOC<em>CHECK</em>有三种设定,即:</p>
+<ul>
+<li>MALLOC<em>CHECK</em>=0 —– 关闭所有检查.</li>
+<li>MALLOC<em>CHECK</em>=1 —– 当有错误被探测到时,在标准错误输出(stderr)上打印错误信息.</li>
+<li>MALLOC<em>CHECK</em>=2 —– 当有错误被探测到时,不显示错误信息,直接进行中断.</li>
+</ul>
+<p>但这个core能带给我们想信息也很少。我们只是找到了另外一种稍高效地重现问题的方法而已。或许最初看到的core的现象是延后显现而已，其实“更早”的时刻内存就被破坏掉了。</p>
+<h2 id="valgrind"><a href="#valgrind" class="headerlink" title="valgrind"></a>valgrind</h2><p>glibc提供的MALLOC<em>CHECK</em>功能太简单了，有没有更高级点的工具不光能够报告错误，还能分析出问题原因来？我们自然想到了大名鼎鼎的valgrind。用valgrind来检查内存问题，程序也不需要重新编译，只需要使用valgrind来启动：</p>
+<p>nohup valgrind –error-limit=no –suppressions=suppress bin/mergeserver -z 45447 -r 10.232.36.183:45401 -p45441 &gt;nohup.out &amp;</p>
+<p>默认情况下，当valgrind发现了1000中不同的错误，或者总数超过1000万次错误后，会停止报告错误。加了–error-limit=no以后可以禁止这一特性。–suppressions用来屏蔽掉一些不关心的误报的问题。</p>
+<h2 id="AddressSanitizer"><a href="#AddressSanitizer" class="headerlink" title="AddressSanitizer"></a>AddressSanitizer</h2><ol>
+<li>版本要求: LLVM3.1 或者gcc4.8</li>
+<li><p>bug代码示例</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">#include &lt;stdio.h&gt;</div><div class="line">#include &lt;stdlib.h&gt;</div><div class="line"></div><div class="line">int main (int argc,char *argv[])</div><div class="line">&#123;</div><div class="line">        int i;</div><div class="line">        char* p = (char *)malloc(10);</div><div class="line">        char* pt = p;</div><div class="line"></div><div class="line">        for (i = 0;i &lt; 10;i++)</div><div class="line">        &#123;</div><div class="line">                p[i] = &apos;z&apos;;</div><div class="line">        &#125;</div><div class="line">        free (p);</div><div class="line">        //free(pt);</div><div class="line"></div><div class="line">        *p = 1;</div><div class="line">        return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>编译&amp;运行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">g++ -fsanitize=address test09.cpp -o test09</div><div class="line">./test09</div></pre></td></tr></table></figure>
+</li>
+<li><p>出错提示<br>[img01]</p>
+</li>
+</ol>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/27/linux-coredump/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/27/linux-coredump/" itemprop="url">
+                  Linux上Core Dump文件的形成和分析
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-27T10:48:16+08:00">
+                2018-03-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>Core，又称之为Core Dump文件，是Unix/Linux操作系统的一种机制，对于线上服务而言，Core令人闻之色变，因为出Core的过程意味着服务暂时不能正常响应，需要恢复，并且随着吐Core进程的内存空间越大，此过程可能持续很长一段时间（例如当进程占用60G+以上内存时，完整Core文件需要15分钟才能完全写到磁盘上），这期间产生的流量损失，不可估量。</p>
+<p>凡事皆有两面性，OS在出Core的同时，虽然会终止掉当前进程，但是也会保留下第一手的现场数据，OS仿佛是一架被按下快门的相机，而照片就是产出的Core文件。里面含有当进程被终止时内存、CPU寄存器等信息，可以供后续开发人员进行调试。</p>
+<p>关于Core产生的原因很多，比如过去一些Unix的版本不支持现代Linux上这种GDB直接附着到进程上进行调试的机制，需要先向进程发送终止信号，然后用工具阅读core文件。在Linux上，我们就可以使用kill向一个指定的进程发送信号或者使用gcore命令来使其主动出Core并退出。如果从浅层次的原因上来讲，出Core意味着当前进程存在BUG，需要程序员修复。从深层次的原因上讲，是当前进程触犯了某些OS层级的保护机制，逼迫OS向当前进程发送诸如SIGSEGV(即signal 11)之类的信号, 例如访问空指针或数组越界出Core，实际上是触犯了OS的内存管理，访问了非当前进程的内存空间，OS需要通过出Core来进行警示，这就好像一个人身体内存在病毒，免疫系统就会通过发热来警示，并导致人体发烧是一个道理（有意思的是，并不是每次数组越界都会出Core，这和OS的内存管理中虚拟页面分配大小和边界有关，即使不出Core，也很有可能读到脏数据，引起后续程序行为紊乱，这是一种很难追查的BUG）。</p>
+<ol>
+<li>修改core文件名格式<br>修改/proc/sys/kernel/core_pattern文件，此文件用于控制Core文件产生的文件名，默认情况下，此文件内容只有一行内容：“core”，此文件支持定制，一般使用%配合不同的字符，这里罗列几种：<ul>
+<li>%p  出Core进程的PID</li>
+<li>%u  出Core进程的UID</li>
+<li>%s  造成Core的signal号</li>
+<li>%t  出Core的时间，从1970-01-0100:00:00开始的秒数</li>
+<li>%e  出Core进程对应的可执行文件名</li>
+</ul>
+</li>
+</ol>
+<p>不能直接修改，需要通过下面的方法：<br> a. vim /etc/sysctl.conf在最后一行添加kernel.core_uses_pid = 1<br> b. 执行sysctl -p</p>
+<ol>
+<li>修改core文件大小</li>
+</ol>
+<ul>
+<li><p>查看core文件的大小<br>ulimit –a </p>
+</li>
+<li><p>修改core文件的大小<br>ulimit –c </p>
+</li>
+</ul>
+<ol>
+<li>文件格式<br>core文件是ELF格式，可以通过 readelf -h命令查看<br>[img01]</li>
+</ol>
+<p>像bmp、exe等文件一样，ELF的文件头包含整个文件的控制结构。它的定义如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">typedef struct elf32_hdr &#123;  </div><div class="line">	unsigned char e_ident[EI_NIDENT];   </div><div class="line">	Elf32_Half    e_type;         /* file type */  </div><div class="line">	Elf32_Half    e_machine;      /* architecture */  </div><div class="line">	Elf32_Word    e_version;  </div><div class="line">	Elf32_Addr    e_entry;    	  /* entry point */  </div><div class="line">	Elf32_Off 	  e_phoff;        /* PH table offset */  </div><div class="line">	Elf32_Off 	  e_shoff;        /* SH table offset */  </div><div class="line">	Elf32_Word    e_flags;  </div><div class="line">	Elf32_Half    e_ehsize;       /* ELF header size in bytes */  </div><div class="line">	Elf32_Half    e_phentsize;    /* PH size */  </div><div class="line">	Elf32_Half    e_phnum;        /* PH number */  </div><div class="line">	Elf32_Half    e_shentsize;    /* SH size */  </div><div class="line">	Elf32_Half    e_shnum;        /* SH number */  </div><div class="line">	Elf32_Half    e_shstrndx;     /* SH name string table index */  </div><div class="line">&#125; Elf32_Ehdr;</div></pre></td></tr></table></figure></p>
+<h1 id="源码"><a href="#源码" class="headerlink" title="源码"></a>源码</h1><p>coredump函数在kernel/fs/exec.c中函数为do_coredump( )，如果coredump生成失败可以在do_coredump函数中增加打印，do_coredump的源代码如下所示。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div></pre></td><td class="code"><pre><div class="line">void do_coredump(long signr, int exit_code, struct pt_regs *regs)</div><div class="line">&#123;</div><div class="line">	struct core_state core_state;</div><div class="line">	char corename[CORENAME_MAX_SIZE + 1];</div><div class="line">	struct mm_struct *mm = current-&gt;mm;</div><div class="line">	struct linux_binfmt * binfmt;</div><div class="line">	const struct cred *old_cred;</div><div class="line">	struct cred *cred;</div><div class="line">	int retval = 0;</div><div class="line">	int flag = 0;</div><div class="line">	int ispipe;</div><div class="line">	static atomic_t core_dump_count = ATOMIC_INIT(0);</div><div class="line">	struct coredump_params cprm = &#123;</div><div class="line">		.signr = signr,</div><div class="line">		.regs = regs,</div><div class="line">		.limit = rlimit(RLIMIT_CORE),</div><div class="line">		/*</div><div class="line">		 * We must use the same mm-&gt;flags while dumping core to avoid</div><div class="line">		 * inconsistency of bit flags, since this flag is not protected</div><div class="line">		 * by any locks.</div><div class="line">		 */</div><div class="line">		.mm_flags = mm-&gt;flags,</div><div class="line">	&#125;;</div><div class="line"></div><div class="line">	audit_core_dumps(signr);</div><div class="line">	binfmt = mm-&gt;binfmt;</div><div class="line"></div><div class="line">	//binfmt-&gt;core_dump根据内核宏初始化赋值core_dump函数，未开宏时为NULL</div><div class="line">	if (!binfmt || !binfmt-&gt;core_dump)</div><div class="line">		goto fail;</div><div class="line">	if (!__get_dumpable(cprm.mm_flags))</div><div class="line">		goto fail;</div><div class="line"></div><div class="line">	cred = prepare_creds();</div><div class="line">	if (!cred)</div><div class="line">		goto fail;</div><div class="line">	/*</div><div class="line">	 *	We cannot trust fsuid as being the &quot;true&quot; uid of the</div><div class="line">	 *	process nor do we know its entire history. We only know it</div><div class="line">	 *	was tainted so we dump it as root in mode 2.</div><div class="line">	 */</div><div class="line">	if (__get_dumpable(cprm.mm_flags) == 2) &#123;</div><div class="line">		/* Setuid core dump mode */</div><div class="line">		flag = O_EXCL;		/* Stop rewrite attacks */</div><div class="line">		cred-&gt;fsuid = 0;	/* Dump root private */</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	retval = coredump_wait(exit_code, &amp;core_state);</div><div class="line">	if (retval &lt; 0)</div><div class="line">		goto fail_creds;</div><div class="line"></div><div class="line">	old_cred = override_creds(cred);</div><div class="line"></div><div class="line">	/*</div><div class="line">	 * Clear any false indication of pending signals that might</div><div class="line">	 * be seen by the filesystem code called to write the core file.</div><div class="line">	 */</div><div class="line">	clear_thread_flag(TIF_SIGPENDING);</div><div class="line"></div><div class="line">	//根据/proc/sys/kernel/core_pattern中值定义core文件名</div><div class="line">	ispipe = format_corename(corename, signr);</div><div class="line"></div><div class="line"> 	if (ispipe) &#123;</div><div class="line">		int dump_count;</div><div class="line">		char **helper_argv;</div><div class="line"></div><div class="line">		if (cprm.limit == 1) &#123;</div><div class="line">			/*</div><div class="line">			 * Normally core limits are irrelevant to pipes, since</div><div class="line">			 * we&apos;re not writing to the file system, but we use</div><div class="line">			 * cprm.limit of 1 here as a speacial value. Any</div><div class="line">			 * non-1 limit gets set to RLIM_INFINITY below, but</div><div class="line">			 * a limit of 0 skips the dump.  This is a consistent</div><div class="line">			 * way to catch recursive crashes.  We can still crash</div><div class="line">			 * if the core_pattern binary sets RLIM_CORE =  !1</div><div class="line">			 * but it runs as root, and can do lots of stupid things</div><div class="line">			 * Note that we use task_tgid_vnr here to grab the pid</div><div class="line">			 * of the process group leader.  That way we get the</div><div class="line">			 * right pid if a thread in a multi-threaded</div><div class="line">			 * core_pattern process dies.</div><div class="line">			 */</div><div class="line">			printk(KERN_WARNING</div><div class="line">				&quot;Process %d(%s) has RLIMIT_CORE set to 1\n&quot;,</div><div class="line">				task_tgid_vnr(current), current-&gt;comm);</div><div class="line">			printk(KERN_WARNING &quot;Aborting core\n&quot;);</div><div class="line">			goto fail_unlock;</div><div class="line">		&#125;</div><div class="line">		cprm.limit = RLIM_INFINITY;</div><div class="line"></div><div class="line">		dump_count = atomic_inc_return(&amp;core_dump_count);</div><div class="line">		if (core_pipe_limit &amp;&amp; (core_pipe_limit &lt; dump_count)) &#123;</div><div class="line">			printk(KERN_WARNING &quot;Pid %d(%s) over core_pipe_limit\n&quot;,</div><div class="line">			       task_tgid_vnr(current), current-&gt;comm);</div><div class="line">			printk(KERN_WARNING &quot;Skipping core dump\n&quot;);</div><div class="line">			goto fail_dropcount;</div><div class="line">		&#125;</div><div class="line"></div><div class="line">		helper_argv = argv_split(GFP_KERNEL, corename+1, NULL);</div><div class="line">		if (!helper_argv) &#123;</div><div class="line">			printk(KERN_WARNING &quot;%s failed to allocate memory\n&quot;,</div><div class="line">			       __func__);</div><div class="line">			goto fail_dropcount;</div><div class="line">		&#125;</div><div class="line"></div><div class="line">		retval = call_usermodehelper_fns(helper_argv[0], helper_argv,</div><div class="line">					NULL, UMH_WAIT_EXEC, umh_pipe_setup,</div><div class="line">					NULL, &amp;cprm);</div><div class="line">		argv_free(helper_argv);</div><div class="line">		if (retval) &#123;</div><div class="line"> 			printk(KERN_INFO &quot;Core dump to %s pipe failed\n&quot;,</div><div class="line">			       corename);</div><div class="line">			goto close_fail;</div><div class="line"> 		&#125;</div><div class="line">	&#125; else &#123;</div><div class="line">		struct inode *inode;</div><div class="line">		</div><div class="line">		//根据进程的soft limit大小，soft limit大于coredump初始设置最小值=PAGE_SZIE</div><div class="line">		if (cprm.limit &lt; binfmt-&gt;min_coredump)</div><div class="line">			goto fail_unlock;</div><div class="line"></div><div class="line">		cprm.file = filp_open(corename,</div><div class="line">				 O_CREAT | 2 | O_NOFOLLOW | O_LARGEFILE | flag,</div><div class="line">				 0600);</div><div class="line">		if (IS_ERR(cprm.file))</div><div class="line">			goto fail_unlock;</div><div class="line"></div><div class="line">		inode = cprm.file-&gt;f_path.dentry-&gt;d_inode;</div><div class="line">		if (inode-&gt;i_nlink &gt; 1)</div><div class="line">			goto close_fail;</div><div class="line">		if (d_unhashed(cprm.file-&gt;f_path.dentry))</div><div class="line">			goto close_fail;</div><div class="line">		/*</div><div class="line">		 * AK: actually i see no reason to not allow this for named</div><div class="line">		 * pipes etc, but keep the previous behaviour for now.</div><div class="line">		 */</div><div class="line">		if (!S_ISREG(inode-&gt;i_mode))</div><div class="line">			goto close_fail;</div><div class="line">		/*</div><div class="line">		 * Dont allow local users get cute and trick others to coredump</div><div class="line">		 * into their pre-created files.</div><div class="line">		 */</div><div class="line">		if (inode-&gt;i_uid != current_fsuid())</div><div class="line">			goto close_fail;</div><div class="line">		if (!cprm.file-&gt;f_op || !cprm.file-&gt;f_op-&gt;write)</div><div class="line">			goto close_fail;</div><div class="line">		if (do_truncate(cprm.file-&gt;f_path.dentry, 0, 0, cprm.file))</div><div class="line">			goto close_fail;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	//执行core_dump函数输出寄存器等信息到core文件中</div><div class="line">	retval = binfmt-&gt;core_dump(&amp;cprm);</div><div class="line">	if (retval)</div><div class="line">		current-&gt;signal-&gt;group_exit_code |= 0x80;</div><div class="line"></div><div class="line">	if (ispipe &amp;&amp; core_pipe_limit)</div><div class="line">		wait_for_dump_helpers(cprm.file);</div><div class="line">close_fail:</div><div class="line">	if (cprm.file)</div><div class="line">		filp_close(cprm.file, NULL);</div><div class="line">fail_dropcount:</div><div class="line">	if (ispipe)</div><div class="line">		atomic_dec(&amp;core_dump_count);</div><div class="line">fail_unlock:</div><div class="line">	coredump_finish(mm);</div><div class="line">	revert_creds(old_cred);</div><div class="line">fail_creds:</div><div class="line">	put_cred(cred);</div><div class="line">fail:</div><div class="line">	return;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/26/distributed-system-zk-install/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/26/distributed-system-zk-install/" itemprop="url">
+                  zookeeper部署
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-26T17:42:44+08:00">
+                2018-03-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/分布式系统/" itemprop="url" rel="index">
+                    <span itemprop="name">分布式系统</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>最新的版本可以通过官网 <a href="http://hadoop.apache.org/zookeeper/来获取，Zookeeper" target="_blank" rel="external">http://hadoop.apache.org/zookeeper/来获取，Zookeeper</a> 的安装非常简单，下面将从单机模式和集群模式两个方面介绍 Zookeeper 的安装和配置。</p>
+<h1 id="单机模式"><a href="#单机模式" class="headerlink" title="单机模式"></a>单机模式</h1><ol>
+<li><p>解压安装包zookerper-3.4.7.tar.gz</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">tar -xzvf zookerper-3.4.7.tar.gz</div></pre></td></tr></table></figure>
+</li>
+<li><p>创建Zookeeper子目录</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">cp -r zookerper-3.4.7 zookerper</div></pre></td></tr></table></figure>
+</li>
+<li><p>修改Zookeeper配置文件conf/zoo.cfg</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line"># The number of milliseconds of each tick</div><div class="line">tickTime=2000</div><div class="line"># The number of ticks that the initial </div><div class="line"># synchronization phase can take</div><div class="line">initLimit=10</div><div class="line"># The number of ticks that can pass between </div><div class="line"># sending a request and getting an acknowledgement</div><div class="line">syncLimit=5</div><div class="line"># the directory where the snapshot is stored.</div><div class="line"># do not use /tmp for storage, /tmp here is just </div><div class="line"># example sakes.</div><div class="line">dataDir=./data</div><div class="line">dataLogDir=./logs</div><div class="line"># the port at which the clients will connect</div><div class="line">clientPort=2181</div><div class="line"># the maximum number of client connections.</div><div class="line"># increase this if you need to handle more clients</div><div class="line">#maxClientCnxns=60</div><div class="line">#</div><div class="line"># Be sure to read the maintenance section of the </div><div class="line"># administrator guide before turning on autopurge.</div><div class="line">#</div><div class="line"># http://zookeeper.apache.org/doc/current/zookeeperAdmin.html#sc_maintenance</div><div class="line">#</div><div class="line"># The number of snapshots to retain in dataDir</div><div class="line">#autopurge.snapRetainCount=3</div><div class="line"># Purge task interval in hours</div><div class="line"># Set to &quot;0&quot; to disable auto purge feature</div><div class="line">#autopurge.purgeInterval=1</div></pre></td></tr></table></figure>
+</li>
+<li><p>运行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ cd bin</div><div class="line">$ ./zkServer.sh start</div></pre></td></tr></table></figure>
+</li>
+<li><p>查看运行状态</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./zkServer.sh status</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<h1 id="伪集群模式"><a href="#伪集群模式" class="headerlink" title="伪集群模式"></a>伪集群模式</h1><ol>
+<li><p>新建两个directory</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">cp -r zookeeper/ zookerper1/</div><div class="line">cp -r zookeeper/ zookerper2/</div></pre></td></tr></table></figure>
+</li>
+<li><p>修改Zookeeper配置文件conf/zoo.cfg,这里配置了3个实例</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">server.1=localhost:2887:3887</div><div class="line">server.2=localhost:2888:3888</div><div class="line">server.3=localhost:2889:3889</div></pre></td></tr></table></figure>
+</li>
+<li><p>分别在data目录下添加myid文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">echo &quot;1&quot; &gt; myid</div><div class="line">echo &quot;2&quot; &gt; myid</div><div class="line">echo &quot;3&quot; &gt; myid</div></pre></td></tr></table></figure>
+</li>
+<li><p>分别运行3个实例</p>
+</li>
+</ol>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/24/mysql-covering-index/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/24/mysql-covering-index/" itemprop="url">
+                  mysql覆盖索引
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-24T00:05:34+08:00">
+                2018-03-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>概念</p>
+<p>如果索引包含所有满足查询需要的数据的索引成为覆盖索引(Covering Index)，也就是平时所说的不需要回表操作</p>
+<p>判断标准</p>
+<p>使用explain，可以通过输出的extra列来判断，对于一个索引覆盖查询，显示为using index,MySQL查询优化器在执行查询前会决定是否有索引覆盖查询</p>
+<p>注意<br>1、覆盖索引也并不适用于任意的索引类型，索引必须存储列的值<br>2、Hash 和full-text索引不存储值，因此MySQL只能使用B-TREE<br>3、并且不同的存储引擎实现覆盖索引都是不同的<br>4、并不是所有的存储引擎都支持它们<br>5、如果要使用覆盖索引，一定要注意SELECT 列表值取出需要的列，不可以是SELECT *，因为如果将所有字段一起做索引会导致索引文件过大，查询性能下降，不能为了利用覆盖索引而这么做</p>
+<p>InnoDB<br>1、覆盖索引查询时除了除了索引本身的包含的列，还可以使用其默认的聚集索引列<br>2、这跟INNOB的索引结构有关系，主索引是B+树索引存储，也即我们所说的数据行即索引，索引即数据<br>3、对于INNODB的辅助索引，它的叶子节点存储的是索引值和指向主键索引的位置，然后需要通过主键在查询表的字段值，所以辅助索引存储了主键的值<br>4、覆盖索引也可以用上INNODB 默认的聚集索引<br>5、innodb引擎的所有储存了主键ID，事务ID，回滚指针,非主键ID，他的查询就会是非主键ID也可覆盖来取得主键ID</p>
+<p>覆盖索引是一种非常强大的工具，能大大提高查询性能，只需要读取索引而不用读取数据有以下一些优点<br>1、索引项通常比记录要小，所以MySQL访问更少的数据<br>2、索引都按值的大小顺序存储，相对于随机访问记录，需要更少的I/O<br>3、大多数据引擎能更好的缓存索引，比如MyISAM只缓存索引<br>4、覆盖索引对于InnoDB表尤其有用，因为InnoDB使用聚集索引组织数据，如果二级索引中包含查询所需的数据，就不再需要在聚集索引中查找了</p>
+<p>在sakila的inventory表中，有一个组合索引(store_id,film_id)，对于只需要访问这两列的查 询，MySQL就可以使用索引，如下<br>表结构<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE `inventory` (</div><div class="line">  `inventory_id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,</div><div class="line">  `film_id` smallint(5) unsigned NOT NULL,</div><div class="line">  `store_id` tinyint(3) unsigned NOT NULL,</div><div class="line">  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,</div><div class="line">  PRIMARY KEY (`inventory_id`),</div><div class="line">  KEY `idx_fk_film_id` (`film_id`),</div><div class="line">  KEY `idx_store_id_film_id` (`store_id`,`film_id`),</div><div class="line">  CONSTRAINT `fk_inventory_film` FOREIGN KEY (`film_id`) REFERENCES `film` (`film_id`) ON UPDATE CASCADE,</div><div class="line">  CONSTRAINT `fk_inventory_store` FOREIGN KEY (`store_id`) REFERENCES `store` (`store_id`) ON UPDATE CASCADE</div><div class="line">) ENGINE=InnoDB AUTO_INCREMENT=4582 DEFAULT CHARSET=utf8 |</div></pre></td></tr></table></figure></p>
+<p>查询语句<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">mysql&gt;  EXPLAIN SELECT store_id, film_id FROM sakila.inventory\G</div><div class="line">*************************** 1. row ***************************</div><div class="line">           id: 1</div><div class="line">  select_type: SIMPLE</div><div class="line">        table: inventory</div><div class="line">         type: index</div><div class="line">possible_keys: NULL</div><div class="line">          key: idx_store_id_film_id</div><div class="line">      key_len: 3</div><div class="line">          ref: NULL</div><div class="line">         rows: 4581</div><div class="line">        Extra: Using index</div><div class="line">1 row in set (0.03 sec)</div></pre></td></tr></table></figure></p>
+<p>在大多数引擎中，只有当查询语句所访问的列是索引的一部分时，索引才会覆盖。但是，InnoDB不限于此，InnoDB的二级索引在叶子节点中存储了 primary key的值。因此，sakila.actor表使用InnoDB，而且对于是last_name上有索引，所以，索引能覆盖那些访问actor_id的查 询，如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">mysql&gt; EXPLAIN SELECT actor_id, last_name  FROM sakila.actor WHERE last_name = &apos;HOPPER&apos;\G</div><div class="line">*************************** 1. row ***************************</div><div class="line">           id: 1</div><div class="line">  select_type: SIMPLE</div><div class="line">        table: actor</div><div class="line">         type: ref</div><div class="line">possible_keys: idx_actor_last_name</div><div class="line">          key: idx_actor_last_name</div><div class="line">      key_len: 137</div><div class="line">          ref: const</div><div class="line">         rows: 2</div><div class="line">        Extra: Using where; Using index</div><div class="line">1 row in set (0.00 sec)</div></pre></td></tr></table></figure></p>
+<p>使用索引进行排序</p>
+<p>MySQL中，有两种方式生成有序结果集：一是使用filesort，二是按索引顺序扫描</p>
+<p>利用索引进行排序操作是非常快的，而且可以利用同一索引同时进 行查找和排序操作。当索引的顺序与ORDER BY中的列顺序相同且所有的列是同一方向(全部升序或者全部降序)时，可以使用索引来排序，如果查询是连接多个表，仅当ORDER BY中的所有列都是第一个表的列时才会使用索引，其它情况都会使用filesort<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE `actor` (</div><div class="line">  `actor_id` int(10) unsigned NOT NULL AUTO_INCREMENT,</div><div class="line">  `name` varchar(16) NOT NULL DEFAULT &apos;&apos;,</div><div class="line">  `password` varchar(16) NOT NULL DEFAULT &apos;&apos;,</div><div class="line">  PRIMARY KEY (`actor_id`),</div><div class="line">  KEY `name` (`name`)</div><div class="line">) ENGINE=InnoDB DEFAULT CHARSET=utf8 ;</div><div class="line">insert into actor(name,password) values (&apos;cat01&apos;,&apos;1234567&apos;),(&apos;cat02&apos;,&apos;1234567&apos;),(&apos;ddddd&apos;,&apos;1234567&apos;),(&apos;aaaaa&apos;,&apos;1234567&apos;);</div></pre></td></tr></table></figure></p>
+<p>1、 explain select actor_id from actor order by actor_id \G<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">mysql&gt; explain select actor_id from actor order by actor_id \G</div><div class="line">*************************** 1. row ***************************</div><div class="line">           id: 1</div><div class="line">  select_type: SIMPLE</div><div class="line">        table: actor</div><div class="line">         type: index</div><div class="line">possible_keys: NULL</div><div class="line">          key: PRIMARY</div><div class="line">      key_len: 4</div><div class="line">          ref: NULL</div><div class="line">         rows: 4</div><div class="line">        Extra: Using index</div><div class="line">1 row in set (0.00 sec)</div></pre></td></tr></table></figure></p>
+<p>2、explain select actor_id from actor order by password \G<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">mysql&gt; explain select actor_id from actor order by password \G</div><div class="line">*************************** 1. row ***************************</div><div class="line">           id: 1</div><div class="line">  select_type: SIMPLE</div><div class="line">        table: actor</div><div class="line">         type: ALL</div><div class="line">possible_keys: NULL</div><div class="line">          key: NULL</div><div class="line">      key_len: NULL</div><div class="line">          ref: NULL</div><div class="line">         rows: 4</div><div class="line">        Extra: Using filesort</div><div class="line">1 row in set (0.00 sec)</div></pre></td></tr></table></figure></p>
+<p>3、explain select actor_id from actor order by name \G<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">mysql&gt; explain select actor_id from actor order by name \G</div><div class="line">*************************** 1. row ***************************</div><div class="line">           id: 1</div><div class="line">  select_type: SIMPLE</div><div class="line">        table: actor</div><div class="line">         type: index</div><div class="line">possible_keys: NULL</div><div class="line">          key: name</div><div class="line">      key_len: 50</div><div class="line">          ref: NULL</div><div class="line">         rows: 4</div><div class="line">        Extra: Using index</div><div class="line">1 row in set (0.00 sec)</div></pre></td></tr></table></figure></p>
+<p>当MySQL不能使用索引进行排序时，就会利用自己的排序算法(快速排序算法)在内存(sort buffer)中对数据进行排序，如果内存装载不下，它会将磁盘上的数据进行分块，再对各个数据块进行排序，然后将各个块合并成有序的结果集（实际上就是外排序）</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/23/redis-sentinel/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/23/redis-sentinel/" itemprop="url">
+                  Redis Sentinel 介绍与部署
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-23T10:29:08+08:00">
+                2018-03-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Redis/" itemprop="url" rel="index">
+                    <span itemprop="name">Redis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="1-Sentinel介绍"><a href="#1-Sentinel介绍" class="headerlink" title="1. Sentinel介绍"></a>1. Sentinel介绍</h1><h2 id="1-1-主从复制的问题"><a href="#1-1-主从复制的问题" class="headerlink" title="1.1 主从复制的问题"></a>1.1 主从复制的问题</h2><p>Redis主从复制可将主节点数据同步给从节点，从节点此时有两个作用：</p>
+<ul>
+<li>一旦主节点宕机，从节点作为主节点的备份可以随时顶上来。</li>
+<li>扩展主节点的读能力，分担主节点读压力。</li>
+</ul>
+<p>但是问题来了：</p>
+<ul>
+<li>一旦主节点宕机，从节点晋升成主节点，同时需要修改应用方的主节点地址，还需要命令所有从节点去复制新的主节点，整个过程需要人工干预。</li>
+<li>主节点的写能力受到单机的限制。</li>
+<li>主节点的存储能力受到单机的限制。<br>第一个问题，我们接下来讲的Sentinel就可以解决。而后两个问题，Redis也给出了方案Redis Cluster。</li>
+</ul>
+<h2 id="1-2-Redis-Sentinel的高可用"><a href="#1-2-Redis-Sentinel的高可用" class="headerlink" title="1.2 Redis Sentinel的高可用"></a>1.2 Redis Sentinel的高可用</h2><p>Redis Sentinel是一个分布式架构，包含若干个Sentinel节点和Redis数据节点，每个Sentinel节点会对数据节点和其余Sentinel节点进行监控，当发现节点不可达时，会对节点做下线标识。</p>
+<p>如果被标识的是主节点，他还会选择和其他Sentinel节点进行“协商”，当大多数的Sentinel节点都认为主节点不可达时，他们会选举出一个Sentinel节点来完成自动故障转移工作，同时将这个变化通知给Redis应用方。</p>
+<p>整个过程完全自动，不需要人工介入，所以可以很好解决Redis的高可用问题。</p>
+<p>接下来我们就通过部署一个Redis Sentinel实例来了解整体框架。</p>
+<h1 id="2-Redis-Sentinel部署"><a href="#2-Redis-Sentinel部署" class="headerlink" title="2. Redis Sentinel部署"></a>2. Redis Sentinel部署</h1><p>我们部署的拓扑结构如图所示：<br>[img01]</p>
+<p>分别有3个Sentinel节点，1个主节点，2个从节点组成一个Redis Sentinel。</p>
+<table>
+<thead>
+<tr>
+<th>role</th>
+<th>IP</th>
+<th>port</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>master</td>
+<td>127.0.0.1</td>
+<td>6379</td>
+</tr>
+<tr>
+<td>slave1</td>
+<td>127.0.0.1</td>
+<td>6380</td>
+</tr>
+<tr>
+<td>slave2</td>
+<td>127.0.0.1</td>
+<td>6381</td>
+</tr>
+<tr>
+<td>Sentinel1</td>
+<td>127.0.0.1</td>
+<td>26379</td>
+</tr>
+<tr>
+<td>Sentinel2</td>
+<td>127.0.0.1</td>
+<td>26380</td>
+</tr>
+<tr>
+<td>Sentinel3</td>
+<td>127.0.0.1</td>
+<td>26381</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-1-启动主节点"><a href="#2-1-启动主节点" class="headerlink" title="2.1 启动主节点"></a>2.1 启动主节点</h2><ul>
+<li><p>配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">port 6379</div><div class="line">daemonize yes</div><div class="line">logfile &quot;6379.log&quot;</div><div class="line">dbfilename &quot;dump-6379.rdb&quot;</div><div class="line">dir &quot;/var/redis/data/&quot;</div></pre></td></tr></table></figure>
+</li>
+<li><p>启动主节点</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">➜   sudo redis-server redis-6379.conf</div></pre></td></tr></table></figure>
+</li>
+<li><p>使用PING命令检测是否启动</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">➜   redis-cli -h 127.0.0.1 -p 6379 ping</div><div class="line">PONG</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="2-2-启动两个从节点"><a href="#2-2-启动两个从节点" class="headerlink" title="2.2 启动两个从节点"></a>2.2 启动两个从节点</h2><ul>
+<li><p>配置（两个从节点配置相同，除了文件名有区分）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">port 6380</div><div class="line">daemonize yes</div><div class="line">logfile &quot;6380.log&quot;</div><div class="line">dbfilename &quot;dump-6380.rdb&quot;</div><div class="line">dir &quot;/var/redis/data/&quot; </div><div class="line">slaveof 127.0.0.1 6379      // 从属主节点</div></pre></td></tr></table></figure>
+</li>
+<li><p>启动两个从节点</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">➜   sudo redis-server redis-6380.conf </div><div class="line">➜   sudo redis-server redis-6381.conf</div></pre></td></tr></table></figure>
+</li>
+<li><p>使用PING命令检测是否启动</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">➜   redis-cli -h 127.0.0.1 -p 6380 ping</div><div class="line">PONG</div><div class="line">➜   redis-cli -h 127.0.0.1 -p 6381 ping</div><div class="line">PONG</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="2-3-确认主从关系"><a href="#2-3-确认主从关系" class="headerlink" title="2.3 确认主从关系"></a>2.3 确认主从关系</h2><ul>
+<li>主节点视角<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">➜   redis-cli -h 127.0.0.1 -p 6379 INFO replication</div><div class="line"># Replication</div><div class="line">role:master</div><div class="line">connected_slaves:2</div><div class="line">slave0:ip=127.0.0.1,port=6380,state=online,offset=85,lag=0</div><div class="line">slave1:ip=127.0.0.1,port=6381,state=online,offset=85,lag=0</div><div class="line">......</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>*从节点视角（6380端口）<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">➜   redis-cli -h 127.0.0.1 -p 6380 INFO replication</div><div class="line"># Replication</div><div class="line">role:slave</div><div class="line">master_host:127.0.0.1</div><div class="line">master_port:6379</div><div class="line">master_link_status:up</div><div class="line">......</div></pre></td></tr></table></figure></p>
+<h2 id="2-4-部署Sentinel节点"><a href="#2-4-部署Sentinel节点" class="headerlink" title="2.4 部署Sentinel节点"></a>2.4 部署Sentinel节点</h2><p>3个Sentinel节点的部署方法是相同的（端口不同）。以26379为例。</p>
+<ul>
+<li><p>配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">// Sentinel节点的端口</div><div class="line">port 26379  </div><div class="line">dir /var/redis/data/</div><div class="line">logfile &quot;26379.log&quot;</div><div class="line"></div><div class="line">// 当前Sentinel节点监控 127.0.0.1:6379 这个主节点</div><div class="line">// 2代表判断主节点失败至少需要2个Sentinel节点节点同意</div><div class="line">// mymaster是主节点的别名</div><div class="line">sentinel monitor mymaster 127.0.0.1 6379 2</div><div class="line"></div><div class="line">//每个Sentinel节点都要定期PING命令来判断Redis数据节点和其余Sentinel节点是否可达，如果超过30000毫秒且没有回复，则判定不可达</div><div class="line">sentinel down-after-milliseconds mymaster 30000</div><div class="line"></div><div class="line">//当Sentinel节点集合对主节点故障判定达成一致时，Sentinel领导者节点会做故障转移操作，选出新的主节点，原来的从节点会向新的主节点发起复制操作，限制每次向新的主节点发起复制操作的从节点个数为1</div><div class="line">sentinel parallel-syncs mymaster 1</div><div class="line"></div><div class="line">//故障转移超时时间为180000毫秒</div><div class="line">sentinel failover-timeout mymaster 180000</div></pre></td></tr></table></figure>
+</li>
+<li><p>启动（两种方法） </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">* redis-sentinel sentinel-26379.conf</div><div class="line">* redis-server sentinel-26379.conf --sentinel</div><div class="line"></div><div class="line">* 确认</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>➜   redis-cli -h 127.0.0.1 -p 26379 INFO Sentinel</p>
+<h1 id="Sentinel"><a href="#Sentinel" class="headerlink" title="Sentinel"></a>Sentinel</h1><p>sentinel_masters:1<br>sentinel_tilt:0<br>sentinel_running_scripts:0<br>sentinel_scripts_queue_length:0<br>sentinel_simulate_failure_flags:0<br>master0:name=mymaster,status=ok,address=127.0.0.1:6379,slaves=2,sentinels=1 //sentinels=1表示启<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">部署三个Sentinel节点之后，真个拓扑结构如图所示：</div><div class="line">[img02]</div><div class="line"></div><div class="line">* 当部署号Redis Sentinel之后，会有如下变化 </div><div class="line"> * Sentinel节点自动发现了从节点、其余Sentinel节点。</div><div class="line"> * 去掉了默认配置，例如：parallel-syncs、failover-timeout。</div><div class="line"> * 新添加了纪元（epoch）参数。</div><div class="line"></div><div class="line">我们拿端口26379的举例，启动所有的Sentinel和数据节点后，配置文件如下：</div></pre></td></tr></table></figure></p>
+<p>port 26379<br>dir “/var/redis/data”<br>sentinel myid 70a3e215c1a34b4d9925d170d9606e615a8874f2<br>sentinel monitor mymaster 127.0.0.1 6379 2<br>sentinel config-epoch mymaster 0<br>sentinel leader-epoch mymaster 0<br>daemonize yes<br>logfile “26379.log”<br>// 发现了两个从节点<br>sentinel known-slave mymaster 127.0.0.1 6381<br>sentinel known-slave mymaster 127.0.0.1 6380<br>// 发送了连个Sentinel节点<br>sentinel known-sentinel mymaster 127.0.0.1 26381 e1148ad6caf60302dd6d0dbd693cb3448e209ac2<br>sentinel known-sentinel mymaster 127.0.0.1 26380 39db5b040b21a52da5334dd2d798244c034b4fc3<br>sentinel current-epoch 0<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">## 2.5 故障转移实验</div><div class="line">先查看一下节点的进程pid</div></pre></td></tr></table></figure></p>
+<p>➜   ps -aux | grep redis<br>root     18225  0.1  0.0  40208 11212 ?        Ssl  22:10   0:05 redis-server 127.0.0.1:6379<br>root     18234  0.0  0.0  38160  8364 ?        Ssl  22:10   0:04 redis-server 127.0.0.1:6380<br>root     18244  0.0  0.0  38160  8308 ?        Ssl  22:10   0:04 redis-server 127.0.0.1:6381<br>root     20568  0.1  0.0  38160  8460 ?        Ssl  23:05   0:02 redis-sentinel <em>:26379 [sentinel]<br>root     20655  0.1  0.0  38160  8296 ?        Ssl  23:07   0:02 redis-sentinel </em>:26380 [sentinel]<br>root     20664  0.1  0.0  38160  8312 ?        Ssl  23:07   0:02 redis-sentinel *:26381 [sentinel]<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">我们干掉端口6379的主节点。</div></pre></td></tr></table></figure></p>
+<p>➜   sudo kill -9 18225<br>➜   ps -aux | grep redis<br>root     18234  0.0  0.0  38160  8364 ?        Ssl  22:10   0:05 redis-server 127.0.0.1:6380<br>root     18244  0.0  0.0  38160  8308 ?        Ssl  22:10   0:05 redis-server 127.0.0.1:6381<br>root     20568  0.1  0.0  38160  8460 ?        Ssl  23:05   0:03 redis-sentinel <em>:26379 [sentinel]<br>root     20655  0.1  0.0  38160  8296 ?        Ssl  23:07   0:03 redis-sentinel </em>:26380 [sentinel]<br>root     20664  0.1  0.0  38160  8312 ?        Ssl  23:07   0:03 redis-sentinel *:26381 [sentinel]<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">此时，Redis Sentinel对主节点进行客观下线（Objectively Down， 简称 ODOWN）的判断，确认主节点不可达，则通知从节点中止复制主节点的操作。</div><div class="line">[img03]</div><div class="line"></div><div class="line">当主节点下线时长超过配置的下线时长30000秒，Redis Sentinel执行故障转移操作。</div><div class="line"></div><div class="line">此时，我们查看一下Sentinel节点监控的主节点信息：</div></pre></td></tr></table></figure></p>
+<p>127.0.0.1:26379&gt; sentinel masters<br>1)  1) “name”<br>    2) “mymaster”<br>    3) “ip”<br>    4) “127.0.0.1”<br>    5) “port”<br>    6) “6380”           //可以看到主节点已经成为6380端口的节点<br>    7) “runid”<br>    8) “084850ab4ff6c2f2502b185c8eab5bdd25a26ce2”<br>    9) “flags”<br>   10) “master”<br>    …………..<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">看一下Sentinel节点监控的从节点信息：</div></pre></td></tr></table></figure></p>
+<p>127.0.0.1:26379&gt; sentinel slaves mymaster<br>1)  1) “name”<br>    2) “127.0.0.1:6379”             //ip:port<br>    3) “ip”<br>    4) “127.0.0.1”<br>    5) “port”<br>    6) “6379”<br>    7) “runid”<br>    8) “”<br>    9) “flags”<br>   10) “s_down,slave,disconnected”  //端口6379的原主节点已经断开了连接<br>   …………..<br>2)  1) “name”<br>    2) “127.0.0.1:6381”<br>    3) “ip”<br>    4) “127.0.0.1”<br>    5) “port”<br>    6) “6381”<br>    7) “runid”<br>    8) “24495fe180e4fd64ac47467e0b2652894406e9e4”<br>    9) “flags”<br>   10) “slave”                      //本来的从节点，还是从节点的role<br>    …………..<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">由以上信息可得，端口为6380的Redis数据节点成为新的主节点，端口为6379的旧主节点断开连接。如图所示：</div><div class="line">[img04]</div><div class="line"></div><div class="line">我们在试着重启端口6379的数据节点。</div></pre></td></tr></table></figure></p>
+<p>➜   sudo redis-server redis-6379.conf<br>➜   ps -aux | grep redis<br>root     18234  0.1  0.0  40208 11392 ?        Ssl  5月22   0:06 redis-server 127.0.0.1:6380<br>root     18244  0.1  0.0  40208 10356 ?        Ssl  5月22   0:07 redis-server 127.0.0.1:6381<br>root     20568  0.1  0.0  38160  8460 ?        Ssl  5月22   0:05 redis-sentinel <em>:26379 [sentinel]<br>root     20655  0.1  0.0  38160  8296 ?        Ssl  5月22   0:05 redis-sentinel </em>:26380 [sentinel]<br>root     20664  0.1  0.0  38160  8312 ?        Ssl  5月22   0:05 redis-sentinel *:26381 [sentinel]<br>menwen   22475  0.0  0.0  14216  5920 pts/2    S+   5月22   0:00 redis-cli -p 26379<br>// 6379的数据节点已重启<br>root     22617  0.0  0.0  38160  8304 ?        Ssl  00:00   0:00 redis-server 127.0.0.1:6379<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">看看发生什么：</div></pre></td></tr></table></figure></p>
+<p>127.0.0.1:26379&gt; sentinel slaves mymaster<br>1)  1) “name”<br>    2) “127.0.0.1:6379”     //6379端口的节点重启后，变成了”活”的从节点<br>    3) “ip”<br>    4) “127.0.0.1”<br>    5) “port”<br>    6) “6379”<br>    7) “runid”<br>    8) “de1b5c28483cf150d9550f8e338886706e952346”<br>    9) “flags”<br>   10) “slave”<br>    …………..<br>2)  1) “name”               //6381端口的节点没有变化，仍是从节点<br>    2) “127.0.0.1:6381”<br>    …………..<br>```</p>
+<p>他被降级成为端口6380的从节点。<br>[img05]</p>
+<p>从上面的逻辑架构和故障转移试验中，可以看出Redis Sentinel的以下几个功能。</p>
+<ul>
+<li>监控：Sentinel节点会定期检测Redis数据节点和其余Sentinel节点是否可达。</li>
+<li>通知：Sentinel节点会将故障转移通知给应用方。</li>
+<li>主节点故障转移：实现从节点晋升为主节点并维护后续正确的主从关系。</li>
+<li>配置提供者：在Redis Sentinel结构中，客户端在初始化的时候连接的是Sentinel节点集合，从中获取主节点信息。</li>
+</ul>
+<h1 id="3-Sentinel配置说明"><a href="#3-Sentinel配置说明" class="headerlink" title="3. Sentinel配置说明"></a>3. Sentinel配置说明</h1><ul>
+<li><p>sentinel monitor mymaster 127.0.0.1 6379 2</p>
+<ul>
+<li>当前Sentinel节点监控 127.0.0.1:6379 这个主节点</li>
+<li>2代表判断主节点失败至少需要2个Sentinel节点节点同意</li>
+<li>mymaster是主节点的别名</li>
+</ul>
+</li>
+<li><p>sentinel down-after-milliseconds mymaster 30000</p>
+<ul>
+<li>每个Sentinel节点都要定期PING命令来判断Redis数据节点和其余Sentinel节点是否可达，如果超过30000毫秒且没有回复，则判定不可达</li>
+</ul>
+</li>
+<li><p>sentinel parallel-syncs mymaster 1</p>
+<ul>
+<li>当Sentinel节点集合对主节点故障判定达成一致时，Sentinel领导者节点会做故障转移操作，选出新的主节点，原来的从节点会向新的主节点发起复制操作，限制每次向新的主节点发起复制操作的从节点个数为1。<br>sentinel failover-timeout mymaster 180000</li>
+</ul>
+</li>
+</ul>
+<p>故障转移超时时间为180000<br>sentinel auth-pass \ \<br>如果Sentinel监控的主节点配置了密码，可以通过sentinel auth-pass配置通过添加主节点的密码，防止Sentinel节点无法对主节点进行监控。<br>例如：sentinel auth-pass mymaster MySUPER–secret-0123passw0rd<br>sentinel notification-script \ \<br>在故障转移期间，当一些警告级别的Sentinel事件发生（指重要事件，如主观下线，客观下线等）时，会触发对应路径的脚本，想脚本发送相应的事件参数。<br>例如：sentinel notification-script mymaster /var/redis/notify.sh<br>sentinel client-reconfig-script \ \<br>在故障转移结束后，触发应对路径的脚本，并向脚本发送故障转移结果的参数。<br>例如：sentinel client-reconfig-script mymaster /var/redis/reconfig.sh。</p>
 
           
         
@@ -1838,7 +2164,7 @@ Derived print:0(Derived.print)
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1881,7 +2207,7 @@ Derived print:0(Derived.print)
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">30</span>
+                <span class="site-state-item-count">68</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1890,7 +2216,7 @@ Derived print:0(Derived.print)
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">16</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1899,7 +2225,7 @@ Derived print:0(Derived.print)
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-count">3</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -1959,7 +2285,7 @@ Derived print:0(Derived.print)
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2017</span>
+  <span itemprop="copyrightYear">2018</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

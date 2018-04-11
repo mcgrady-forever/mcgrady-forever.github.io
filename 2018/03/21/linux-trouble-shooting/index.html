@@ -1,0 +1,953 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="有时候，有很多问题只有在线上或者预发环境才能发现，而线上又不能调试代码，所以线上问题定位就只能看日志、系统状态和dump线程，介绍一些常用的工具，介绍一些常用命令定位线上问题。
+top在Linux命令行下使用TOP命令查看每个进程的情况，显示如下。
+
+交互命令数字1查看每个CPU的性能数据
+查看某个进程所有线程的信息1top -H -p pid
+
+
+strace &amp;amp; pstackstrac">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在线定位问题常用命令">
+<meta property="og:url" content="http://hlei.io/2018/03/21/linux-trouble-shooting/index.html">
+<meta property="og:site_name" content="HeLei Blog">
+<meta property="og:description" content="有时候，有很多问题只有在线上或者预发环境才能发现，而线上又不能调试代码，所以线上问题定位就只能看日志、系统状态和dump线程，介绍一些常用的工具，介绍一些常用命令定位线上问题。
+top在Linux命令行下使用TOP命令查看每个进程的情况，显示如下。
+
+交互命令数字1查看每个CPU的性能数据
+查看某个进程所有线程的信息1top -H -p pid
+
+
+strace &amp;amp; pstackstrac">
+<meta property="og:image" content="http://hlei.io/2018/03/21/linux-trouble-shooting/linux-trouble-shooting01.png">
+<meta property="og:image" content="http://hlei.io/2018/03/21/linux-trouble-shooting/linux-trouble-shooting02.png">
+<meta property="og:image" content="http://hlei.io/2018/03/21/linux-trouble-shooting/linux-trouble-shooting03.png">
+<meta property="og:image" content="http://hlei.io/2018/03/21/linux-trouble-shooting/linux-trouble-shooting04.png">
+<meta property="og:updated_time" content="2018-03-27T08:15:07.841Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="在线定位问题常用命令">
+<meta name="twitter:description" content="有时候，有很多问题只有在线上或者预发环境才能发现，而线上又不能调试代码，所以线上问题定位就只能看日志、系统状态和dump线程，介绍一些常用的工具，介绍一些常用命令定位线上问题。
+top在Linux命令行下使用TOP命令查看每个进程的情况，显示如下。
+
+交互命令数字1查看每个CPU的性能数据
+查看某个进程所有线程的信息1top -H -p pid
+
+
+strace &amp;amp; pstackstrac">
+<meta name="twitter:image" content="http://hlei.io/2018/03/21/linux-trouble-shooting/linux-trouble-shooting01.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://hlei.io/2018/03/21/linux-trouble-shooting/"/>
+
+
+
+
+
+  <title> 在线定位问题常用命令 | HeLei Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">HeLei Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+    
+      <h1 class="site-subtitle" itemprop="description">不要因为走得太远，就忘记为什么而出发</h1>
+    
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/21/linux-trouble-shooting/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                在线定位问题常用命令
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-21T10:10:12+08:00">
+                2018-03-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>有时候，有很多问题只有在线上或者预发环境才能发现，而线上又不能调试代码，所以线<br>上问题定位就只能看日志、系统状态和dump线程，介绍一些常用的工具，介绍一些常用命令定位线上问题。</p>
+<h1 id="top"><a href="#top" class="headerlink" title="top"></a>top</h1><p>在Linux命令行下使用TOP命令查看每个进程的情况，显示如下。<br><img src="/2018/03/21/linux-trouble-shooting/linux-trouble-shooting01.png" alt="img01"></p>
+<ul>
+<li>交互命令数字1查看每个CPU的性能数据</li>
+<li>查看某个进程所有线程的信息<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">top -H -p pid</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h1 id="strace-amp-pstack"><a href="#strace-amp-pstack" class="headerlink" title="strace &amp; pstack"></a>strace &amp; pstack</h1><p>strace就是这样一款工具。通过它，我们可以跟踪程序执行过程中产生的系统调用及接收到的信号，帮助我们分析程序或命令执行中遇到的异常情况。</p>
+<h2 id="1-一个简单的例子"><a href="#1-一个简单的例子" class="headerlink" title="1. 一个简单的例子"></a>1. 一个简单的例子</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">//main.c</div><div class="line">#include &lt;sys/types.h&gt;</div><div class="line">#include &lt;sys/stat.h&gt;</div><div class="line">#include &lt;fcntl.h&gt;</div><div class="line">int main( )</div><div class="line">&#123;</div><div class="line">　　int fd ;</div><div class="line">　　int i = 0 ;</div><div class="line">　　fd = open( “/tmp/foo”, O_RDONLY ) ;</div><div class="line">　　if ( fd &lt; 0 )</div><div class="line">　　　　i=5;</div><div class="line">　　else</div><div class="line">　　　　i=2;</div><div class="line">　　return i;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="2-strace跟踪输出"><a href="#2-strace跟踪输出" class="headerlink" title="2.strace跟踪输出"></a>2.strace跟踪输出</h2><p>使用以下命令，我们将使用strace对以上程序进行跟踪，并将结果重定向至main.strace文件：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ strace -o main.strace ./main</div></pre></td></tr></table></figure></p>
+<p>接下来我们来看main.strace文件的内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">lx@LX:~$ cat main.strace</div><div class="line">execve(&quot;./main&quot;, [&quot;./main&quot;], [/* 43 vars */]) = 0</div><div class="line">brk(0)                                  = 0x9ac4000</div><div class="line">access(&quot;/etc/ld.so.nohwcap&quot;, F_OK)      = -1 ENOENT (No such file or directory)</div><div class="line">mmap2(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7739000</div><div class="line">access(&quot;/etc/ld.so.preload&quot;, R_OK)      = -1 ENOENT (No such file or directory)</div><div class="line">open(&quot;/etc/ld.so.cache&quot;, O_RDONLY)      = 3</div><div class="line">fstat64(3, &#123;st_mode=S_IFREG|0644, st_size=80682, ...&#125;) = 0</div><div class="line">mmap2(NULL, 80682, PROT_READ, MAP_PRIVATE, 3, 0) = 0xb7725000</div><div class="line">close(3)                                = 0</div><div class="line">access(&quot;/etc/ld.so.nohwcap&quot;, F_OK)      = -1 ENOENT (No such file or directory)</div><div class="line">open(&quot;/lib/i386-linux-gnu/libc.so.6&quot;, O_RDONLY) = 3</div><div class="line">read(3, &quot;\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\220o\1\0004\0\0\0&quot;..., 512) = 512</div><div class="line">fstat64(3, &#123;st_mode=S_IFREG|0755, st_size=1434180, ...&#125;) = 0</div><div class="line">mmap2(NULL, 1444360, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x56d000</div><div class="line">mprotect(0x6c7000, 4096, PROT_NONE)     = 0</div><div class="line">mmap2(0x6c8000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x15a) = 0x6c8000</div><div class="line">mmap2(0x6cb000, 10760, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x6cb000</div><div class="line">close(3)                                = 0</div><div class="line">mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7724000</div><div class="line">set_thread_area(&#123;entry_number:-1 -&gt; 6, base_addr:0xb77248d0, limit:1048575, seg_32bit:1, contents:0, read_exec_    only:0, limit_in_pages:1, seg_not_present:0, useable:1&#125;) = 0</div><div class="line">mprotect(0x6c8000, 8192, PROT_READ)     = 0</div><div class="line">mprotect(0x8049000, 4096, PROT_READ)    = 0</div><div class="line">mprotect(0x4b0000, 4096, PROT_READ)     = 0</div><div class="line">munmap(0xb7725000, 80682)               = 0</div><div class="line">open(&quot;/tmp/foo&quot;, O_RDONLY)              = -1 ENOENT (No such file or directory)</div><div class="line">exit_group(5)                           = ?</div><div class="line">//标红的行号为方便说明而添加，非strace执行输出</div></pre></td></tr></table></figure></p>
+<p>strace跟踪程序与系统交互时产生的系统调用，以上每一行就对应一个系统调用，格式为：</p>
+<p>系统调用的名称( 参数… ) = 返回值  错误标志和描述</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">Line 1:  对于命令行下执行的程序，execve(或exec系列调用中的某一个)均为strace输出系统调用中的第一个。strace首先调用fork或clone函数新建一个子进程，然后在子进程中调用exec载入需要执行的程序(这里为./main)</div><div class="line"></div><div class="line">Line 2:  以0作为参数调用brk，返回值为内存管理的起始地址(若在子进程中调用malloc，则从0x9ac4000地址开始分配空间)</div><div class="line"></div><div class="line">Line 3:  调用access函数检验/etc/ld.so.nohwcap是否存在</div><div class="line"></div><div class="line">Line 4:  使用mmap2函数进行匿名内存映射，以此来获取8192bytes内存空间，该空间起始地址为0xb7739000，关于匿名内存映射，可以看这里</div><div class="line"></div><div class="line">Line 6:  调用open函数尝试打开/etc/ld.so.cache文件，返回文件描述符为3</div><div class="line"></div><div class="line">Line 7:  fstat64函数获取/etc/ld.so.cache文件信息</div><div class="line"></div><div class="line">Line 8:  调用mmap2函数将/etc/ld.so.cache文件映射至内存，关于使用mmap映射文件至内存，可以看这里</div><div class="line"></div><div class="line">Line 9:  close关闭文件描述符为3指向的/etc/ld.so.cache文件</div><div class="line"></div><div class="line">Line12:  调用read，从/lib/i386-linux-gnu/libc.so.6该libc库文件中读取512bytes，即读取ELF头信息</div><div class="line"></div><div class="line">Line15:  使用mprotect函数对0x6c7000起始的4096bytes空间进行保护(PROT_NONE表示不能访问，PROT_READ表示可以读取)</div><div class="line"></div><div class="line">Line24:  调用munmap函数，将/etc/ld.so.cache文件从内存中去映射，与Line 8的mmap2对应</div><div class="line"></div><div class="line">Line25:  对应源码中使用到的唯一的系统调用——open函数，使用其打开/tmp/foo文件</div><div class="line"></div><div class="line">Line26:  子进程结束，退出码为5(为什么退出值为5？返回前面程序示例部分看看源码吧：)</div></pre></td></tr></table></figure>
+<h2 id="3-输出分析"><a href="#3-输出分析" class="headerlink" title="3. 输出分析"></a>3. 输出分析</h2><p>呼呼！看完这么多系统调用函数，是不是有点摸不着北？让我们从整体入手，回到主题strace上来。</p>
+<p>从上面输出可以发现，真正能与源码对应上的只有open这一个系统调用(Line25)，其他系统调用几乎都用于进行进程初始化工作：装载被执行程序、载入libc函数库、设置内存映射等。</p>
+<p>源码中的if语句或其他代码在相应strace输出中并没有体现，因为它们并没有唤起系统调用。strace只关心程序与系统之间产生的交互，因而strace不适用于程序逻辑代码的排错和分析。</p>
+<h2 id="4-常用选项"><a href="#4-常用选项" class="headerlink" title="4. 常用选项"></a>4. 常用选项</h2><ol>
+<li>跟踪子进程 -f</li>
+<li>记录系统调用时间</li>
+</ol>
+<p>strace还可以记录程序与系统交互时，各个系统调用发生时的时间信息，有r、t、tt、ttt、T等几个选项，它们记录时间的方式为：</p>
+<p>-T:   记录各个系统调用花费的时间，精确到微秒</p>
+<p>-r:   以第一个系统调用(通常为execve)计时，精确到微秒</p>
+<p>-t:   时：分：秒</p>
+<p>-tt:  时：分：秒 . 微秒</p>
+<p>-ttt: 计算机纪元以来的秒数 . 微秒</p>
+<p>比较常用的为T选项，因为其提供了每个系统调用花费时间。而其他选项的时间记录既包含系统调用时间，又算上用户级代码执行用时，参考意义就小一些。对部分时间选项我们可以组合起来使用，例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">strace -Tr ./main</div><div class="line">0.000000 execve(“./main”, [“main”], [/* 64 vars */]) = 0</div><div class="line">0.000931 fcntl64(0, F_GETFD)= 0 &lt;0.000012&gt;</div><div class="line">0.000090 fcntl64(1, F_GETFD)= 0 &lt;0.000022&gt;</div><div class="line">0.000060 fcntl64(2, F_GETFD)= 0 &lt;0.000012&gt;</div><div class="line">0.000054 uname(&#123;sys=”Linux”, node=”ion”, ...&#125;) = 0 &lt;0.000014&gt;</div><div class="line">0.000307 geteuid32()= 7903 &lt;0.000011&gt;</div><div class="line">0.000040 getuid32()= 7903 &lt;0.000012&gt;</div><div class="line">0.000039 getegid32()= 200 &lt;0.000011&gt;</div><div class="line">0.000039 getgid32()= 200 &lt;0.000011&gt;</div><div class="line">……</div></pre></td></tr></table></figure></p>
+<p>最左边一列为-r选项对应的时间输出，最右边一列为-T选项对应的输出。</p>
+<ol>
+<li>跟踪正在运行的进程 strace -p PID</li>
+</ol>
+<h2 id="5-使用strace处理程序挂死实例"><a href="#5-使用strace处理程序挂死实例" class="headerlink" title="5. 使用strace处理程序挂死实例"></a>5. 使用strace处理程序挂死实例</h2><h3 id="挂死程序源码"><a href="#挂死程序源码" class="headerlink" title="挂死程序源码"></a>挂死程序源码</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">//hang.c</div><div class="line">#include &lt;stdio.h&gt;</div><div class="line">#include &lt;sys/types.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line">#include &lt;string.h&gt;</div><div class="line"></div><div class="line">int main(int argc, char** argv)</div><div class="line">&#123;</div><div class="line">    getpid(); //该系统调用起到标识作用</div><div class="line">    if(argc &lt; 2)</div><div class="line">    &#123;</div><div class="line">        printf(&quot;hang (user|system)\n&quot;);</div><div class="line">        return 1;</div><div class="line">    &#125;</div><div class="line">    if(!strcmp(argv[1], &quot;user&quot;))</div><div class="line">        while(1);</div><div class="line">    else if(!strcmp(argv[1], &quot;system&quot;))</div><div class="line">        sleep(500);</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可向该程序传送user和system参数，以上代码使用死循环模拟用户态挂死，调用sleep模拟内核态程序挂死。</p>
+<h3 id="strace跟踪输出"><a href="#strace跟踪输出" class="headerlink" title="strace跟踪输出"></a>strace跟踪输出</h3><ul>
+<li><p>用户态挂死跟踪输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">……</div><div class="line">mprotect(0x8049000, 4096, PROT_READ)    = 0</div><div class="line">mprotect(0xb59000, 4096, PROT_READ)     = 0</div><div class="line">munmap(0xb77bf000, 80682)               = 0</div><div class="line">getpid()                                = 14539</div></pre></td></tr></table></figure>
+</li>
+<li><p>内核态挂死跟踪输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">……</div><div class="line">mprotect(0x8049000, 4096, PROT_READ)    = 0</div><div class="line">mprotect(0xddf000, 4096, PROT_READ)     = 0</div><div class="line">munmap(0xb7855000, 80682)               = 0</div><div class="line">getpid()                                = 14543</div><div class="line">rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0</div><div class="line">rt_sigaction(SIGCHLD, NULL, &#123;SIG_DFL, [], 0&#125;, 8) = 0</div><div class="line">rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0</div><div class="line">nanosleep(&#123;500, 0&#125;,</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="输出分析"><a href="#输出分析" class="headerlink" title="输出分析"></a>输出分析</h3><p>用户态挂死情况下，strace在getpid()一行输出之后没有其他系统调用输出；进程在内核态挂死，最后一行的系统调用nanosleep不能完整显示，这里nanosleep没有返回值表示该调用尚未完成。</p>
+<p>因而我们可以得出以下结论：使用strace跟踪挂死程序，如果最后一行系统调用显示完整，程序在逻辑代码处挂死；如果最后一行系统调用显示不完整，程序在该系统调用处挂死。</p>
+<h1 id="其它命令"><a href="#其它命令" class="headerlink" title="其它命令"></a>其它命令</h1><ul>
+<li>查看网络流量 /proc/net/dev<br><img src="/2018/03/21/linux-trouble-shooting/linux-trouble-shooting02.png" alt="img02"></li>
+<li>查看连接数 /proc/net/snmp<br><img src="/2018/03/21/linux-trouble-shooting/linux-trouble-shooting03.png" alt="img03"></li>
+<li>查看内存信息 /proc/meminfo<br><img src="/2018/03/21/linux-trouble-shooting/linux-trouble-shooting04.png" alt="img04"></li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/wechat.png" alt="He Lei WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.png" alt="He Lei Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/19/network-thundering-herd/" rel="next" title="惊群效应">
+                <i class="fa fa-chevron-left"></i> 惊群效应
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/03/22/python-iterator/" rel="prev" title="迭代器&生成器&装饰器">
+                迭代器&生成器&装饰器 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="He Lei" />
+          <p class="site-author-name" itemprop="name">He Lei</p>
+          <p class="site-description motion-element" itemprop="description">c/c++/python | redis | recommend algorithm | search engine</p>
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">68</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/mcgrady-forever" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/wuxubj" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#top"><span class="nav-number">1.</span> <span class="nav-text">top</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#strace-amp-pstack"><span class="nav-number">2.</span> <span class="nav-text">strace & pstack</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-一个简单的例子"><span class="nav-number">2.1.</span> <span class="nav-text">1. 一个简单的例子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-strace跟踪输出"><span class="nav-number">2.2.</span> <span class="nav-text">2.strace跟踪输出</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-输出分析"><span class="nav-number">2.3.</span> <span class="nav-text">3. 输出分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-常用选项"><span class="nav-number">2.4.</span> <span class="nav-text">4. 常用选项</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-使用strace处理程序挂死实例"><span class="nav-number">2.5.</span> <span class="nav-text">5. 使用strace处理程序挂死实例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#挂死程序源码"><span class="nav-number">2.5.1.</span> <span class="nav-text">挂死程序源码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#strace跟踪输出"><span class="nav-number">2.5.2.</span> <span class="nav-text">strace跟踪输出</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#输出分析"><span class="nav-number">2.5.3.</span> <span class="nav-text">输出分析</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#其它命令"><span class="nav-number">3.</span> <span class="nav-text">其它命令</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">He Lei</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+      search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+      $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = $( "entry", xmlResponse ).map(function() {
+            return {
+              title: $( "title", this ).text(),
+              content: $("content",this).text(),
+              url: $( "url" , this).text()
+            };
+          }).get();
+          var $input = document.getElementById(search_id);
+          var $resultContent = document.getElementById(content_id);
+          $input.addEventListener('input', function(){
+            var matchcounts = 0;
+            var str='<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length > 1) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var content_index = [];
+                var data_title = data.title.trim().toLowerCase();
+                var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                var data_url = decodeURIComponent(data.url);
+                var index_title = -1;
+                var index_content = -1;
+                var first_occur = -1;
+                // only match artiles with not empty titles and contents
+                if(data_title != '') {
+                  keywords.forEach(function(keyword, i) {
+                    index_title = data_title.indexOf(keyword);
+                    index_content = data_content.indexOf(keyword);
+                    if( index_title >= 0 || index_content >= 0 ){
+                      isMatch = true;
+                      if (i == 0) {
+                        first_occur = index_content;
+                      }
+                    }
+
+                  });
+                }
+                // show search results
+                if (isMatch) {
+                  matchcounts += 1;
+                  str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                  var content = data.content.trim().replace(/<[^>]+>/g,"");
+                  if (first_occur >= 0) {
+                    // cut out 100 characters
+                    var start = first_occur - 20;
+                    var end = first_occur + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if(start == 0){
+                      end = 50;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    var match_content = content.substring(start, end);
+                    // highlight all keywords
+                    keywords.forEach(function(keyword){
+                      var regS = new RegExp(keyword, "gi");
+                      match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                    });
+
+                    str += "<p class=\"search-result\">" + match_content +"...</p>"
+                  }
+                  str += "</li>";
+                }
+              })};
+            str += "</ul>";
+            if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+            if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+            $resultContent.innerHTML = str;
+          });
+          proceedsearch();
+        }
+      });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

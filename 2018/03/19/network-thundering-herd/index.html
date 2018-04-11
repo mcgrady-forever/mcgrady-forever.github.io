@@ -1,0 +1,891 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="什么叫惊群现象首先，我们看看维基百科对惊群的定义:
+The thundering herd problem occurs when a large number of processes waiting for an event are awoken when that event occurs, but only one process is able to proceed at a time.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="惊群效应">
+<meta property="og:url" content="http://hlei.io/2018/03/19/network-thundering-herd/index.html">
+<meta property="og:site_name" content="HeLei Blog">
+<meta property="og:description" content="什么叫惊群现象首先，我们看看维基百科对惊群的定义:
+The thundering herd problem occurs when a large number of processes waiting for an event are awoken when that event occurs, but only one process is able to proceed at a time.">
+<meta property="og:updated_time" content="2018-03-20T12:04:19.399Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="惊群效应">
+<meta name="twitter:description" content="什么叫惊群现象首先，我们看看维基百科对惊群的定义:
+The thundering herd problem occurs when a large number of processes waiting for an event are awoken when that event occurs, but only one process is able to proceed at a time.">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://hlei.io/2018/03/19/network-thundering-herd/"/>
+
+
+
+
+
+  <title> 惊群效应 | HeLei Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">HeLei Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+    
+      <h1 class="site-subtitle" itemprop="description">不要因为走得太远，就忘记为什么而出发</h1>
+    
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/19/network-thundering-herd/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                惊群效应
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-19T14:24:47+08:00">
+                2018-03-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="什么叫惊群现象"><a href="#什么叫惊群现象" class="headerlink" title="什么叫惊群现象"></a>什么叫惊群现象</h1><p>首先，我们看看维基百科对惊群的定义:</p>
+<pre><code>The thundering herd problem occurs when a large number of processes waiting for an event are awoken when that event occurs, but only one process is able to proceed at a time. After the processes wake up, they all demand the resource and a decision must be made as to which process can continue. After the decision is made, the remaining processes are put back to sleep, only to all wake up again to request access to the resource.
+
+This occurs repeatedly, until there are no more processes to be woken up. Because all the processes use system resources upon waking, it is more efficient if only one process was woken up at a time.
+
+This may render the computer unusable, but it can also be used as a technique if there is no other way to decide which process should continue (for example when programming with semaphores).
+</code></pre><p>惊群简单来说就是多个进程或者线程在等待同一个事件，当事件发生时，所有线程和进程都会被内核唤醒。唤醒后通常只有一个进程获得了该事件并进行处理，其他进程发现获取事件失败后又继续进入了等待状态，在一定程度上降低了系统性能。</p>
+<h1 id="accept-惊群"><a href="#accept-惊群" class="headerlink" title="accept 惊群"></a>accept 惊群</h1><p>具体来说惊群通常发生在服务器的监听等待调用上，服务器创建监听socket，后fork多个进程，在每个进程中调用accept或者epoll_wait等待终端的连接。</p>
+<p>那么这个问题真的存在吗？</p>
+<p>事实上，历史上，Linux 的 accpet 确实存在惊群问题，但现在的内核都解决该问题了。即，当多个进程/线程都阻塞在对同一个 socket 的 accept 调用上时，当有一个新的连接到来，内核只会唤醒一个进程，其他进程保持休眠，压根就不会被唤醒。</p>
+<p>测试代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div></pre></td><td class="code"><pre><div class="line">#include &lt;stdio.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line">#include &lt;sys/types.h&gt;  </div><div class="line">#include &lt;sys/socket.h&gt;  </div><div class="line">#include &lt;netinet/in.h&gt;  </div><div class="line">#include &lt;arpa/inet.h&gt;  </div><div class="line">#include &lt;assert.h&gt;  </div><div class="line">#include &lt;sys/wait.h&gt;</div><div class="line">#include &lt;string.h&gt;</div><div class="line">#include &lt;errno.h&gt;</div><div class="line"></div><div class="line">#define IP   &quot;127.0.0.1&quot;</div><div class="line">#define PORT  8888</div><div class="line">#define WORKER 4</div><div class="line"></div><div class="line">int worker(int listenfd, int i)</div><div class="line">&#123;</div><div class="line">    while (1) &#123;</div><div class="line">        printf(&quot;I am worker %d, begin to accept connection.\n&quot;, i);</div><div class="line">        struct sockaddr_in client_addr;  </div><div class="line">        socklen_t client_addrlen = sizeof( client_addr );  </div><div class="line">        int connfd = accept( listenfd, ( struct sockaddr* )&amp;client_addr, &amp;client_addrlen );  </div><div class="line">        if (connfd != -1) &#123;</div><div class="line">            printf(&quot;worker %d accept a connection success.\t&quot;, i);</div><div class="line">            printf(&quot;ip :%s\t&quot;,inet_ntoa(client_addr.sin_addr));</div><div class="line">            printf(&quot;port: %d \n&quot;,client_addr.sin_port);</div><div class="line">        &#125; else &#123;</div><div class="line">            printf(&quot;worker %d accept a connection failed,error:%s&quot;, i, strerror(errno));</div><div class="line">			close(connfd);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    return 0;</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main()</div><div class="line">&#123;</div><div class="line">    int i = 0;</div><div class="line">    struct sockaddr_in address;  </div><div class="line">    bzero(&amp;address, sizeof(address));  </div><div class="line">    address.sin_family = AF_INET;  </div><div class="line">    inet_pton( AF_INET, IP, &amp;address.sin_addr);  </div><div class="line">    address.sin_port = htons(PORT);  </div><div class="line">    int listenfd = socket(PF_INET, SOCK_STREAM, 0);  </div><div class="line">    assert(listenfd &gt;= 0);  </div><div class="line"></div><div class="line">    int ret = bind(listenfd, (struct sockaddr*)&amp;address, sizeof(address));  </div><div class="line">    assert(ret != -1);  </div><div class="line"></div><div class="line">    ret = listen(listenfd, 5);  </div><div class="line">    assert(ret != -1);  </div><div class="line"></div><div class="line">    for (i = 0; i &lt; WORKER; i++) &#123;</div><div class="line">        printf(&quot;Create worker %d\n&quot;, i+1);</div><div class="line">        pid_t pid = fork();</div><div class="line">        /*child  process */</div><div class="line">        if (pid == 0) &#123;</div><div class="line">            worker(listenfd, i);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        if (pid &lt; 0) &#123;</div><div class="line">            printf(&quot;fork error&quot;);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /*wait child process*/</div><div class="line">    int status;</div><div class="line">    wait(&amp;status);</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>当我们对该服务器发起连接请求（用 telnet/curl 等模拟）时，会看到只有一个进程被唤醒。</p>
+<h1 id="epoll惊群"><a href="#epoll惊群" class="headerlink" title="epoll惊群"></a>epoll惊群</h1><p>如上所述，accept 已经不存在惊群问题，但 epoll 上还是存在惊群问题。即，如果多个进程/线程阻塞在监听同一个 listening socket fd 的 epoll_wait 上，当有一个新的连接到来时，所有的进程都会被唤醒。</p>
+<p>考虑如下场景：</p>
+<p>主进程创建 socket, bind， listen 后，将该 socket 加入到 epoll 中，然后 fork 出多个子进程，每个进程都阻塞在 epoll_wait 上，如果有事件到来，则判断该事件是否是该 socket 上的事件，如果是，说明有新的连接到来了，则进行 accept 操作。为了简化处理，忽略后续的读写以及对 accept 返回的新的套接字的处理，直接断开连接。</p>
+<p>那么，当新的连接到来时，是否每个阻塞在 epoll_wait 上的进程都会被唤醒呢？</p>
+<p>很多博客中提到，测试表明虽然 epoll_wait 不会像 accept 那样只唤醒一个进程/线程，但也不会把所有的进程/线程都唤醒。</p>
+<p>为了验证这个问题，我自己写了一个测试程序：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div></pre></td><td class="code"><pre><div class="line">#include &lt;sys/types.h&gt;</div><div class="line">#include &lt;sys/socket.h&gt;</div><div class="line">#include &lt;sys/epoll.h&gt;</div><div class="line">#include &lt;netdb.h&gt;</div><div class="line">#include &lt;string.h&gt;</div><div class="line">#include &lt;stdio.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line">#include &lt;fcntl.h&gt;</div><div class="line">#include &lt;stdlib.h&gt;</div><div class="line">#include &lt;errno.h&gt;</div><div class="line">#include &lt;sys/wait.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line">#include &lt;netinet/in.h&gt;</div><div class="line">#include &lt;arpa/inet.h&gt;</div><div class="line"></div><div class="line">#define IP   &quot;127.0.0.1&quot;</div><div class="line">#define PORT  8888</div><div class="line">#define PROCESS_NUM 4</div><div class="line">#define MAXEVENTS 64</div><div class="line"></div><div class="line">static int create_and_bind ()</div><div class="line">&#123;</div><div class="line">    int fd = socket(PF_INET, SOCK_STREAM, 0);</div><div class="line">    struct sockaddr_in serveraddr;</div><div class="line">    serveraddr.sin_family = AF_INET;</div><div class="line">    inet_pton( AF_INET, IP, &amp;serveraddr.sin_addr);  </div><div class="line">    serveraddr.sin_port = htons(PORT);</div><div class="line">    bind(fd, (struct sockaddr*)&amp;serveraddr, sizeof(serveraddr));</div><div class="line">    return fd;</div><div class="line">&#125;</div><div class="line"></div><div class="line">static int make_socket_non_blocking (int sfd)</div><div class="line">&#123;</div><div class="line">    int flags, s;</div><div class="line">    flags = fcntl (sfd, F_GETFL, 0);</div><div class="line">    if (flags == -1) &#123;</div><div class="line">        perror (&quot;fcntl&quot;);</div><div class="line">        return -1;</div><div class="line">    &#125;</div><div class="line">    flags |= O_NONBLOCK;</div><div class="line">    s = fcntl (sfd, F_SETFL, flags);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        perror (&quot;fcntl&quot;);</div><div class="line">        return -1;</div><div class="line">    &#125;</div><div class="line">    return 0;</div><div class="line">&#125;</div><div class="line"></div><div class="line">void worker(int sfd, int efd, struct epoll_event *events, int k) &#123;</div><div class="line">    /* The event loop */</div><div class="line">    while (1) &#123;</div><div class="line">        int n, i;</div><div class="line">        n = epoll_wait(efd, events, MAXEVENTS, -1);</div><div class="line">        //sleep(1);</div><div class="line">        printf(&quot;worker  %d return from epoll_wait!\n&quot;, k);</div><div class="line">        for (i = 0; i &lt; n; i++) &#123;</div><div class="line">            if ((events[i].events &amp; EPOLLERR) || (events[i].events &amp; EPOLLHUP) || (!(events[i].events &amp;EPOLLIN))) &#123;</div><div class="line">                /* An error has occured on this fd, or the socket is not ready for reading (why were we notified then?) */</div><div class="line">                fprintf (stderr, &quot;epoll error\n&quot;);</div><div class="line">                close (events[i].data.fd);</div><div class="line">                continue;</div><div class="line">            &#125; else if (sfd == events[i].data.fd) &#123;</div><div class="line">                /* We have a notification on the listening socket, which means one or more incoming connections. */</div><div class="line">                struct sockaddr in_addr;</div><div class="line">                socklen_t in_len;</div><div class="line">                int infd;</div><div class="line">                char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];</div><div class="line">                in_len = sizeof in_addr;</div><div class="line">                infd = accept(sfd, &amp;in_addr, &amp;in_len);</div><div class="line">                if (infd == -1) &#123;</div><div class="line">                    printf(&quot;worker %d accept failed!\n&quot;, k);</div><div class="line">                    break;</div><div class="line">                &#125;</div><div class="line">                printf(&quot;worker %d accept successed!\n&quot;, k);</div><div class="line">                /* Make the incoming socket non-blocking and add it to the list of fds to monitor. */</div><div class="line">                close(infd); </div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main (int argc, char *argv[])</div><div class="line">&#123;</div><div class="line">    int sfd, s;</div><div class="line">    int efd;</div><div class="line">    struct epoll_event event;</div><div class="line">    struct epoll_event *events;</div><div class="line">    sfd = create_and_bind();</div><div class="line">    if (sfd == -1) &#123;</div><div class="line">        abort ();</div><div class="line">    &#125;</div><div class="line">    s = make_socket_non_blocking (sfd);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        abort ();</div><div class="line">    &#125;</div><div class="line">    s = listen(sfd, SOMAXCONN);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        perror (&quot;listen&quot;);</div><div class="line">        abort ();</div><div class="line">    &#125;</div><div class="line">    efd = epoll_create(MAXEVENTS);</div><div class="line">    if (efd == -1) &#123;</div><div class="line">        perror(&quot;epoll_create&quot;);</div><div class="line">        abort();</div><div class="line">    &#125;</div><div class="line">    event.data.fd = sfd;</div><div class="line">    event.events = EPOLLIN | EPOLLEXCLUSIVE;</div><div class="line">    s = epoll_ctl(efd, EPOLL_CTL_ADD, sfd, &amp;event);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        perror(&quot;epoll_ctl&quot;);</div><div class="line">        abort();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /* Buffer where events are returned */</div><div class="line">    events = (struct epoll_event*)calloc(MAXEVENTS, sizeof event);</div><div class="line">    int k;</div><div class="line">    for(k = 0; k &lt; PROCESS_NUM; k++) &#123;</div><div class="line">        printf(&quot;Create worker %d\n&quot;, k+1);</div><div class="line">        int pid = fork();</div><div class="line">        if(pid == 0) &#123;</div><div class="line">            worker(sfd, efd, events, k);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    int status;</div><div class="line">    wait(&amp;status);</div><div class="line">    free (events);</div><div class="line">    close (sfd);</div><div class="line">    return EXIT_SUCCESS;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>运行server端后用telnet连，出现了2个进程被唤醒的情况，并不是每次都出现。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">worker  3 return from epoll_wait!</div><div class="line">worker 3 accept successed!</div><div class="line">worker  2 return from epoll_wait!</div><div class="line">worker 2 accept failed!</div></pre></td></tr></table></figure></p>
+<p>也就是说，到目前为止，还没有得到一个确定的答案。但后来，在下面这篇博客中看到这样一个评论：<a href="http://blog.csdn.net/spch2008/article/details/18301357" target="_blank" rel="external">http://blog.csdn.net/spch2008/article/details/18301357</a></p>
+<p>这个总结，需要进一步阐述，你的实验，看上去是只有4个进程唤醒了，而事实上，其余进程没有被唤醒的原因是你的某个进程已经处理完这个 accept，内核队列上已经没有这个事件，无需唤醒其他进程。你可以在 epoll 获知这个 accept 事件的时候，不要立即去处理，而是 sleep 下，这样所有的进程都会被唤起</p>
+<p>看到这个评论后，我顿时如醍醐灌顶，重新修改了上面的测试程序，即在 epoll_wait 返回后，加了个 sleep 语句，这时再测试，果然发现所有的进程都被唤醒了。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">worker  1 return from epoll_wait!</div><div class="line">worker  3 return from epoll_wait!</div><div class="line">worker 1 accept successed!</div><div class="line">worker 3 accept failed!</div><div class="line">worker  2 return from epoll_wait!</div><div class="line">worker 2 accept failed!</div><div class="line">worker  0 return from epoll_wait!</div><div class="line">worker 0 accept failed!</div></pre></td></tr></table></figure></p>
+<p>所以，epoll_wait上的惊群确实是存在的。</p>
+<h1 id="为什么内核不处理-epoll-惊群"><a href="#为什么内核不处理-epoll-惊群" class="headerlink" title="为什么内核不处理 epoll 惊群"></a>为什么内核不处理 epoll 惊群</h1><p>看到这里，我们可能有疑惑了，为什么内核对 accept 的惊群做了处理，而现在仍然存在 epoll 的惊群现象呢？</p>
+<p>accept 确实应该只能被一个进程调用成功，内核很清楚这一点。但 epoll 不一样，他监听的文件描述符，除了可能后续被 accept 调用外，还有可能是其他网络 IO 事件的，而其他 IO 事件是否只能由一个进程处理，是不一定的，内核不能保证这一点，这是一个由用户决定的事情，例如可能一个文件会由多个进程来读写。所以，对 epoll 的惊群，内核则不予处理。</p>
+<h1 id="Nginx-是如何处理惊群问题的"><a href="#Nginx-是如何处理惊群问题的" class="headerlink" title="Nginx 是如何处理惊群问题的"></a>Nginx 是如何处理惊群问题的</h1><h1 id="使用EPOLLEXCLUSIVE"><a href="#使用EPOLLEXCLUSIVE" class="headerlink" title="使用EPOLLEXCLUSIVE"></a>使用EPOLLEXCLUSIVE</h1><p>Linux 4.5解决了这一问题，使用EPOLLEXCLUSIVE标记，但我自己的系统还没这么新，留待之后验证。<br><a href="http://www.man7.org/linux/man-pages/man2/epoll_ctl.2.html" target="_blank" rel="external">http://www.man7.org/linux/man-pages/man2/epoll_ctl.2.html</a></p>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>现在我们对惊群及 Nginx 的处理总结如下：</p>
+<ul>
+<li>accept 不会有惊群(since linux2.6)，epoll_wait 才会。</li>
+<li>Nginx 的 accept_mutex,并不是解决 accept 惊群问题，而是解决 epoll_wait 惊群问题。</li>
+<li>说Nginx 解决了 epoll_wait 惊群问题，也是不对的，它只是控制是否将监听套接字加入到epoll 中。监听套接字只在一个子进程的 epoll 中，当新的连接来到时，其他子进程当然不会惊醒了。</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/wechat.png" alt="He Lei WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.png" alt="He Lei Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/13/multithread-lock-summary/" rel="next" title="各种锁的总结">
+                <i class="fa fa-chevron-left"></i> 各种锁的总结
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/03/21/linux-trouble-shooting/" rel="prev" title="在线定位问题常用命令">
+                在线定位问题常用命令 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="He Lei" />
+          <p class="site-author-name" itemprop="name">He Lei</p>
+          <p class="site-description motion-element" itemprop="description">c/c++/python | redis | recommend algorithm | search engine</p>
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">68</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/mcgrady-forever" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/wuxubj" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#什么叫惊群现象"><span class="nav-number">1.</span> <span class="nav-text">什么叫惊群现象</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#accept-惊群"><span class="nav-number">2.</span> <span class="nav-text">accept 惊群</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#epoll惊群"><span class="nav-number">3.</span> <span class="nav-text">epoll惊群</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#为什么内核不处理-epoll-惊群"><span class="nav-number">4.</span> <span class="nav-text">为什么内核不处理 epoll 惊群</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx-是如何处理惊群问题的"><span class="nav-number">5.</span> <span class="nav-text">Nginx 是如何处理惊群问题的</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#使用EPOLLEXCLUSIVE"><span class="nav-number">6.</span> <span class="nav-text">使用EPOLLEXCLUSIVE</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#小结"><span class="nav-number">7.</span> <span class="nav-text">小结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">He Lei</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+      search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+      $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = $( "entry", xmlResponse ).map(function() {
+            return {
+              title: $( "title", this ).text(),
+              content: $("content",this).text(),
+              url: $( "url" , this).text()
+            };
+          }).get();
+          var $input = document.getElementById(search_id);
+          var $resultContent = document.getElementById(content_id);
+          $input.addEventListener('input', function(){
+            var matchcounts = 0;
+            var str='<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length > 1) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var content_index = [];
+                var data_title = data.title.trim().toLowerCase();
+                var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                var data_url = decodeURIComponent(data.url);
+                var index_title = -1;
+                var index_content = -1;
+                var first_occur = -1;
+                // only match artiles with not empty titles and contents
+                if(data_title != '') {
+                  keywords.forEach(function(keyword, i) {
+                    index_title = data_title.indexOf(keyword);
+                    index_content = data_content.indexOf(keyword);
+                    if( index_title >= 0 || index_content >= 0 ){
+                      isMatch = true;
+                      if (i == 0) {
+                        first_occur = index_content;
+                      }
+                    }
+
+                  });
+                }
+                // show search results
+                if (isMatch) {
+                  matchcounts += 1;
+                  str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                  var content = data.content.trim().replace(/<[^>]+>/g,"");
+                  if (first_occur >= 0) {
+                    // cut out 100 characters
+                    var start = first_occur - 20;
+                    var end = first_occur + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if(start == 0){
+                      end = 50;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    var match_content = content.substring(start, end);
+                    // highlight all keywords
+                    keywords.forEach(function(keyword){
+                      var regS = new RegExp(keyword, "gi");
+                      match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                    });
+
+                    str += "<p class=\"search-result\">" + match_content +"...</p>"
+                  }
+                  str += "</li>";
+                }
+              })};
+            str += "</ul>";
+            if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+            if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+            $resultContent.innerHTML = str;
+          });
+          proceedsearch();
+        }
+      });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

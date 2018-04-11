@@ -281,7 +281,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/05/18/java-cmd02/">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/23/redis-cluster-solution/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="He Lei">
@@ -306,8 +306,8 @@
             
               
                 
-                <a class="post-title-link" href="/2017/05/18/java-cmd02/" itemprop="url">
-                  java-cmd01-jstat
+                <a class="post-title-link" href="/2018/03/23/redis-cluster-solution/" itemprop="url">
+                  Redis集群方案应该怎么做
                 </a>
               
             
@@ -323,8 +323,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-05-18T19:58:12+08:00">
-                2017-05-18
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-23T10:13:48+08:00">
+                2018-03-23
               </time>
             
 
@@ -346,8 +346,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
+                  <a href="/categories/Redis/" itemprop="url" rel="index">
+                    <span itemprop="name">Redis</span>
                   </a>
                 </span>
 
@@ -383,1385 +383,1608 @@
       
         
           
-            <p>jstat位于java的bin目录下，主要利用JVM内建的指令对Java应用程序的资源和性能进行实时的命令行的监控，包括了对Heap size和垃圾回收状况的监控。可见，Jstat是轻量级的、专门针对JVM的工具，非常适用。</p>
-<h2 id="jstat-命令格式"><a href="#jstat-命令格式" class="headerlink" title="jstat 命令格式"></a>jstat 命令格式</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jstat -&lt;option&gt; [-t] [-h&lt;lines&gt;] &lt;vmid&gt; [&lt;interval&gt; [&lt;count&gt;]]</div></pre></td></tr></table></figure>
-<p>参数解释：<br>Option — 选项，我们一般使用 -gcutil 查看gc情况<br>vmid — VM的进程号，即当前运行的java进程号<br>interval– 间隔时间，单位为秒或者毫秒<br>count — 打印次数，如果缺省则打印无数次</p>
-<p>参数interval和count代表查询间隔和次数，如果省略这两个参数，说明只查询一次。假设需要每250毫秒查询一次进程5828垃圾收集状况，一共查询5次，那命令行如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">jstat -gc 5828 250 5</div></pre></td></tr></table></figure></p>
-<h2 id="option"><a href="#option" class="headerlink" title="option"></a>option</h2><p>选项option代表这用户希望查询的虚拟机信息，主要分为3类：类装载、垃圾收集和运行期编译状况，具体选项及作用如下：</p>
+            
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/22/python-iterator/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/22/python-iterator/" itemprop="url">
+                  迭代器&生成器&装饰器
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-22T10:31:37+08:00">
+                2018-03-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index">
+                    <span itemprop="name">Python</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="迭代器"><a href="#迭代器" class="headerlink" title="迭代器"></a>迭代器</h1><p>迭代器是访问集合元素的一种方式。迭代器对象从集合的第一个元素开始访问，直到所有的元素被访问完结束。迭代器只能往前不会后退迭代器的一大优点是不要求事先准备好整个迭代过程中所有的元素。迭代器仅仅在迭代到某个元素时才计算该元素，而在这之前或之后，元素可以不存在或者被销毁。这个特点使得它特别适合用于遍历一些巨大的或是无限的集合</p>
+<p>特点：</p>
+<ol>
+<li>访问者不需要关心迭代器内部的结构，仅需通过next()方法不断去取下一个内容</li>
+<li>不能随机访问集合中的某个值 ，只能从头到尾依次访问</li>
+<li>访问到一半时不能往回退</li>
+<li>便于循环比较大的数据集合，节省内存</li>
+</ol>
+<p>第一种方式，<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">list=[&quot;hello&quot;,&quot;world&quot;,&quot;china&quot;]</div><div class="line">for i in list:</div><div class="line">	print i</div></pre></td></tr></table></figure></p>
+<p>也是通常我们使用的遍历方式</p>
+<p>第二种方式，<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; list=[&quot;hello&quot;,&quot;world&quot;,&quot;china&quot;]</div><div class="line">&gt;&gt;&gt; it=iter(list)</div><div class="line">&gt;&gt;&gt; while True:</div><div class="line">	try:</div><div class="line">		m=next(it)</div><div class="line">		print(m)</div><div class="line">	except StopIteration:</div><div class="line">		break</div></pre></td></tr></table></figure></p>
+<p>列表推导<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; L = [x * x for x in range(10)]</div><div class="line">&gt;&gt;&gt; L</div><div class="line">[0, 1, 4, 9, 16, 25, 36, 49, 64, 81]</div><div class="line">&gt;&gt;&gt; type(L)</div><div class="line">&lt;type &apos;list&apos;&gt;</div></pre></td></tr></table></figure></p>
+<p>range（10）返回的也是一个list</p>
+<h1 id="生成器"><a href="#生成器" class="headerlink" title="生成器"></a>生成器</h1><p>通过列表生成式，我们可以直接创建一个列表。但是，受到内存限制，列表容量肯定是有限的。而且，创建一个包含100万个元素的列表，不仅占用很大的存储空间，如果我们仅仅需要访问前面几个元素，那后面绝大多数元素占用的空间都白白浪费了。</p>
+<p>所以，如果列表元素可以按照某种算法推算出来，那我们是否可以在循环的过程中不断推算出后续的元素呢？这样就不必创建完整的list，从而节省大量的空间。在Python中，这种一边循环一边计算的机制，称为生成器：generator。</p>
+<p> 一个函数调用时返回一个迭代器，那这个函数就叫做生成器（generator），如果函数中包含yield语法，那这个函数就会变成生成器。这个yield的主要效果呢，就是可以使函数中断，并保存中断状态，中断后，代码可以继续往下执行，过一段时间还可以再重新调用这个函数，从上次yield的下一句开始执行。</p>
+<ul>
+<li><p>用法一</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&gt;&gt;&gt; g = (x * x for x in range(10))</div><div class="line">&gt;&gt;&gt; g</div><div class="line">&lt;generator object &lt;genexpr&gt; at 0x1022ef630&gt;</div></pre></td></tr></table></figure>
+</li>
+<li><p>用法二</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">def fab(n):</div><div class="line">	a = 0</div><div class="line">	b = 1</div><div class="line">	while a &lt;= n:</div><div class="line">		yield a</div><div class="line">		a, b = a+b, a</div><div class="line"></div><div class="line">for i in fab(5):</div><div class="line">	print i</div><div class="line"></div><div class="line">0</div><div class="line">1</div><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">5</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>xrange是一个生成器，而range是迭代器。</p>
+<h1 id="装饰器"><a href="#装饰器" class="headerlink" title="装饰器"></a>装饰器</h1><p>不希望修改变原有函数定义，在代码运行期间动态增加功能的方式，称之为“装饰器”（Decorator，类似于设计模式中的装饰器模式。</p>
+<p>代码示例<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">def log(func):</div><div class="line">    def inner(*args, **kwargs):</div><div class="line">        print(&quot;__func__ = %s&quot;, func.__name__)</div><div class="line">        return func(*args, **kwargs)</div><div class="line">    return inner</div><div class="line"></div><div class="line">@log</div><div class="line">def now():</div><div class="line">    print &quot;2018/03/22&quot;</div><div class="line"></div><div class="line">(&apos;__func__ = %s&apos;, &apos;now&apos;)</div><div class="line">2018/03/22</div></pre></td></tr></table></figure></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/21/linux-trouble-shooting/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/21/linux-trouble-shooting/" itemprop="url">
+                  在线定位问题常用命令
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-21T10:10:12+08:00">
+                2018-03-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>有时候，有很多问题只有在线上或者预发环境才能发现，而线上又不能调试代码，所以线<br>上问题定位就只能看日志、系统状态和dump线程，介绍一些常用的工具，介绍一些常用命令定位线上问题。</p>
+<h1 id="top"><a href="#top" class="headerlink" title="top"></a>top</h1><p>在Linux命令行下使用TOP命令查看每个进程的情况，显示如下。<br><img src="/2018/03/21/linux-trouble-shooting/linux-trouble-shooting01.png" alt="img01"></p>
+<ul>
+<li>交互命令数字1查看每个CPU的性能数据</li>
+<li>查看某个进程所有线程的信息<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">top -H -p pid</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h1 id="strace-amp-pstack"><a href="#strace-amp-pstack" class="headerlink" title="strace &amp; pstack"></a>strace &amp; pstack</h1><p>strace就是这样一款工具。通过它，我们可以跟踪程序执行过程中产生的系统调用及接收到的信号，帮助我们分析程序或命令执行中遇到的异常情况。</p>
+<h2 id="1-一个简单的例子"><a href="#1-一个简单的例子" class="headerlink" title="1. 一个简单的例子"></a>1. 一个简单的例子</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">//main.c</div><div class="line">#include &lt;sys/types.h&gt;</div><div class="line">#include &lt;sys/stat.h&gt;</div><div class="line">#include &lt;fcntl.h&gt;</div><div class="line">int main( )</div><div class="line">&#123;</div><div class="line">　　int fd ;</div><div class="line">　　int i = 0 ;</div><div class="line">　　fd = open( “/tmp/foo”, O_RDONLY ) ;</div><div class="line">　　if ( fd &lt; 0 )</div><div class="line">　　　　i=5;</div><div class="line">　　else</div><div class="line">　　　　i=2;</div><div class="line">　　return i;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="2-strace跟踪输出"><a href="#2-strace跟踪输出" class="headerlink" title="2.strace跟踪输出"></a>2.strace跟踪输出</h2><p>使用以下命令，我们将使用strace对以上程序进行跟踪，并将结果重定向至main.strace文件：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ strace -o main.strace ./main</div></pre></td></tr></table></figure></p>
+<p>接下来我们来看main.strace文件的内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">lx@LX:~$ cat main.strace</div><div class="line">execve(&quot;./main&quot;, [&quot;./main&quot;], [/* 43 vars */]) = 0</div><div class="line">brk(0)                                  = 0x9ac4000</div><div class="line">access(&quot;/etc/ld.so.nohwcap&quot;, F_OK)      = -1 ENOENT (No such file or directory)</div><div class="line">mmap2(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7739000</div><div class="line">access(&quot;/etc/ld.so.preload&quot;, R_OK)      = -1 ENOENT (No such file or directory)</div><div class="line">open(&quot;/etc/ld.so.cache&quot;, O_RDONLY)      = 3</div><div class="line">fstat64(3, &#123;st_mode=S_IFREG|0644, st_size=80682, ...&#125;) = 0</div><div class="line">mmap2(NULL, 80682, PROT_READ, MAP_PRIVATE, 3, 0) = 0xb7725000</div><div class="line">close(3)                                = 0</div><div class="line">access(&quot;/etc/ld.so.nohwcap&quot;, F_OK)      = -1 ENOENT (No such file or directory)</div><div class="line">open(&quot;/lib/i386-linux-gnu/libc.so.6&quot;, O_RDONLY) = 3</div><div class="line">read(3, &quot;\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0\220o\1\0004\0\0\0&quot;..., 512) = 512</div><div class="line">fstat64(3, &#123;st_mode=S_IFREG|0755, st_size=1434180, ...&#125;) = 0</div><div class="line">mmap2(NULL, 1444360, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x56d000</div><div class="line">mprotect(0x6c7000, 4096, PROT_NONE)     = 0</div><div class="line">mmap2(0x6c8000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x15a) = 0x6c8000</div><div class="line">mmap2(0x6cb000, 10760, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x6cb000</div><div class="line">close(3)                                = 0</div><div class="line">mmap2(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7724000</div><div class="line">set_thread_area(&#123;entry_number:-1 -&gt; 6, base_addr:0xb77248d0, limit:1048575, seg_32bit:1, contents:0, read_exec_    only:0, limit_in_pages:1, seg_not_present:0, useable:1&#125;) = 0</div><div class="line">mprotect(0x6c8000, 8192, PROT_READ)     = 0</div><div class="line">mprotect(0x8049000, 4096, PROT_READ)    = 0</div><div class="line">mprotect(0x4b0000, 4096, PROT_READ)     = 0</div><div class="line">munmap(0xb7725000, 80682)               = 0</div><div class="line">open(&quot;/tmp/foo&quot;, O_RDONLY)              = -1 ENOENT (No such file or directory)</div><div class="line">exit_group(5)                           = ?</div><div class="line">//标红的行号为方便说明而添加，非strace执行输出</div></pre></td></tr></table></figure></p>
+<p>strace跟踪程序与系统交互时产生的系统调用，以上每一行就对应一个系统调用，格式为：</p>
+<p>系统调用的名称( 参数… ) = 返回值  错误标志和描述</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">Line 1:  对于命令行下执行的程序，execve(或exec系列调用中的某一个)均为strace输出系统调用中的第一个。strace首先调用fork或clone函数新建一个子进程，然后在子进程中调用exec载入需要执行的程序(这里为./main)</div><div class="line"></div><div class="line">Line 2:  以0作为参数调用brk，返回值为内存管理的起始地址(若在子进程中调用malloc，则从0x9ac4000地址开始分配空间)</div><div class="line"></div><div class="line">Line 3:  调用access函数检验/etc/ld.so.nohwcap是否存在</div><div class="line"></div><div class="line">Line 4:  使用mmap2函数进行匿名内存映射，以此来获取8192bytes内存空间，该空间起始地址为0xb7739000，关于匿名内存映射，可以看这里</div><div class="line"></div><div class="line">Line 6:  调用open函数尝试打开/etc/ld.so.cache文件，返回文件描述符为3</div><div class="line"></div><div class="line">Line 7:  fstat64函数获取/etc/ld.so.cache文件信息</div><div class="line"></div><div class="line">Line 8:  调用mmap2函数将/etc/ld.so.cache文件映射至内存，关于使用mmap映射文件至内存，可以看这里</div><div class="line"></div><div class="line">Line 9:  close关闭文件描述符为3指向的/etc/ld.so.cache文件</div><div class="line"></div><div class="line">Line12:  调用read，从/lib/i386-linux-gnu/libc.so.6该libc库文件中读取512bytes，即读取ELF头信息</div><div class="line"></div><div class="line">Line15:  使用mprotect函数对0x6c7000起始的4096bytes空间进行保护(PROT_NONE表示不能访问，PROT_READ表示可以读取)</div><div class="line"></div><div class="line">Line24:  调用munmap函数，将/etc/ld.so.cache文件从内存中去映射，与Line 8的mmap2对应</div><div class="line"></div><div class="line">Line25:  对应源码中使用到的唯一的系统调用——open函数，使用其打开/tmp/foo文件</div><div class="line"></div><div class="line">Line26:  子进程结束，退出码为5(为什么退出值为5？返回前面程序示例部分看看源码吧：)</div></pre></td></tr></table></figure>
+<h2 id="3-输出分析"><a href="#3-输出分析" class="headerlink" title="3. 输出分析"></a>3. 输出分析</h2><p>呼呼！看完这么多系统调用函数，是不是有点摸不着北？让我们从整体入手，回到主题strace上来。</p>
+<p>从上面输出可以发现，真正能与源码对应上的只有open这一个系统调用(Line25)，其他系统调用几乎都用于进行进程初始化工作：装载被执行程序、载入libc函数库、设置内存映射等。</p>
+<p>源码中的if语句或其他代码在相应strace输出中并没有体现，因为它们并没有唤起系统调用。strace只关心程序与系统之间产生的交互，因而strace不适用于程序逻辑代码的排错和分析。</p>
+<h2 id="4-常用选项"><a href="#4-常用选项" class="headerlink" title="4. 常用选项"></a>4. 常用选项</h2><ol>
+<li>跟踪子进程 -f</li>
+<li>记录系统调用时间</li>
+</ol>
+<p>strace还可以记录程序与系统交互时，各个系统调用发生时的时间信息，有r、t、tt、ttt、T等几个选项，它们记录时间的方式为：</p>
+<p>-T:   记录各个系统调用花费的时间，精确到微秒</p>
+<p>-r:   以第一个系统调用(通常为execve)计时，精确到微秒</p>
+<p>-t:   时：分：秒</p>
+<p>-tt:  时：分：秒 . 微秒</p>
+<p>-ttt: 计算机纪元以来的秒数 . 微秒</p>
+<p>比较常用的为T选项，因为其提供了每个系统调用花费时间。而其他选项的时间记录既包含系统调用时间，又算上用户级代码执行用时，参考意义就小一些。对部分时间选项我们可以组合起来使用，例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">strace -Tr ./main</div><div class="line">0.000000 execve(“./main”, [“main”], [/* 64 vars */]) = 0</div><div class="line">0.000931 fcntl64(0, F_GETFD)= 0 &lt;0.000012&gt;</div><div class="line">0.000090 fcntl64(1, F_GETFD)= 0 &lt;0.000022&gt;</div><div class="line">0.000060 fcntl64(2, F_GETFD)= 0 &lt;0.000012&gt;</div><div class="line">0.000054 uname(&#123;sys=”Linux”, node=”ion”, ...&#125;) = 0 &lt;0.000014&gt;</div><div class="line">0.000307 geteuid32()= 7903 &lt;0.000011&gt;</div><div class="line">0.000040 getuid32()= 7903 &lt;0.000012&gt;</div><div class="line">0.000039 getegid32()= 200 &lt;0.000011&gt;</div><div class="line">0.000039 getgid32()= 200 &lt;0.000011&gt;</div><div class="line">……</div></pre></td></tr></table></figure></p>
+<p>最左边一列为-r选项对应的时间输出，最右边一列为-T选项对应的输出。</p>
+<ol>
+<li>跟踪正在运行的进程 strace -p PID</li>
+</ol>
+<h2 id="5-使用strace处理程序挂死实例"><a href="#5-使用strace处理程序挂死实例" class="headerlink" title="5. 使用strace处理程序挂死实例"></a>5. 使用strace处理程序挂死实例</h2><h3 id="挂死程序源码"><a href="#挂死程序源码" class="headerlink" title="挂死程序源码"></a>挂死程序源码</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">//hang.c</div><div class="line">#include &lt;stdio.h&gt;</div><div class="line">#include &lt;sys/types.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line">#include &lt;string.h&gt;</div><div class="line"></div><div class="line">int main(int argc, char** argv)</div><div class="line">&#123;</div><div class="line">    getpid(); //该系统调用起到标识作用</div><div class="line">    if(argc &lt; 2)</div><div class="line">    &#123;</div><div class="line">        printf(&quot;hang (user|system)\n&quot;);</div><div class="line">        return 1;</div><div class="line">    &#125;</div><div class="line">    if(!strcmp(argv[1], &quot;user&quot;))</div><div class="line">        while(1);</div><div class="line">    else if(!strcmp(argv[1], &quot;system&quot;))</div><div class="line">        sleep(500);</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可向该程序传送user和system参数，以上代码使用死循环模拟用户态挂死，调用sleep模拟内核态程序挂死。</p>
+<h3 id="strace跟踪输出"><a href="#strace跟踪输出" class="headerlink" title="strace跟踪输出"></a>strace跟踪输出</h3><ul>
+<li><p>用户态挂死跟踪输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">……</div><div class="line">mprotect(0x8049000, 4096, PROT_READ)    = 0</div><div class="line">mprotect(0xb59000, 4096, PROT_READ)     = 0</div><div class="line">munmap(0xb77bf000, 80682)               = 0</div><div class="line">getpid()                                = 14539</div></pre></td></tr></table></figure>
+</li>
+<li><p>内核态挂死跟踪输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">……</div><div class="line">mprotect(0x8049000, 4096, PROT_READ)    = 0</div><div class="line">mprotect(0xddf000, 4096, PROT_READ)     = 0</div><div class="line">munmap(0xb7855000, 80682)               = 0</div><div class="line">getpid()                                = 14543</div><div class="line">rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0</div><div class="line">rt_sigaction(SIGCHLD, NULL, &#123;SIG_DFL, [], 0&#125;, 8) = 0</div><div class="line">rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0</div><div class="line">nanosleep(&#123;500, 0&#125;,</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="输出分析"><a href="#输出分析" class="headerlink" title="输出分析"></a>输出分析</h3><p>用户态挂死情况下，strace在getpid()一行输出之后没有其他系统调用输出；进程在内核态挂死，最后一行的系统调用nanosleep不能完整显示，这里nanosleep没有返回值表示该调用尚未完成。</p>
+<p>因而我们可以得出以下结论：使用strace跟踪挂死程序，如果最后一行系统调用显示完整，程序在逻辑代码处挂死；如果最后一行系统调用显示不完整，程序在该系统调用处挂死。</p>
+<h1 id="其它命令"><a href="#其它命令" class="headerlink" title="其它命令"></a>其它命令</h1><ul>
+<li>查看网络流量 /proc/net/dev<br><img src="/2018/03/21/linux-trouble-shooting/linux-trouble-shooting02.png" alt="img02"></li>
+<li>查看连接数 /proc/net/snmp<br><img src="/2018/03/21/linux-trouble-shooting/linux-trouble-shooting03.png" alt="img03"></li>
+<li>查看内存信息 /proc/meminfo<br><img src="/2018/03/21/linux-trouble-shooting/linux-trouble-shooting04.png" alt="img04"></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/19/network-thundering-herd/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/19/network-thundering-herd/" itemprop="url">
+                  惊群效应
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-19T14:24:47+08:00">
+                2018-03-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="什么叫惊群现象"><a href="#什么叫惊群现象" class="headerlink" title="什么叫惊群现象"></a>什么叫惊群现象</h1><p>首先，我们看看维基百科对惊群的定义:</p>
+<pre><code>The thundering herd problem occurs when a large number of processes waiting for an event are awoken when that event occurs, but only one process is able to proceed at a time. After the processes wake up, they all demand the resource and a decision must be made as to which process can continue. After the decision is made, the remaining processes are put back to sleep, only to all wake up again to request access to the resource.
+
+This occurs repeatedly, until there are no more processes to be woken up. Because all the processes use system resources upon waking, it is more efficient if only one process was woken up at a time.
+
+This may render the computer unusable, but it can also be used as a technique if there is no other way to decide which process should continue (for example when programming with semaphores).
+</code></pre><p>惊群简单来说就是多个进程或者线程在等待同一个事件，当事件发生时，所有线程和进程都会被内核唤醒。唤醒后通常只有一个进程获得了该事件并进行处理，其他进程发现获取事件失败后又继续进入了等待状态，在一定程度上降低了系统性能。</p>
+<h1 id="accept-惊群"><a href="#accept-惊群" class="headerlink" title="accept 惊群"></a>accept 惊群</h1><p>具体来说惊群通常发生在服务器的监听等待调用上，服务器创建监听socket，后fork多个进程，在每个进程中调用accept或者epoll_wait等待终端的连接。</p>
+<p>那么这个问题真的存在吗？</p>
+<p>事实上，历史上，Linux 的 accpet 确实存在惊群问题，但现在的内核都解决该问题了。即，当多个进程/线程都阻塞在对同一个 socket 的 accept 调用上时，当有一个新的连接到来，内核只会唤醒一个进程，其他进程保持休眠，压根就不会被唤醒。</p>
+<p>测试代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div></pre></td><td class="code"><pre><div class="line">#include &lt;stdio.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line">#include &lt;sys/types.h&gt;  </div><div class="line">#include &lt;sys/socket.h&gt;  </div><div class="line">#include &lt;netinet/in.h&gt;  </div><div class="line">#include &lt;arpa/inet.h&gt;  </div><div class="line">#include &lt;assert.h&gt;  </div><div class="line">#include &lt;sys/wait.h&gt;</div><div class="line">#include &lt;string.h&gt;</div><div class="line">#include &lt;errno.h&gt;</div><div class="line"></div><div class="line">#define IP   &quot;127.0.0.1&quot;</div><div class="line">#define PORT  8888</div><div class="line">#define WORKER 4</div><div class="line"></div><div class="line">int worker(int listenfd, int i)</div><div class="line">&#123;</div><div class="line">    while (1) &#123;</div><div class="line">        printf(&quot;I am worker %d, begin to accept connection.\n&quot;, i);</div><div class="line">        struct sockaddr_in client_addr;  </div><div class="line">        socklen_t client_addrlen = sizeof( client_addr );  </div><div class="line">        int connfd = accept( listenfd, ( struct sockaddr* )&amp;client_addr, &amp;client_addrlen );  </div><div class="line">        if (connfd != -1) &#123;</div><div class="line">            printf(&quot;worker %d accept a connection success.\t&quot;, i);</div><div class="line">            printf(&quot;ip :%s\t&quot;,inet_ntoa(client_addr.sin_addr));</div><div class="line">            printf(&quot;port: %d \n&quot;,client_addr.sin_port);</div><div class="line">        &#125; else &#123;</div><div class="line">            printf(&quot;worker %d accept a connection failed,error:%s&quot;, i, strerror(errno));</div><div class="line">			close(connfd);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    return 0;</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main()</div><div class="line">&#123;</div><div class="line">    int i = 0;</div><div class="line">    struct sockaddr_in address;  </div><div class="line">    bzero(&amp;address, sizeof(address));  </div><div class="line">    address.sin_family = AF_INET;  </div><div class="line">    inet_pton( AF_INET, IP, &amp;address.sin_addr);  </div><div class="line">    address.sin_port = htons(PORT);  </div><div class="line">    int listenfd = socket(PF_INET, SOCK_STREAM, 0);  </div><div class="line">    assert(listenfd &gt;= 0);  </div><div class="line"></div><div class="line">    int ret = bind(listenfd, (struct sockaddr*)&amp;address, sizeof(address));  </div><div class="line">    assert(ret != -1);  </div><div class="line"></div><div class="line">    ret = listen(listenfd, 5);  </div><div class="line">    assert(ret != -1);  </div><div class="line"></div><div class="line">    for (i = 0; i &lt; WORKER; i++) &#123;</div><div class="line">        printf(&quot;Create worker %d\n&quot;, i+1);</div><div class="line">        pid_t pid = fork();</div><div class="line">        /*child  process */</div><div class="line">        if (pid == 0) &#123;</div><div class="line">            worker(listenfd, i);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        if (pid &lt; 0) &#123;</div><div class="line">            printf(&quot;fork error&quot;);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /*wait child process*/</div><div class="line">    int status;</div><div class="line">    wait(&amp;status);</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>当我们对该服务器发起连接请求（用 telnet/curl 等模拟）时，会看到只有一个进程被唤醒。</p>
+<h1 id="epoll惊群"><a href="#epoll惊群" class="headerlink" title="epoll惊群"></a>epoll惊群</h1><p>如上所述，accept 已经不存在惊群问题，但 epoll 上还是存在惊群问题。即，如果多个进程/线程阻塞在监听同一个 listening socket fd 的 epoll_wait 上，当有一个新的连接到来时，所有的进程都会被唤醒。</p>
+<p>考虑如下场景：</p>
+<p>主进程创建 socket, bind， listen 后，将该 socket 加入到 epoll 中，然后 fork 出多个子进程，每个进程都阻塞在 epoll_wait 上，如果有事件到来，则判断该事件是否是该 socket 上的事件，如果是，说明有新的连接到来了，则进行 accept 操作。为了简化处理，忽略后续的读写以及对 accept 返回的新的套接字的处理，直接断开连接。</p>
+<p>那么，当新的连接到来时，是否每个阻塞在 epoll_wait 上的进程都会被唤醒呢？</p>
+<p>很多博客中提到，测试表明虽然 epoll_wait 不会像 accept 那样只唤醒一个进程/线程，但也不会把所有的进程/线程都唤醒。</p>
+<p>为了验证这个问题，我自己写了一个测试程序：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div></pre></td><td class="code"><pre><div class="line">#include &lt;sys/types.h&gt;</div><div class="line">#include &lt;sys/socket.h&gt;</div><div class="line">#include &lt;sys/epoll.h&gt;</div><div class="line">#include &lt;netdb.h&gt;</div><div class="line">#include &lt;string.h&gt;</div><div class="line">#include &lt;stdio.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line">#include &lt;fcntl.h&gt;</div><div class="line">#include &lt;stdlib.h&gt;</div><div class="line">#include &lt;errno.h&gt;</div><div class="line">#include &lt;sys/wait.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line">#include &lt;netinet/in.h&gt;</div><div class="line">#include &lt;arpa/inet.h&gt;</div><div class="line"></div><div class="line">#define IP   &quot;127.0.0.1&quot;</div><div class="line">#define PORT  8888</div><div class="line">#define PROCESS_NUM 4</div><div class="line">#define MAXEVENTS 64</div><div class="line"></div><div class="line">static int create_and_bind ()</div><div class="line">&#123;</div><div class="line">    int fd = socket(PF_INET, SOCK_STREAM, 0);</div><div class="line">    struct sockaddr_in serveraddr;</div><div class="line">    serveraddr.sin_family = AF_INET;</div><div class="line">    inet_pton( AF_INET, IP, &amp;serveraddr.sin_addr);  </div><div class="line">    serveraddr.sin_port = htons(PORT);</div><div class="line">    bind(fd, (struct sockaddr*)&amp;serveraddr, sizeof(serveraddr));</div><div class="line">    return fd;</div><div class="line">&#125;</div><div class="line"></div><div class="line">static int make_socket_non_blocking (int sfd)</div><div class="line">&#123;</div><div class="line">    int flags, s;</div><div class="line">    flags = fcntl (sfd, F_GETFL, 0);</div><div class="line">    if (flags == -1) &#123;</div><div class="line">        perror (&quot;fcntl&quot;);</div><div class="line">        return -1;</div><div class="line">    &#125;</div><div class="line">    flags |= O_NONBLOCK;</div><div class="line">    s = fcntl (sfd, F_SETFL, flags);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        perror (&quot;fcntl&quot;);</div><div class="line">        return -1;</div><div class="line">    &#125;</div><div class="line">    return 0;</div><div class="line">&#125;</div><div class="line"></div><div class="line">void worker(int sfd, int efd, struct epoll_event *events, int k) &#123;</div><div class="line">    /* The event loop */</div><div class="line">    while (1) &#123;</div><div class="line">        int n, i;</div><div class="line">        n = epoll_wait(efd, events, MAXEVENTS, -1);</div><div class="line">        //sleep(1);</div><div class="line">        printf(&quot;worker  %d return from epoll_wait!\n&quot;, k);</div><div class="line">        for (i = 0; i &lt; n; i++) &#123;</div><div class="line">            if ((events[i].events &amp; EPOLLERR) || (events[i].events &amp; EPOLLHUP) || (!(events[i].events &amp;EPOLLIN))) &#123;</div><div class="line">                /* An error has occured on this fd, or the socket is not ready for reading (why were we notified then?) */</div><div class="line">                fprintf (stderr, &quot;epoll error\n&quot;);</div><div class="line">                close (events[i].data.fd);</div><div class="line">                continue;</div><div class="line">            &#125; else if (sfd == events[i].data.fd) &#123;</div><div class="line">                /* We have a notification on the listening socket, which means one or more incoming connections. */</div><div class="line">                struct sockaddr in_addr;</div><div class="line">                socklen_t in_len;</div><div class="line">                int infd;</div><div class="line">                char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];</div><div class="line">                in_len = sizeof in_addr;</div><div class="line">                infd = accept(sfd, &amp;in_addr, &amp;in_len);</div><div class="line">                if (infd == -1) &#123;</div><div class="line">                    printf(&quot;worker %d accept failed!\n&quot;, k);</div><div class="line">                    break;</div><div class="line">                &#125;</div><div class="line">                printf(&quot;worker %d accept successed!\n&quot;, k);</div><div class="line">                /* Make the incoming socket non-blocking and add it to the list of fds to monitor. */</div><div class="line">                close(infd); </div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main (int argc, char *argv[])</div><div class="line">&#123;</div><div class="line">    int sfd, s;</div><div class="line">    int efd;</div><div class="line">    struct epoll_event event;</div><div class="line">    struct epoll_event *events;</div><div class="line">    sfd = create_and_bind();</div><div class="line">    if (sfd == -1) &#123;</div><div class="line">        abort ();</div><div class="line">    &#125;</div><div class="line">    s = make_socket_non_blocking (sfd);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        abort ();</div><div class="line">    &#125;</div><div class="line">    s = listen(sfd, SOMAXCONN);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        perror (&quot;listen&quot;);</div><div class="line">        abort ();</div><div class="line">    &#125;</div><div class="line">    efd = epoll_create(MAXEVENTS);</div><div class="line">    if (efd == -1) &#123;</div><div class="line">        perror(&quot;epoll_create&quot;);</div><div class="line">        abort();</div><div class="line">    &#125;</div><div class="line">    event.data.fd = sfd;</div><div class="line">    event.events = EPOLLIN | EPOLLEXCLUSIVE;</div><div class="line">    s = epoll_ctl(efd, EPOLL_CTL_ADD, sfd, &amp;event);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        perror(&quot;epoll_ctl&quot;);</div><div class="line">        abort();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /* Buffer where events are returned */</div><div class="line">    events = (struct epoll_event*)calloc(MAXEVENTS, sizeof event);</div><div class="line">    int k;</div><div class="line">    for(k = 0; k &lt; PROCESS_NUM; k++) &#123;</div><div class="line">        printf(&quot;Create worker %d\n&quot;, k+1);</div><div class="line">        int pid = fork();</div><div class="line">        if(pid == 0) &#123;</div><div class="line">            worker(sfd, efd, events, k);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    int status;</div><div class="line">    wait(&amp;status);</div><div class="line">    free (events);</div><div class="line">    close (sfd);</div><div class="line">    return EXIT_SUCCESS;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>运行server端后用telnet连，出现了2个进程被唤醒的情况，并不是每次都出现。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">worker  3 return from epoll_wait!</div><div class="line">worker 3 accept successed!</div><div class="line">worker  2 return from epoll_wait!</div><div class="line">worker 2 accept failed!</div></pre></td></tr></table></figure></p>
+<p>也就是说，到目前为止，还没有得到一个确定的答案。但后来，在下面这篇博客中看到这样一个评论：<a href="http://blog.csdn.net/spch2008/article/details/18301357" target="_blank" rel="external">http://blog.csdn.net/spch2008/article/details/18301357</a></p>
+<p>这个总结，需要进一步阐述，你的实验，看上去是只有4个进程唤醒了，而事实上，其余进程没有被唤醒的原因是你的某个进程已经处理完这个 accept，内核队列上已经没有这个事件，无需唤醒其他进程。你可以在 epoll 获知这个 accept 事件的时候，不要立即去处理，而是 sleep 下，这样所有的进程都会被唤起</p>
+<p>看到这个评论后，我顿时如醍醐灌顶，重新修改了上面的测试程序，即在 epoll_wait 返回后，加了个 sleep 语句，这时再测试，果然发现所有的进程都被唤醒了。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">worker  1 return from epoll_wait!</div><div class="line">worker  3 return from epoll_wait!</div><div class="line">worker 1 accept successed!</div><div class="line">worker 3 accept failed!</div><div class="line">worker  2 return from epoll_wait!</div><div class="line">worker 2 accept failed!</div><div class="line">worker  0 return from epoll_wait!</div><div class="line">worker 0 accept failed!</div></pre></td></tr></table></figure></p>
+<p>所以，epoll_wait上的惊群确实是存在的。</p>
+<h1 id="为什么内核不处理-epoll-惊群"><a href="#为什么内核不处理-epoll-惊群" class="headerlink" title="为什么内核不处理 epoll 惊群"></a>为什么内核不处理 epoll 惊群</h1><p>看到这里，我们可能有疑惑了，为什么内核对 accept 的惊群做了处理，而现在仍然存在 epoll 的惊群现象呢？</p>
+<p>accept 确实应该只能被一个进程调用成功，内核很清楚这一点。但 epoll 不一样，他监听的文件描述符，除了可能后续被 accept 调用外，还有可能是其他网络 IO 事件的，而其他 IO 事件是否只能由一个进程处理，是不一定的，内核不能保证这一点，这是一个由用户决定的事情，例如可能一个文件会由多个进程来读写。所以，对 epoll 的惊群，内核则不予处理。</p>
+<h1 id="Nginx-是如何处理惊群问题的"><a href="#Nginx-是如何处理惊群问题的" class="headerlink" title="Nginx 是如何处理惊群问题的"></a>Nginx 是如何处理惊群问题的</h1><h1 id="使用EPOLLEXCLUSIVE"><a href="#使用EPOLLEXCLUSIVE" class="headerlink" title="使用EPOLLEXCLUSIVE"></a>使用EPOLLEXCLUSIVE</h1><p>Linux 4.5解决了这一问题，使用EPOLLEXCLUSIVE标记，但我自己的系统还没这么新，留待之后验证。<br><a href="http://www.man7.org/linux/man-pages/man2/epoll_ctl.2.html" target="_blank" rel="external">http://www.man7.org/linux/man-pages/man2/epoll_ctl.2.html</a></p>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>现在我们对惊群及 Nginx 的处理总结如下：</p>
+<ul>
+<li>accept 不会有惊群(since linux2.6)，epoll_wait 才会。</li>
+<li>Nginx 的 accept_mutex,并不是解决 accept 惊群问题，而是解决 epoll_wait 惊群问题。</li>
+<li>说Nginx 解决了 epoll_wait 惊群问题，也是不对的，它只是控制是否将监听套接字加入到epoll 中。监听套接字只在一个子进程的 epoll 中，当新的连接来到时，其他子进程当然不会惊醒了。</li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/13/multithread-lock-summary/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/13/multithread-lock-summary/" itemprop="url">
+                  各种锁的总结
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-13T11:21:43+08:00">
+                2018-03-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/多线程/" itemprop="url" rel="index">
+                    <span itemprop="name">多线程</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="自旋锁"><a href="#自旋锁" class="headerlink" title="自旋锁"></a>自旋锁</h1><p>自旋锁可以使线程在没有取得锁的时候，不被挂起，而转去执行一个空循环，（即所谓的自旋，就是自己执行空循环），若在若干个空循环后，线程如果可以获得锁，则继续执行。若线程依然不能获得锁，才会被挂起。</p>
+<p>使用自旋锁后，线程被挂起的几率相对减少，线程执行的连贯性相对加强。因此，对于那些锁竞争不是很激烈，锁占用时间很短的并发线程，具有一定的积极意义，但对于锁竞争激烈，单线程锁占用很长时间的并发程序，自旋锁在自旋等待后，往往毅然无法获得对应的锁，不仅仅白白浪费了CPU时间，最终还是免不了被挂起的操作 ，反而浪费了系统的资源。</p>
+<p>在JDK1.6中，Java虚拟机提供-XX:+UseSpinning参数来开启自旋锁，使用-XX:PreBlockSpin参数来设置自旋锁等待的次数。</p>
+<p>在JDK1.7开始，自旋锁的参数被取消，虚拟机不再支持由用户配置自旋锁，自旋锁总是会执行，自旋锁次数也由虚拟机自动调整。</p>
+<p>可能引起的问题：</p>
+<ol>
+<li><p>过多占据CPU时间：如果锁的当前持有者长时间不释放该锁，那么等待者将长时间的占据cpu时间片，导致CPU资源的浪费，因此可以设定一个时间，当锁持有者超过这个时间不释放锁时，等待者会放弃CPU时间片阻塞；</p>
+</li>
+<li><p>死锁问题：试想一下，有一个线程连续两次试图获得自旋锁（比如在递归程序中），第一次这个线程获得了该锁，当第二次试图加锁的时候，检测到锁已被占用（其实是被自己占用），那么这时，线程会一直等待自己释放该锁，而不能继续执行，这样就引起了死锁。因此递归程序使用自旋锁应该遵循以下原则：递归程序决不能在持有自旋锁时调用它自己，也决不能在递归调用时试图获得相同的自旋锁。</p>
+</li>
+</ol>
+<h1 id="阻塞锁"><a href="#阻塞锁" class="headerlink" title="阻塞锁"></a>阻塞锁</h1><p>让线程进入阻塞状态进行等待，当获得相应的信号（唤醒，时间） 时，才可以进入线程的准备就绪状态，准备就绪状态的所有线程，通过竞争，进入运行状态。。</p>
+<p>JAVA中，能够进入\退出、阻塞状态或包含阻塞锁的方法有 ，synchronized 关键字（其中的重量锁），ReentrantLock，Object.wait()\notify()</p>
+<h1 id="可重入锁"><a href="#可重入锁" class="headerlink" title="可重入锁"></a>可重入锁</h1><p>可重入锁，也叫做递归锁，指的是同一线程外层函数获得锁之后，内层递归函数仍然有获取该锁的代码，但不受影响。<br>在JAVA环境下<strong>ReentrantLock</strong>和<strong>synchronized</strong>都是可重入锁</p>
+<p>3、可重入锁</p>
+<p>可重入锁，也叫做递归锁，指的是同一线程 外层函数获得锁之后 ，内层递归函数仍然有获取该锁的代码，但不受影响。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div></pre></td><td class="code"><pre><div class="line">public class Test implements Runnable&#123;</div><div class="line"></div><div class="line">	public synchronized void get()&#123;</div><div class="line">		System.out.println(Thread.currentThread().getId());</div><div class="line">		set();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public synchronized void set()&#123;</div><div class="line">		System.out.println(Thread.currentThread().getId());</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	@Override</div><div class="line">	public void run() &#123;</div><div class="line">		get();</div><div class="line">	&#125;</div><div class="line">	public static void main(String[] args) &#123;</div><div class="line">		Test ss=new Test();</div><div class="line">		new Thread(ss).start();</div><div class="line">		new Thread(ss).start();</div><div class="line">		new Thread(ss).start();</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">public class Test implements Runnable &#123;</div><div class="line">	ReentrantLock lock = new ReentrantLock();</div><div class="line"></div><div class="line">	public void get() &#123;</div><div class="line">		lock.lock();</div><div class="line">		System.out.println(Thread.currentThread().getId());</div><div class="line">		set();</div><div class="line">		lock.unlock();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public void set() &#123;</div><div class="line">		lock.lock();</div><div class="line">		System.out.println(Thread.currentThread().getId());</div><div class="line">		lock.unlock();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	@Override</div><div class="line">	public void run() &#123;</div><div class="line">		get();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public static void main(String[] args) &#123;</div><div class="line">		Test ss = new Test();</div><div class="line">		new Thread(ss).start();</div><div class="line">		new Thread(ss).start();</div><div class="line">		new Thread(ss).start();</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>两个例子最后的结果都是正确的，即 同一个线程id被连续输出两次。</p>
+<p>结果如下：</p>
+<p>Threadid: 8</p>
+<p>Threadid: 8</p>
+<p>Threadid: 10</p>
+<p>Threadid: 10</p>
+<p>Threadid: 9</p>
+<p>Threadid: 9</p>
+<p>可重入锁最大的作用是避免死锁</p>
+<p>我们以自旋锁作为例子，<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">public class SpinLock &#123;  </div><div class="line">    private AtomicReference&lt;Thread&gt; owner =new AtomicReference&lt;&gt;();  </div><div class="line">    public void lock()&#123;  </div><div class="line">        Thread current = Thread.currentThread();  </div><div class="line">        while(!owner.compareAndSet(null, current))&#123;  </div><div class="line">        &#125;  </div><div class="line">    &#125;  </div><div class="line">    public void unlock ()&#123;  </div><div class="line">        Thread current = Thread.currentThread();  </div><div class="line">        owner.compareAndSet(current, null);  </div><div class="line">    &#125;  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>对于自旋锁来说，</p>
+<ol>
+<li>若有同一线程两调用lock() ，会导致第二次调用lock位置进行自旋，产生了死锁<br>说明这个锁并不是可重入的。（在lock函数内，应验证线程是否为已经获得锁的线程）</li>
+<li>若1问题已经解决，当unlock（）第一次调用时，就已经将锁释放了。实际上不应释放锁。</li>
+</ol>
+<p>（采用计数次进行统计）<br>修改之后，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">public class SpinLock1 &#123;</div><div class="line">	private AtomicReference&lt;Thread&gt; owner =new AtomicReference&lt;&gt;();</div><div class="line">	private int count =0;</div><div class="line">	public void lock()&#123;</div><div class="line">		Thread current = Thread.currentThread();</div><div class="line">		if(current==owner.get()) &#123;</div><div class="line">			count++;</div><div class="line">			return ;</div><div class="line">		&#125;</div><div class="line">		while(!owner.compareAndSet(null, current))&#123;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	public void unlock ()&#123;</div><div class="line">		Thread current = Thread.currentThread();</div><div class="line">		if(current==owner.get())&#123;</div><div class="line">			if(count!=0)&#123;</div><div class="line">				count--;</div><div class="line">			&#125;else&#123;</div><div class="line">				owner.compareAndSet(current, null);</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>该自旋锁即为可重入锁。</p>
+<h1 id="悲观锁和乐观锁"><a href="#悲观锁和乐观锁" class="headerlink" title="悲观锁和乐观锁"></a>悲观锁和乐观锁</h1><p>悲观锁(Pessimistic Lock), 顾名思义就是很悲观，每次去拿数据的时候都认为别人会修改，所以每次在拿数据的时候都会上锁，这样别人想拿这个数据就会block直到它拿到锁。传统的关系型数据库里边就用到了很多这种锁机制，比如行锁，表锁等，读锁，写锁等，都是在做操作之前先上锁。独占锁是悲观锁的一种实现</p>
+<p>乐观锁(Optimistic Lock), 顾名思义，就是很乐观，每次去拿数据的时候都认为别人不会修改，所以不会上锁，但是在更新的时候会判断一下在此期间别人有没有去更新这个数据，可以使用版本号等机制。乐观锁适用于多读的应用类型，这样可以提高吞吐量，像数据库如果提供类似于write_condition机制的其实都是提供的乐观锁。使用CAS来保证,保证这个操作的原子性</p>
+<p>两种锁各有优缺点，不可认为一种好于另一种，像乐观锁适用于写比较少的情况下，即冲突真的很少发生的时候，这样可以省去了锁的开销，加大了系统的整个吞吐量。但如果经常产生冲突，上层应用会不断的进行retry，这样反倒是降低了性能，所以这种情况下用悲观锁就比较合适。</p>
+<h1 id="读-写锁"><a href="#读-写锁" class="headerlink" title="读-写锁"></a>读-写锁</h1><p>Lock接口以及对象，使用它，很优雅的控制了竞争资源的安全访问，但是这种锁不区分读写，称这种锁为普通锁。为了提高性能，Java提供了读写锁，在读的地方使用读锁，在写的地方使用写锁，灵活控制，如果没有写锁的情况下，读是无阻塞的,在一定程度上提高了程序的执行效率。</p>
+<p>Java中读写锁有个接口java.util.concurrent.locks.ReadWriteLock，也有具体的实现ReentrantReadWriteLock，详细的API可以查看JavaAPI文档。</p>
+<p>ReentrantReadWriteLock 和 ReentrantLock 不是继承关系，但都是基于 AbstractQueuedSynchronizer 来实现。lock方法是基于CAS来实现的</p>
+<p>ReadWriteLock中暴露了两个Lock对象：<br>在读写锁的加锁策略中，允许多个读操作同时进行，但每次只允许一个写操作。读写锁是一种性能优化的策略。<br>RentrantReadWriteLock在构造时也可以选择是一个非公平的锁（默认）还是公平的锁。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/12/os-memory-layout/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/12/os-memory-layout/" itemprop="url">
+                  内存布局
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-12T17:25:18+08:00">
+                2018-03-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/OS/" itemprop="url" rel="index">
+                    <span itemprop="name">OS</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="进程的内存空间布局"><a href="#进程的内存空间布局" class="headerlink" title="进程的内存空间布局"></a>进程的内存空间布局</h1><p>进程的内存布局在结构上是有规律的，具体来说对于 linux 系统上的进程，其内存空间一般可以粗略地分为以下几大段【1】，从高内存到低内存排列：</p>
+<ol>
+<li><p>内核态内存空间，其大小一般比较固定（可以编译时调整），但 32 位系统和 64 位系统的值不一样。</p>
+</li>
+<li><p>用户态的堆栈，大小不固定，可以用 ulimit -s 进行调整，默认一般为 8M，从高地址向低地址增长。</p>
+</li>
+<li><p>mmap 区域，进程茫茫内存空间里的主要部分，既可以从高地址到低地址延伸(所谓 flexible layout)，也可以从低到高延伸(所谓 legacy layout)，看进程具体情况【2】【3】。</p>
+</li>
+<li><p>brk 区域，紧邻数据段(甚至贴着)，从低位向高位伸展，但它的大小主要取决于 mmap 如何增长，一般来说，即使是 32 位的进程以传统方式延伸，也有差不多 1 GB 的空间（准确地说是 TASK_SIZE/3 - 代码段数据段，参看 arch/x86/include/asm/processor.h 里的定义)【4】</p>
+</li>
+<li><p>数据段，主要是进程里初始化和未初始化的全局数据总和，当然还有编译器生成一些辅助数据结构等等)，大小取决于具体进程，其位置紧贴着代码段。</p>
+</li>
+<li><p>代码段，主要是进程的指令，包括用户代码和编译器生成的辅助代码，其大小取决于具体程序，但起始位置根据 32 位还是 64 位一般固定(-fPIC, -fPIE等除外【5】)。<br><img src="/2018/03/12/os-memory-layout/os_memory_layout.png" alt="img01"></p>
+</li>
+</ol>
+<h1 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h1><ul>
+<li>【1】<a href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/5/html/Tuning_and_Optimizing_Red_Hat_Enterprise_Linux_for_Oracle_9i_and_10g_Databases/sect-Oracle_9i_and_10g_Tuning_Guide-Growing_the_Oracle_SGA_to_2.7_GB_in_x86_Red_Hat_Enterprise_Linux_2.1_Without_VLM-Linux_Memory_Layout.html" target="_blank" rel="external">https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/5/html/Tuning_and_Optimizing_Red_Hat_Enterprise_Linux_for_Oracle_9i_and_10g_Databases/sect-Oracle_9i_and_10g_Tuning_Guide-Growing_the_Oracle_SGA_to_2.7_GB_in_x86_Red_Hat_Enterprise_Linux_2.1_Without_VLM-Linux_Memory_Layout.html</a></li>
+<li>【2】understanding the linux kernel, page 819, flexible memory region layout: <a href="https://books.google.com.hk/books?id=h0lltXyJ8aIC&amp;pg=PT925&amp;lpg=PT925&amp;dq=linux+flexible+memory&amp;source=bl&amp;ots=gO7rIYb8HR&amp;sig=pirB5pswdHFHSljy57EksxS3ABw&amp;hl=en&amp;sa=X&amp;ved=0ahUKEwjpkfa-2_rRAhVGFJQKHcETDSUQ6AEITDAH#v=onepage&amp;q=linux%20flexible%20memory&amp;f=false" target="_blank" rel="external">https://books.google.com.hk/books?id=h0lltXyJ8aIC&amp;pg=PT925&amp;lpg=PT925&amp;dq=linux+flexible+memory&amp;source=bl&amp;ots=gO7rIYb8HR&amp;sig=pirB5pswdHFHSljy57EksxS3ABw&amp;hl=en&amp;sa=X&amp;ved=0ahUKEwjpkfa-2_rRAhVGFJQKHcETDSUQ6AEITDAH#v=onepage&amp;q=linux%20flexible%20memory&amp;f=false</a></li>
+<li>【3】<a href="https://gist.github.com/CMCDragonkai/10ab53654b2aa6ce55c11cfc5b2432a4" target="_blank" rel="external">https://gist.github.com/CMCDragonkai/10ab53654b2aa6ce55c11cfc5b2432a4</a></li>
+<li>【4】<a href="http://lxr.free-electrons.com/source/arch/x86/include/asm/processor.h#L770" target="_blank" rel="external">http://lxr.free-electrons.com/source/arch/x86/include/asm/processor.h#L770</a></li>
+<li>【5】<a href="https://access.redhat.com/blogs/766093/posts/1975793" target="_blank" rel="external">https://access.redhat.com/blogs/766093/posts/1975793</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/12/c-compile/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/12/c-compile/" itemprop="url">
+                  程序的编译与链接
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-12T16:50:34+08:00">
+                2018-03-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/C/" itemprop="url" rel="index">
+                    <span itemprop="name">C++</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="编译过程预览"><a href="#编译过程预览" class="headerlink" title="编译过程预览"></a>编译过程预览</h1><p><img src="/2018/03/12/c-compile/c_compile01.png" alt="img01"></p>
+<h1 id="预处理"><a href="#预处理" class="headerlink" title="预处理"></a>预处理</h1><ul>
+<li>预处理(Prepressing) :   -E 表示只进行预处理, 即 : gcc –E hello.c –o hello.i<ul>
+<li>展开所有 #define 定义的宏</li>
+<li>处理所有条件预编译指令,如 #if, #ifdef</li>
+<li>递归的将 #include 的文件插入到该预编译文件中</li>
+<li>删除各类注释</li>
+<li>添加行和文件标识,如  #2 “hello.c” 2 ,用于调试或编译出错报警</li>
+<li>保留所有的 #pragma 编译指令,编译器要使用</li>
+</ul>
+</li>
+<li>对于C++ 来说,预处理后的文件扩展名是 .ii</li>
+</ul>
+<h1 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h1><ul>
+<li>编译(Compilation):  gcc –S hello.i –o hello.s<br>编译过程就是把预处理完的文件进行一系列词法分析,语法分析,语义分析及优化后生成相应的汇编代码文件.</li>
+<li>现在的gcc 把预处理和编译两个步骤合成一个步骤,C语言使用一个叫做 cc1 的程序来完成,C++则是 cc1plus ,位于 /usr/libexec/gcc/x86_64-redhat-linux/4.1.2/</li>
+<li>gcc 实际上是这些后台程序的包装,它会根据参数要求去调用 cc1(cclplus), 汇编器 as 和链接器 ld</li>
+</ul>
+<h1 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h1><ul>
+<li>链接(Linking):解决一个程序被分割成多个模块后,模块间最后如何组合成一个单一程序的问题.</li>
+<li>链接的主要任务是把各个模块之间相互引用的部分处理好,使各个模块之间能正确的衔接.</li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/12/linux-command/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/12/linux-command/" itemprop="url">
+                  linux-command
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-12T10:49:48+08:00">
+                2018-03-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="查看某个进程的线程数量"><a href="#查看某个进程的线程数量" class="headerlink" title="查看某个进程的线程数量"></a>查看某个进程的线程数量</h1><ol>
+<li>根据进程号进行查询：<ul>
+<li><h1 id="pstree-p-进程号"><a href="#pstree-p-进程号" class="headerlink" title="pstree -p 进程号"></a>pstree -p 进程号</h1></li>
+</ul>
+</li>
+</ol>
+<p>example:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~/myspace/test/network$ pstree -p 5629</div><div class="line">test05(5629)─┬─&#123;test05&#125;(5630)</div><div class="line">             ├─&#123;test05&#125;(5631)</div><div class="line">             ├─&#123;test05&#125;(5632)</div><div class="line">             └─&#123;test05&#125;(5633)</div></pre></td></tr></table></figure></p>
+<ul>
+<li><h1 id="top-Hp-进程号"><a href="#top-Hp-进程号" class="headerlink" title="top -Hp 进程号"></a>top -Hp 进程号</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"> PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND </div><div class="line">  5629 chris     20   0 47680 1420 1188 S    0  0.1   0:00.02 test05                                          </div><div class="line"> 5630 chris     20   0 47680 1420 1188 S    0  0.1   0:00.00 test05                                          </div><div class="line"> 5631 chris     20   0 47680 1420 1188 S    0  0.1   0:00.03 test05                                          </div><div class="line"> 5632 chris     20   0 47680 1420 1188 S    0  0.1   0:00.00 test05                                          </div><div class="line"> 5633 chris     20   0 47680 1420 1188 S    0  0.1   0:00.00 test05</div><div class="line"> ``` </div><div class="line"></div><div class="line">2. 根据进程名字进行查询：</div></pre></td></tr></table></figure>
+<h1 id="pstree-p-ps-e-grep-test05-awk-39-print-1-39"><a href="#pstree-p-ps-e-grep-test05-awk-39-print-1-39" class="headerlink" title="pstree -p ps -e | grep test05 | awk &#39;{print $1}&#39;"></a>pstree -p <code>ps -e | grep test05 | awk &#39;{print $1}&#39;</code></h1><h1 id="pstree-p-ps-e-grep-test05-awk-39-print-1-39-wc-l"><a href="#pstree-p-ps-e-grep-test05-awk-39-print-1-39-wc-l" class="headerlink" title="pstree -p ps -e | grep test05 | awk &#39;{print $1}&#39; | wc -l"></a>pstree -p <code>ps -e | grep test05 | awk &#39;{print $1}&#39;</code> | wc -l</h1><p>```<br>执行效果和上面的命令是一样的</p>
+</li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/07/distributed-system-consistent-hashing/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/07/distributed-system-consistent-hashing/" itemprop="url">
+                  一致性哈希算法
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-07T17:02:49+08:00">
+                2018-03-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/分布式系统/" itemprop="url" rel="index">
+                    <span itemprop="name">分布式系统</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>一些场景希望同样的请求尽量落到一台机器上，比如访问缓存集群时，我们往往希望同一种请求能落到同一个后端上，以充分利用其上已有的缓存，不同的机器承载不同的稳定working set。而不是随机地散落到所有机器上，那样的话会迫使所有机器缓存所有的内容，最终由于存不下形成颠簸而表现糟糕。 我们都知道hash能满足这个要求，比如当有n台服务器时，输入x总是会发送到第hash(x) % n台服务器上。但当服务器变为m台时，hash(x) % n和hash(x) % m很可能都不相等，这会使得几乎所有请求的发送目的地都发生变化，如果目的地是缓存服务，所有缓存将失效，继而对原本被缓存遮挡的数据库或计算服务造成请求风暴，触发雪崩。一致性哈希是一种特殊的哈希算法，在增加服务器时，发向每个老节点的请求中只会有一部分转向新节点，从而实现平滑的迁移。这篇论文中提出了一致性hash的概念。</p>
+<p>一致性hash满足以下四个性质：</p>
+<ul>
+<li>平衡性 (Balance) : 每个节点被选到的概率是O(1/n)。</li>
+<li>单调性 (Monotonicity) : 当新节点加入时， 不会有请求在老节点间移动， 只会从老节点移动到新节点。当有节点被删除时，也不会影响落在别的节点上的请求。</li>
+<li>分散性 (Spread) : 当上游的机器看到不同的下游列表时(在上线时及不稳定的网络中比较常见), 同一个请求尽量映射到少量的节点中。</li>
+<li>负载 (Load) : 当上游的机器看到不同的下游列表的时候， 保证每台下游分到的请求数量尽量一致。</li>
+</ul>
+<h1 id="算法实现"><a href="#算法实现" class="headerlink" title="算法实现"></a>算法实现</h1><p>所有server的32位hash值在32位整数值域上构成一个环(Hash Ring)，环上的每个区间和一个server唯一对应，如果一个key落在某个区间内， 它就被分流到对应的server上。<br><img src="/2018/03/07/distributed-consistent-hashing/chash.png" alt="img01"><br>当删除一个server的， 它对应的区间会归属于相邻的server，所有的请求都会跑过去。当增加一个server时，它会分割某个server的区间并承载落在这个区间上的所有请求。单纯使用Hash Ring很难满足我们上节提到的属性，主要两个问题：</p>
+<ul>
+<li>在机器数量较少的时候， 区间大小会不平衡。</li>
+<li>当一台机器故障的时候， 它的压力会完全转移到另外一台机器， 可能无法承载。<br>为了解决这个问题，我们为每个server计算m个hash值，从而把32位整数值域划分为n*m个区间，当key落到某个区间时，分流到对应的server上。那些额外的hash值使得区间划分更加均匀，被称为Virtual Node。当删除一个server时，它对应的m个区间会分别合入相邻的区间中，那个server上的请求会较为平均地转移到其他server上。当增加server时，它会分割m个现有区间，从对应server上分别转移一些请求过来。</li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/07/distributed-system-raft/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/07/distributed-system-raft/" itemprop="url">
+                  Raft一致性算法
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-07T12:04:19+08:00">
+                2018-03-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/分布式系统/" itemprop="url" rel="index">
+                    <span itemprop="name">分布式系统</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="一致性问题"><a href="#一致性问题" class="headerlink" title="一致性问题"></a>一致性问题</h2><p>在分布式系统中,一致性问题(consensus problem)是指对于一组服务器，给定一组操作，我们需要一个协议使得最后它们的结果达成一致。</p>
+<p>在理论计算机科学中，计算机科学家Eric Brewer之后命名为布鲁尔定理的CAP定理指出，分布式数据存储不可能同时提供以下三种保证中的两种以上：</p>
 <table>
 <thead>
 <tr>
-<th>param</th>
-<th>description</th>
+<th>一致性</th>
+<th>可用性</th>
+<th>分区容忍</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>–class</td>
-<td>监视类装载、卸载数量、总空间及类装载所耗费的时间</td>
-</tr>
-<tr>
-<td>–gc</td>
-<td>监视Java堆状况，包括Eden区、2个Survivor区、老年代、永久代等的容量</td>
-</tr>
-<tr>
-<td>–gccapacity</td>
-<td>监视内容与-gc基本相同，但输出主要关注Java堆各个区域使用到的最大和最小空间</td>
-</tr>
-<tr>
-<td>–gcutil</td>
-<td>监视内容与-gc基本相同，但输出主要关注已使用空间占总空间的百分比</td>
-</tr>
-<tr>
-<td>–gccause</td>
-<td>与-gcutil功能一样，但是会额外输出导致上一次GC产生的原因</td>
-</tr>
-<tr>
-<td>–gcnew</td>
-<td>监视新生代GC的状况</td>
-</tr>
-<tr>
-<td>–gcnewcapacity</td>
-<td>监视内容与-gcnew基本相同，输出主要关注使用到的最大和最小空间</td>
-</tr>
-<tr>
-<td>–gcold</td>
-<td>监视老年代GC的状况</td>
-</tr>
-<tr>
-<td>–gcoldcapacity</td>
-<td>监视内容与——gcold基本相同，输出主要关注使用到的最大和最小空间</td>
-</tr>
-<tr>
-<td>–gcpermcapacity</td>
-<td>输出永久代使用到的最大和最小空间</td>
-</tr>
-<tr>
-<td>-compiler</td>
-<td>输出JIT编译器编译过的方法、耗时等信息</td>
-</tr>
-<tr>
-<td>–printcompilation</td>
-<td>输出已经被JIT编译的方法</td>
+<td>在分布式系统中的所有数据备份，在同一时刻是否同样的值。（等同于所有节点访问同一份最新的数据副本）</td>
+<td>在集群中一部分节点故障后，集群整体是否还能响应客户端的读写请求。（对数据更新具备高可用性）</td>
+<td>以实际效果而言，分区相当于对通信的时限要求。系统如果不能在时限内达成数据一致性，就意味着发生了分区的情况，必须就当前操作在C和A之间做出选择。</td>
 </tr>
 </tbody>
 </table>
-<p>1、jstat –class <pid>: 显示加载class的数量，及所占空间等信息。<br>Loaded 装载的类的数量<br>Bytes 装载类所占用的字节数<br>Unloaded 卸载类的数量<br>Bytes 卸载类的字节数<br>Time 装载和卸载类所花费的时间</pid></p>
-<p>2、jstat -compiler <pid>: 显示VM实时编译的数量等信息。</pid></p>
-<p>Compiled 编译任务执行数量 Failed 编译任务执行失败数量 Invalid 编译任务执行失效数量 Time 编译任务消耗时间 FailedType 最后一个编译失败任务的类型 FailedMethod 最后一个编译失败任务所在的类及方法</p>
-<p>3、jstat -gc <pid>: 可以显示gc的信息，查看gc的次数，及时间。</pid></p>
-<p>S0C 年轻代中第一个survivor（幸存区）的容量 (字节) S1C 年轻代中第二个survivor（幸存区）的容量 (字节) S0U 年轻代中第一个survivor（幸存区）目前已使用空间 (字节) S1U 年轻代中第二个survivor（幸存区）目前已使用空间 (字节) EC 年轻代中Eden（伊甸园）的容量 (字节) EU 年轻代中Eden（伊甸园）目前已使用空间 (字节) OC Old代的容量 (字节) OU Old代目前已使用空间 (字节) PC Perm(持久代)的容量 (字节) PU Perm(持久代)目前已使用空间 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 YGCT 从应用程序启动到采样时年轻代中gc所用时间(s) FGC 从应用程序启动到采样时old代(全gc)gc次数 FGCT 从应用程序启动到采样时old代(全gc)gc所用时间(s) GCT 从应用程序启动到采样时gc用的总时间(s)</p>
-<p>4、jstat -gccapacity <pid>:可以显示，VM内存中三代（young,old,perm）对象的使用和占用大小</pid></p>
-<p>NGCMN 年轻代(young)中初始化(最小)的大小(字节) NGCMX 年轻代(young)的最大容量 (字节) NGC 年轻代(young)中当前的容量 (字节) S0C 年轻代中第一个survivor（幸存区）的容量 (字节) S1C 年轻代中第二个survivor（幸存区）的容量 (字节) EC 年轻代中Eden（伊甸园）的容量 (字节) OGCMN old代中初始化(最小)的大小 (字节) OGCMX old代的最大容量(字节) OGC old代当前新生成的容量 (字节) OC Old代的容量 (字节) PGCMN perm代中初始化(最小)的大小 (字节) PGCMX perm代的最大容量 (字节)<br>PGC perm代当前新生成的容量 (字节) PC Perm(持久代)的容量 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 FGC 从应用程序启动到采样时old代(全gc)gc次数</p>
-<p>5、jstat -gcutil <pid>:统计gc信息</pid></p>
-<p>S0 年轻代中第一个survivor（幸存区）已使用的占当前容量百分比 S1 年轻代中第二个survivor（幸存区）已使用的占当前容量百分比 E 年轻代中Eden（伊甸园）已使用的占当前容量百分比 O old代已使用的占当前容量百分比 P perm代已使用的占当前容量百分比 YGC 从应用程序启动到采样时年轻代中gc次数 YGCT 从应用程序启动到采样时年轻代中gc所用时间(s) FGC 从应用程序启动到采样时old代(全gc)gc次数 FGCT 从应用程序启动到采样时old代(全gc)gc所用时间(s) GCT 从应用程序启动到采样时gc用的总时间(s)</p>
-<p>6、jstat -gcnew <pid>:年轻代对象的信息。</pid></p>
-<p>S0C 年轻代中第一个survivor（幸存区）的容量 (字节) S1C 年轻代中第二个survivor（幸存区）的容量 (字节) S0U 年轻代中第一个survivor（幸存区）目前已使用空间 (字节) S1U 年轻代中第二个survivor（幸存区）目前已使用空间 (字节) TT 持有次数限制 MTT 最大持有次数限制 EC 年轻代中Eden（伊甸园）的容量 (字节) EU 年轻代中Eden（伊甸园）目前已使用空间 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 YGCT 从应用程序启动到采样时年轻代中gc所用时间(s)</p>
-<p>7、jstat -gcnewcapacity<pid>: 年轻代对象的信息及其占用量。</pid></p>
-<p>NGCMN 年轻代(young)中初始化(最小)的大小(字节) NGCMX 年轻代(young)的最大容量 (字节) NGC 年轻代(young)中当前的容量 (字节) S0CMX 年轻代中第一个survivor（幸存区）的最大容量 (字节) S0C 年轻代中第一个survivor（幸存区）的容量 (字节) S1CMX 年轻代中第二个survivor（幸存区）的最大容量 (字节) S1C 年轻代中第二个survivor（幸存区）的容量 (字节) ECMX 年轻代中Eden（伊甸园）的最大容量 (字节) EC 年轻代中Eden（伊甸园）的容量 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 FGC 从应用程序启动到采样时old代(全gc)gc次数</p>
-<p>8、jstat -gcold <pid>：old代对象的信息。</pid></p>
-<p>PC Perm(持久代)的容量 (字节) PU Perm(持久代)目前已使用空间 (字节) OC Old代的容量 (字节) OU Old代目前已使用空间 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 FGC 从应用程序启动到采样时old代(全gc)gc次数 FGCT 从应用程序启动到采样时old代(全gc)gc所用时间(s) GCT 从应用程序启动到采样时gc用的总时间(s)</p>
-<p>9、stat -gcoldcapacity <pid>: old代对象的信息及其占用量。</pid></p>
-<p>OGCMN old代中初始化(最小)的大小 (字节) OGCMX old代的最大容量(字节) OGC old代当前新生成的容量 (字节) OC Old代的容量 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 FGC 从应用程序启动到采样时old代(全gc)gc次数 FGCT 从应用程序启动到采样时old代(全gc)gc所用时间(s) GCT 从应用程序启动到采样时gc用的总时间(s)</p>
-<p>10、jstat -gcpermcapacity<pid>: perm对象的信息及其占用量。</pid></p>
-<p>PGCMN perm代中初始化(最小)的大小 (字节) PGCMX perm代的最大容量 (字节)<br>PGC perm代当前新生成的容量 (字节) PC Perm(持久代)的容量 (字节) YGC 从应用程序启动到采样时年轻代中gc次数 FGC 从应用程序启动到采样时old代(全gc)gc次数 FGCT 从应用程序启动到采样时old代(全gc)gc所用时间(s) GCT 从应用程序启动到采样时gc用的总时间(s)</p>
-<p>11、jstat -printcompilation <pid>：当前VM执行的信息。</pid></p>
-<p>Compiled 编译任务的数目 Size 方法生成的字节码的大小 Type 编译类型 Method 类名和方法名用来标识编译的方法。类名使用/做为一个命名空间分隔符。方法名是给定类中的方法。上述格式是由-XX:+PrintComplation选项进行设置的</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/05/18/java-cmd01/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/05/18/java-cmd01/" itemprop="url">
-                  java-cmd01-jps
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-05-18T19:58:12+08:00">
-                2017-05-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="位置"><a href="#位置" class="headerlink" title="位置"></a>位置</h2><p>我们知道，很多Java命令都在jdk的JAVA_HOME/bin目录下面，jps也不例外，他就在bin目录下，所以，他是java自带的一个命令。</p>
-<h2 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h2><p>jps(Java Virtual Machine Process Status Tool)是JDK1.5提供的一个显示当前所有java进程pid的命令，简单实用，非常适合在linux/unix平台上简单察看当前java进程的一些简单情况。</p>
-<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>jdk中的jps命令可以显示当前运行的java进程以及相关参数，它的实现机制如下：<br>java程序在启动以后，会在java.io.tmpdir指定的目录下，就是临时文件夹里，生成一个类似于hsperfdata<em>User的文件夹，这个文件夹里（在Linux中为/tmp/hsperfdata</em>{userName}/），有几个文件，名字就是java进程的pid，因此列出当前运行的java进程，只是把这个目录里的文件名列一下而已。至于系统的参数什么，就可以解析这几个文件获得。</p>
-<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>-q 只显示pid，不显示class名称,jar文件名和传递给main 方法的参数<br>-m 输出传递给main 方法的参数，在嵌入式jvm上可能是null<br>-l 输出应用程序main class的完整package名 或者 应用程序的jar文件完整路径名<br>-v 输出传递给JVM的参数</p>
-<p>PS:jps命令有个地方很不好，似乎只能显示当前用户的java进程，要显示其他用户的还是只能用unix/linux的ps命令</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/05/11/jvm02/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/05/11/jvm02/" itemprop="url">
-                  GC algorithm
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-05-12T02:12:51+08:00">
-                2017-05-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>##1 按照基本回收策略分<br>标记-清除算法<br>算法分为“标记”和“清除”两个阶段：首先标记出所有需要回收的对象，在标记完成后统一回收所有被标记的对象，它的标记过程其实在前一节讲述对象标记判定时已经介绍过了。之所以说它是最基础的收集算法，是因为后续的收集算法都是基于这种思路并对其不足进行改进而得到的。<br>它的主要不足有两个：一个是效率问题，标记和清除两个过程的效率都不高；另一个是空间问题，标记清除之后会产生大量不连续的内存碎片，空间碎片太多可能会导致以后在程序运行过程中需要分配较大对象时，无法找到足够的连续内存而不得不提前触发另一次垃圾收集动作。 </p>
-<p>复制算法<br>为了解决效率问题，一种称为“复制”（Copying）的收集算法出现了，它将可用内存按容量划分为大小相等的两块，每次只使用其中的一块。 当这一块的内存用完了，就将还存活着的对象复制到另外一块上面，然后再把已使用过的内存空间一次清理掉。 这样使得每次都是对整个半区进行内存回收，内存分配时也就不用考虑内存碎片等复杂情况，只要移动堆顶指针，按顺序分配内存即可，实现简单，运行高效。 只是这种算法的代价是将内存缩小为了原来的一半，未免太高了一点。</p>
-<p>分代收集算法<br>当前商业虚拟机的垃圾收集都采用“分代收集”（Generational Collection）算法，这种算法并没有什么新的思想，只是根据对象存活周期的不同将内存划分为几块。一般是把Java堆分为新生代和老年代，这样就可以根据各个年代的特点采用最适当的收集算法。在新生代中，每次垃圾收集时都发现有大批对象死去，只有少量存活，那就选用复制算法，只需要付出少量存活对象的复制成本就可以完成收集。 而老年代中因为对象存活率高、没有额外空间对它进行分配担保，就必须使用“标记—清理”或者“标记—整理”算法来进行回收。</p>
-<p>分代垃圾回收详解:<br>分代的垃圾回收策略，是基于这样一个事实：不同的对象的生命周期是不一样的。因此，不同生命周期的对象可以采取不同的收集方式，以便提高回收效率。</p>
-<p>在Java程序运行的过程中，会产生大量的对象，其中有些对象是与业务信息相关，比如Http请求中的Session对象、线程、Socket连接，这类对象跟业务直接挂钩，因此生命周期比较长。但是还有一些对象，主要是程序运行过程中生成的临时变量，这些对象生命周期会比较短，比如：String对象，由于其不变类的特性，系统会产生大量的这些对象，有些对象甚至只用一次即可回收。</p>
-<p>试想，在不进行对象存活时间区分的情况下，每次垃圾回收都是对整个堆空间进行回收，花费时间相对会长，同时，因为每次回收都需要遍历所有存活对象，但实际上，对于生命周期长的对象而言，这种遍历是没有效果的，因为可能进行了很多次遍历，但是他们依旧存在。因此，分代垃圾回收采用分治的思想，进行代的划分，把不同生命周期的对象放在不同代上，不同代上采用最适合它的垃圾回收方式进行回收。</p>
-<p>虚拟机中的共划分为三个代：年轻代（Young Generation）、年老点（Old Generation）和持久代（Permanent Generation）。其中持久代主要存放的是Java类的类信息，与垃圾收集要收集的Java对象关系不大。年轻代和年老代的划分是对垃圾收集影响比较大的。</p>
-<p>年轻代:<br>       所有新生成的对象首先都是放在年轻代的。年轻代的目标就是尽可能快速的收集掉那些生命周期短的对象。年轻代分三个区。一个Eden区，两个Survivor区(一般而言)。大部分对象在Eden区中生成。当Eden区满时，还存活的对象将被复制到Survivor区（两个中的一个），当这个Survivor区满时，此区的存活对象将被复制到另外一个Survivor区，当这个Survivor区也满了的时候，从第一个Survivor区复制过来的并且此时还存活的对象，将被复制“年老区(Tenured)”。需要注意，Survivor的两个区是对称的，没先后关系，所以同一个区中可能同时存在从Eden复制过来 对象，和从前一个Survivor复制过来的对象，而复制到年老区的只有从第一个Survivor去过来的对象。而且，Survivor区总有一个是空的。同时，根据程序需要，Survivor区是可以配置为多个的（多于两个），这样可以增加对象在年轻代中的存在时间，减少被放到年老代的可能。</p>
-<p>年老代:<br>    在年轻代中经历了N次垃圾回收后仍然存活的对象，就会被放到年老代中。因此，可以认为年老代中存放的都是一些生命周期较长的对象。</p>
-<p>持久代:<br>    用于存放静态文件，如今Java类、方法等。持久代对垃圾回收没有显著影响，但是有些应用可能动态生成或者调用一些class，例如hibernate等，在这种时候需要设置一个比较大的持久代空间来存放这些运行过程中新增的类。持久代大小通过-XX:MaxPermSize=<n>进行设置。</n></p>
-<p>什么情况下触发垃圾回收<br>由于对象进行了分代处理，因此垃圾回收区域、时间也不一样。GC有两种类型：Scavenge GC和Full GC。</p>
-<p>Scavenge GC<br>    一般情况下，当新对象生成，并且在Eden申请空间失败时，就会触发Scavenge GC，对Eden区域进行GC，清除非存活对象，并且把尚且存活的对象移动到Survivor区。然后整理Survivor的两个区。这种方式的GC是对年轻代的Eden区进行，不会影响到年老代。因为大部分对象都是从Eden区开始的，同时Eden区不会分配的很大，所以Eden区的GC会频繁进行。因而，一般在这里需要使用速度快、效率高的算法，使Eden去能尽快空闲出来。</p>
-<p>Full GC<br>    对整个堆进行整理，包括Young、Tenured和Perm。Full GC因为需要对整个对进行回收，所以比Scavenge GC要慢，因此应该尽可能减少Full GC的次数。在对JVM调优的过程中，很大一部分工作就是对于FullGC的调节。有如下原因可能导致Full GC：<br>· 年老代（Tenured）被写满<br>· 持久代（Perm）被写满<br>· System.gc()被显示调用<br>·上一次GC之后Heap的各域分配策略动态变化</p>
-<p>##2 按分区对待的方式分<br>增量收集（IncrementalCollecting）:实时垃圾回收算法，即：在应用进行的同时进行垃圾回收。不知道什么原因JDK5.0中的收集器没有使用这种算法的。</p>
-<p>分代收集（Generational Collecting）:基于对对象生命周期分析后得出的垃圾回收算法。把对象分为年青代、年老代、持久代，对不同生命周期的对象使用不同的算法（上述方式中的一个）进行回收。现在的垃圾回收器（从J2SE1.2开始）都是使用此算法的。</p>
-<p>##3 按系统线程分<br>串行收集:串行收集使用单线程处理所有垃圾回收工作，因为无需多线程交互，实现容易，而且效率比较高。但是，其局限性也比较明显，即无法使用多处理器的优势，所以此收集适合单处理器机器。当然,此收集器也可以用在小数据量（100M左右）情况下的多处理器机器上。</p>
-<p>并行收集:并行收集使用多线程处理垃圾回收工作，因而速度快，效率高。而且理论上CPU数目越多，越能体现出并行收集器的优势。（串型收集的并发版本，需要暂停jvm）并行paralise指的是多个任务在多个cpu中一起并行执行，最后将结果合并。效率是N倍。</p>
-<p>并发收集:相对于串行收集和并行收集而言，前面两个在进行垃圾回收工作时，需要暂停整个运行环境，而只有垃圾回收程序在运行，因此，系统在垃圾回收时会有明显的暂停，而且暂停时间会因为堆越大而越长。（和并行收集不同，并发只有在开头和结尾会暂停jvm）并发concurrent指的是多个任务在一个cpu伪同步执行，但其实是串行调度的，效率并非直接是N倍。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/05/11/jvm01/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/05/11/jvm01/" itemprop="url">
-                  jvm01
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-05-11T20:44:16+08:00">
-                2017-05-11
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="阻塞io模型"><a href="#阻塞io模型" class="headerlink" title="阻塞io模型"></a>阻塞io模型</h2><p><img src="/2017/03/08/network/阻塞io模型.png" alt="阻塞io模型"></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/04/24/java-multithread/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/04/24/java-multithread/" itemprop="url">
-                  java-multithread
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-04-25T05:11:45+08:00">
-                2017-04-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>##<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">test01</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">        <span class="class"><span class="keyword">class</span> <span class="title">Counter</span> </span>&#123;</div><div class="line">            <span class="keyword">private</span> <span class="keyword">int</span> count = <span class="number">0</span>;</div><div class="line"></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">incre</span><span class="params">()</span> </span>&#123;</div><div class="line">                count += <span class="number">1</span>;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getCount</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">return</span> count;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        <span class="keyword">final</span> Counter counter = <span class="keyword">new</span> Counter();</div><div class="line">        <span class="class"><span class="keyword">class</span> <span class="title">CountingThread</span> <span class="keyword">extends</span> <span class="title">Thread</span> </span>&#123;</div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">200000</span>; ++i) &#123;</div><div class="line">                    System.out.println(<span class="string">"thread id:"</span>+<span class="keyword">this</span>.getId());</div><div class="line">                    counter.incre();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        Thread thread1 = <span class="keyword">new</span> CountingThread();</div><div class="line">        Thread thread2 = <span class="keyword">new</span> CountingThread();</div><div class="line"></div><div class="line">        thread2.start();</div><div class="line">        thread1.start();</div><div class="line">        thread1.join();</div><div class="line">        thread2.join();</div><div class="line"></div><div class="line">        System.out.println(<span class="string">"counter: "</span>+counter.getCount());</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">counter: 399998</div></pre></td></tr></table></figure>
-<p>使用synchronized修饰方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">public synchronized void incre() &#123;</div><div class="line">    count += 1;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>使用synchronized修饰”关键区域”<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">public void incre() &#123;</div><div class="line">    synchronized (this) &#123;</div><div class="line">        count += 1;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>synchronized不能继承——也就是说，假如一个方法在基础类中是“ 同步”的，那么在衍生类过载版本中，它不会自动进入“同步”状态。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/04/20/elasticsearch01/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/04/20/elasticsearch01/" itemprop="url">
-                  elasticsearch01
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-04-21T03:49:13+08:00">
-                2017-04-21
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ElasticSearch/" itemprop="url" rel="index">
-                    <span itemprop="name">ElasticSearch</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>##<br>Elasticsearch是一个基于Apache Lucene(TM)的开源搜索引擎。无论在开源还是专有领域，Lucene可以被认为是迄今为止最先进、性能最好的、功能最全的搜索引擎库。<br>但是，Lucene只是一个库。想要使用它，你必须使用Java来作为开发语言并将其直接集成到你的应用中，更糟糕的是，Lucene非常复杂，你需要深入了解检索的相关知识来理解它是如何工作的。<br>Elasticsearch也使用Java开发并使用Lucene作为其核心来实现所有索引和搜索的功能，但是它的目的是通过简单的RESTful API来隐藏Lucene的复杂性，从而让全文搜索变得简单。<br>不过，Elasticsearch不仅仅是Lucene和全文搜索，我们还能这样去描述它：</p>
+<p>换句话说，<strong>CAP</strong>定理指出，在存在网络分区的情况下，必须在一致性和可用性之间进行选择。请注意，CAP定理中定义的一致性与ACID 数据库事务中保证的一致性完全不同。</p>
+<p>由于CAP理论告诉我们对于分布式系统，如果不想牺牲一致性，我们就只能放弃可用性，所以，数据一致性模型主要有以下几种：强一致性、弱一致性和最终一致性等，在本篇章中，我们主要讨论的算法Raft，是一种分布式系统中的强一致性的实现算法。</p>
+<p>强一致性的一般实现的原理：当其中某个服务器收到客户端的一组指令时,它必须与其它服务器交流以保证所有的服务器都是以同样的顺序收到同样的指令,这样的话所有的服务器会产生一致的结果,看起来就像是一台机器一样.</p>
+<h2 id="Raft算法描述"><a href="#Raft算法描述" class="headerlink" title="Raft算法描述"></a>Raft算法描述</h2><p>在Raft被提出来之前，Paxos协议是第一个被证明的一致性算法，但是Paxos的论文非常难懂，导致基于Paxos的工程实践和教学都十分头疼，于是Raft在设计的过程中，就从可理解性出发，使用算法分解和减少状态等手段，目前已经应用非常广泛。</p>
+<p>在Raft中，问题分解为：领导选取、日志复制、安全和成员变化。</p>
+<h3 id="复制状态机（Replicated-State-Machine）"><a href="#复制状态机（Replicated-State-Machine）" class="headerlink" title="复制状态机（Replicated State Machine）"></a>复制状态机（Replicated State Machine）</h3><p><img src="/2018/03/07/distributed-system-raft/raft01.png" alt="img01"></p>
 <ul>
-<li>分布式的实时文件存储，每个字段都被索引并可被搜索</li>
-<li>分布式的实时分析搜索引擎</li>
-<li>可以扩展到上百台服务器，处理PB级结构化或非结构化数据<br>而且，所有的这些功能被集成到一个服务里面，你的应用可以通过简单的RESTful API、各种语言的客户端甚至命令行与之交互。</li>
+<li><p>复制状态机通过复制日志来实现：</p>
+<ul>
+<li>日志：每台机器保存一份日志，日志来自于客户端的请求，包含一系列的命令</li>
+<li>状态机：状态机会按顺序执行这些命令</li>
+<li>一致性模型：分布式环境下，保证多机的日志是一致的，这样回放到状态机中的状态是一致的</li>
 </ul>
-<p>可以用传统的关系数据库来作对比：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Relational DB -&gt; Databases -&gt; Tables -&gt; Rows -&gt; Columns</div><div class="line">Elasticsearch -&gt; Indices   -&gt; Types  -&gt; Documents -&gt; Fields</div></pre></td></tr></table></figure></p>
-<h2 id="如何安装"><a href="#如何安装" class="headerlink" title="如何安装"></a>如何安装</h2><p>1.安装jdk，我自己机器上的是jdk7<br>2.下载安装包<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">wget https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.3.4/elasticsearch-2.3.4.tar.gz</div></pre></td></tr></table></figure></p>
-<p>3.解压<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">tar -zxvf elasticsearch-2.3.4.tar.gz</div></pre></td></tr></table></figure></p>
-<p>4.启动服务<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./bin/elasticsearch</div></pre></td></tr></table></figure></p>
-<p>5.测试是否成功<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">curl &apos;http://localhost:9200/?pretty&apos;</div></pre></td></tr></table></figure></p>
-<p>如果输出下面的结果就大功告成了<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">  &quot;count&quot; : 3,</div><div class="line">  &quot;_shards&quot; : &#123;</div><div class="line">    &quot;total&quot; : 5,</div><div class="line">    &quot;successful&quot; : 5,</div><div class="line">    &quot;failed&quot; : 0</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<h2 id="如何使用"><a href="#如何使用" class="headerlink" title="如何使用"></a>如何使用</h2><p>###让我们建立一个员工目录</p>
-<p>假设我们刚好在Megacorp工作，这时人力资源部门出于某种目的需要让我们创建一个员工目录，这个目录用于促进人文关怀和用于实时协同工作</p>
-<p>###索引员工文档<br>所以为了创建员工目录，我们将进行如下操作：<br><em>为每个员工的文档(document)建立索引，每个文档包含了相应员工的所有信息。
-</em>每个文档的类型为employee。<br><em>employee类型归属于索引megacorp。
-</em>megacorp索引存储在Elasticsearch集群中。</p>
-<p>我们看到path:/megacorp/employee/1包含三部分信息：<br>| 名字 | 说明 |<br>| ————- | ————- |<br>| megacorp | 索引名 |<br>| employee | 类型名 |<br>| 1 | 这个员工的ID |</p>
-<p>使用RESTful API，通过9200端口的与Elasticsearch进行通信<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line">curl -XPUT 'localhost:9200/megacorp/employee/1' -d '</div><div class="line">&#123;</div><div class="line">    "first_name" : "John",</div><div class="line">    "last_name" :  "Smith",</div><div class="line">    "age" :        25,</div><div class="line">    "about" :      "I love to go rock climbing",</div><div class="line">    "interests": [ "sports", "music" ]</div><div class="line">&#125;'</div><div class="line"></div><div class="line">curl -XPUT 'localhost:9200/megacorp/employee/2' -d '</div><div class="line">&#123;</div><div class="line">    "first_name" :  "Jane",</div><div class="line">    "last_name" :   "Smith",</div><div class="line">    "age" :         32,</div><div class="line">    "about" :       "I like to collect rock albums",</div><div class="line">    "interests":  [ "music" ]</div><div class="line">&#125;'</div><div class="line"></div><div class="line">curl -XPUT 'localhost:9200/megacorp/employee/3' -d '</div><div class="line">&#123;</div><div class="line">    "first_name" :  "Douglas",</div><div class="line">    "last_name" :   "Fir",</div><div class="line">    "age" :         35,</div><div class="line">    "about":        "I like to build cabinets",</div><div class="line">    "interests":  [ "forestry" ]</div><div class="line">&#125;'</div></pre></td></tr></table></figure></p>
+</li>
+<li><p>一致性算法作用于一致性模型，一般有以下特性：</p>
+<ul>
+<li>safety：在非拜占庭问题下（网络延时，网络分区，丢包，重复发包以及包乱序等），结果是正确的</li>
+<li>availability：在半数以上机器能正常工作时，则系统可用</li>
+<li>timing-unindependent：不依赖于时钟来保证日志一致性，错误的时钟以及极端的消息时延最多会造成可用性问题</li>
+</ul>
+</li>
+</ul>
+<h3 id="服务器状态"><a href="#服务器状态" class="headerlink" title="服务器状态"></a>服务器状态</h3><p>每台服务器一定会处于三种状态：</p>
+<ul>
+<li>领导者</li>
+<li>候选人</li>
+<li>追随者<br><img src="/2018/03/07/distributed-system-raft/raft02.png" alt="img02"><br>追随者只响应其他服务器的请求。如果追随者没有收到任何消息，它会成为一个候选人并且开始一次选举。收到大多数服务器投票的候选人会成为新的领导人。领导人在它们宕机之前会一直保持领导人的状态。</li>
+</ul>
+<h3 id="任期-Term"><a href="#任期-Term" class="headerlink" title="任期(Term)"></a>任期(Term)</h3><p>Raft 算法将时间划分成为任意不同长度的任期（term）。任期用连续的数字进行表示。每一个任期的开始都是一次选举（election），一个或多个候选人会试图成为领导人。如果一个候选人赢得了选举，它就会在该任期的剩余时间担任领导人。在某些情况下，选票会被瓜分，有可能没有选出领导人，那么，将会开始另一个任期，并且立刻开始下一次选举。Raft 算法保证在给定的一个任期最多只有一个领导人。<br><img src="/2018/03/07/distributed-system-raft/raft03.png" alt="img03"></p>
+<h3 id="RPC"><a href="#RPC" class="headerlink" title="RPC"></a>RPC</h3><p>Raft 算法中服务器节点之间通信使用远程过程调用（RPCs），并且基本的一致性算法只需要两种类型的 RPCs。请求投票（RequestVote） RPCs 由候选人在选举期间发起，然后附加条目（AppendEntries）RPCs 由领导人发起，用来复制日志和提供一种心跳机制。为了在服务器之间传输快照增加了第三种 RPC。当服务器没有及时的收到 RPC 的响应时，会进行重试， 并且他们能够并行的发起 RPCs 来获得最佳的性能。<br>RPC有三种：</p>
+<ol>
+<li>RequestVote RPC：候选人在选举期间发起</li>
+<li>AppendEntries RPC：领导人发起的一种心跳机制，复制日志也在该命令中完成</li>
+<li>InstallSnapshot RPC: 领导者使用该RPC来发送快照给太落后的追随者。</li>
+</ol>
+<p>超时设置：</p>
+<ol>
+<li>BroadcastTime: 领导者的心跳超时时间</li>
+<li>Election Timeout: 追随者设置的候选超时时间</li>
+<li>MTBT: 指的是单个服务器发生故障的间隔时间的平均数<br>BroadcastTime &lt;&lt; ElectionTimeout &lt;&lt; MTBF</li>
+</ol>
+<p>两个原则：</p>
+<ol>
+<li>BroadcastTime应该比ElectionTimeout小一个数量级，为的是使领导人能够持续发送心跳信息（heartbeat）来阻止追随者们开始选举；</li>
+<li>ElectionTimeout也要比MTBF小几个数量级，为的是使得系统稳定运行。<br>一般BroadcastTime大约为0.5毫秒到20毫秒，ElectionTimeout一般在10ms到500ms之间。大多数服务器的MTBF都在几个月甚至更长。</li>
+</ol>
+<h3 id="领导人选取"><a href="#领导人选取" class="headerlink" title="领导人选取"></a>领导人选取</h3><ul>
+<li>触发条件：</li>
+</ul>
+<ol>
+<li>一般情况下，追随者接到领导者的心跳时，把ElectionTimeout清零，不会触发；</li>
+<li>领导者故障，追随者的ElectionTimeout超时发生时，会变成候选者，触发领导人选取；</li>
+</ol>
+<ul>
+<li>候选操作过程：</li>
+</ul>
+<p>追随者自增当前任期，转换为Candidate，对自己投票，并发起RequestVote RPC，等待下面三种情形发生；</p>
+<ol>
+<li>获得超过半数服务器的投票，赢得选举，成为领导者；</li>
+<li>另一台服务器赢得选举，并接收到对应的心跳，成为追随者；</li>
+<li>选举超时，没有任何一台服务器赢得选举，自增当前任期，重新发起选举；</li>
+</ol>
+<p>注意事项：</p>
+<ol>
+<li>服务器在一个任期内，最多能给一个候选人投票，采用先到先服务原则；</li>
+<li>候选者等待投票时，可能会接收到来自其它声明为领导人的的AppendEntries RPC。如果该领导人的任期（RPC中有）比当前候选人的当前任期要大，则候选人认为该领导人合法，并转换成追随者；如果RPC中的任期小于候选人的当前任期，则候选人拒绝此次RPC，继续保持候选人状态；</li>
+<li>候选人既没有赢得选举也没有输掉选举：如果许多追随者在同一时刻都成为了候选人，选票会被分散，可能没有候选人能获得大多数的选票。当这种情形发生时，每一个候选人都会超时，并且通过自增任期号和发起另一轮 RequestVote RPC 来开始新的选举。然而，如果没有其它手段来分配选票的话，这种情形可能会无限的重复下去。所以Raft使用的随机的选举超时时间（150~300ms之间），来避免这种情况发生。</li>
+</ol>
+<h3 id="日志复制"><a href="#日志复制" class="headerlink" title="日志复制"></a>日志复制</h3><p><img src="/2018/03/07/distributed-system-raft/raft04.png" alt="img04"><br>接受命令的过程：</p>
+<ol>
+<li>领导者接受客户端请求；</li>
+<li>领导者把指令追加到日志；</li>
+<li>发送AppendEntries RPC到追随者；</li>
+<li>领导者收到大多数追随者的确认后，领导者Commit该日志，把日志在状态机中回放，并返回结果给客户端；</li>
+</ol>
+<p>提交过程：</p>
+<ol>
+<li>在下一个心跳阶段，领导者再次发送AppendEntries RPC给追随者，日志已经commited；</li>
+<li>追随者收到Commited日志后，将日志在状态机中回放。</li>
+</ol>
+<h3 id="安全性"><a href="#安全性" class="headerlink" title="安全性"></a>安全性</h3><p>到目前为止描述的机制并不能充分的保证每一个状态机会按照相同的顺序执行相同的指令，例如：一个跟随者可能会进入不可用状态同时领导人已经提交了若干的日志条目，然后这个跟随者可能会被选举为领导人并且覆盖这些日志条目；因此，不同的状态机可能会执行不同的指令序列。</p>
+<ol>
+<li><p>领导者追加日志（Append-Only)<br>领导者永远不会覆盖已经存在的日志条目；<br>日志永远只有一个流向：从领导者到追随者；</p>
+</li>
+<li><p>选举限制：投票阻止没有全部日志条目的服务器赢得选举<br>如果投票者的日志比候选人的新，拒绝投票请求；<br>这意味着要赢得选举，候选者的日志至少和大多数服务器的日志一样新，那么它一定包含全部的已经提交的日志条目。</p>
+</li>
+<li><p>永远不提交任期之前的日志条目（只提交任期内的日志条目）<br>在Raft算法中，当一个日志被安全的复制到绝大多数的机器上面，即AppendEntries RPC在绝大多数服务器正确返回了，那么这个日志就是被提交了，然后领导者会更新commit index。<br><img src="/2018/03/07/distributed-system-raft/raft05.png" alt="img05"></p>
+</li>
+</ol>
+<p>如果允许提交任期之前的日志条目，那么在步骤c中，我们就会把之前任期为2的日志提交到其他服务器中去，并造成了大多数机器存在了日志为2的情况。所以造成了d中S5中任期为3的日志条目会覆盖掉已经提交的日志的情况。</p>
+<p>Raft 从来不会通过计算复制的数目来提交之前人气的日志条目。只有领导人当前任期的日志条目才能通过计算数目来进行提交。一旦当前任期的日志条目以这种方式被提交，那么由于日志匹配原则（Log Matching Property），之前的日志条目也都会被间接的提交。</p>
+<p>论文中的这段话比较难理解，更加直观的说：由于Raft不会提交任期之前的日志条目，那么就不会从b过渡到c的情况，只能从b发生S5down机的情况下直接过渡到e，这样就产生的更新的任期，这样S5就没有机会被选为领导者了。</p>
+<ol>
+<li>候选者和追随者崩溃<br>候选者和追随者崩溃的情况处理要简单的多。如果这类角色崩溃了，那么后续发送给他们的 RequestVote和AppendEntries的所有RCP都会失败，Raft算法中处理这类失败就是简单的无限重试的方式。<br>　　如果这些服务器重新可用，那么这些RPC就会成功返回。如果一个服务器完成了一个RPC，但是在响应Leader前崩溃了，那么当他再次可用的时候还会收到相同的RPC请求，此时接收服务器负责检查，比如如果收到了已经包含该条日志的RPC请求，可以直接忽略这个请求，确保对系统是无害的。</li>
+</ol>
+<h3 id="集群成员变更"><a href="#集群成员变更" class="headerlink" title="集群成员变更"></a>集群成员变更</h3><p>集群成员的变更和成员的宕机与重启不同，因为前者会修改成员个数进而影响到领导者的选取和决议过程，因为在分布式系统这对于majority这个集群中成员大多数的概念是极为重要的。</p>
+<p>简单的做法是，运维人员将系统临时下线，修改配置，重新上线。但是这种做法存在两个缺点：</p>
+<ol>
+<li>更改时集群不可用</li>
+<li>人为操作失误风险<br>直接从一种配置转到新的配置是十分不安全的<br>如下图所示：<br><img src="/2018/03/07/distributed-system-raft/raft06.png" alt="img06"></li>
+</ol>
+<p>因为各个机器可能在任何的时候进行转换。在这个例子中，集群配额从 3 台机器变成了 5 台。不幸的是，存在这样的一个时间点，两个不同的领导人在同一个任期里都可以被选举成功。一个是通过旧的配置，一个通过新的配置。</p>
+<p>两阶段方法保证安全性：<br>为了保证安全性，配置更改必须使用两阶段方法。在 Raft 中，集群先切换到一个过渡的配置，我们称之为共同一致；一旦共同一致已经被提交了，那么系统就切换到新的配置上。共同一致是老配置和新配置的结合。</p>
+<p>共同一致允许独立的服务器在不影响安全性的前提下，在不同的时间进行配置转换过程。此外，共同一致可以让集群在配置转换的过程人依然响应服务器请求。</p>
+<p>一个领导人接收到一个改变配置从 C-old 到 C-new 的请求，他会为了共同一致存储配置（图中的 C-old,new），以前面描述的日志条目和副本的形式。一旦一个服务器将新的配置日志条目增加到它的日志中，他就会用这个配置来做出未来所有的决定。领导人完全特性保证了只有拥有 C-old,new 日志条目的服务器才有可能被选举为领导人。当C-old,new日志条目被提交以后，领导人在使用相同的策略提交C-new，如下图所示，C-old 和 C-new 没有任何机会同时做出单方面的决定，这就保证了安全性。<br><img src="/2018/03/07/distributed-system-raft/raft07.png" alt="img07"></p>
+<p>一个配置切换的时间线。虚线表示已经被创建但是还没有被提交的条目，实线表示最后被提交的日志条目。领导人首先创建了 C-old,new 的配置条目在自己的日志中，并提交到 C-old,new 中（C-old,new 的大多数和 C-new 的大多数）。然后他创建 C-new 条目并提交到 C-new 中的大多数。这样就不存在 C-new 和 C-old 可以同时做出决定的时间点。</p>
+<h3 id="日志压缩"><a href="#日志压缩" class="headerlink" title="日志压缩"></a>日志压缩</h3><p>日志会随着系统的不断运行会无限制的增长，这会给存储带来压力，几乎所有的分布式系统(Chubby、ZooKeeper)都采用快照的方式进行日志压缩，做完快照之后快照会在稳定持久存储中保存，而快照之前的日志和快照就可以丢弃掉。</p>
+<p>Raft的具体做法如下图所示：<br><img src="/2018/03/07/distributed-system-raft/raft08.png" alt="img08"><br>与Raft其它操作Leader-Based不同，snapshot是由各个节点独立生成的。除了日志压缩这一个作用之外，snapshot还可以用于同步状态：slow-follower以及new-server，Raft使用InstallSnapshot RPC完成该过程，不再赘述。</p>
+<p>Client交互<br>Client只向领导者发送请求；<br>Client开始会向追随者发送请求，追随者拒绝Client的请求，并重定向到领导者；<br>Client请求失败，会超时重新发送请求；<br>Raft算法要求Client的请求线性化，防止请求被多次执行。有两个解决方案：</p>
+<p>Raft算法提出要求每个请求有个唯一标识；<br>Raft的请求保持幂等性；</p>
 
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/04/16/c-02-stlsort/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/04/16/c-02-stlsort/" itemprop="url">
-                  回顾C++之一-STL中的sort
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-04-17T02:50:00+08:00">
-                2017-04-17
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/C/" itemprop="url" rel="index">
-                    <span itemprop="name">C++</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="相等-or-等价"><a href="#相等-or-等价" class="headerlink" title="相等 or 等价"></a>相等 or 等价</h2><p>STL充满了比较对象是否有同样的值。比如，当你用find来定位区间中第一个有特定值的对象的位置，find必须可以比较两个对象，看看一个的值是否与另一个相等。同样，当你尝试向set中插入一个新元素时，set::insert必须可以判断那个元素的值是否已经在set中了。</p>
-<p>find算法和set的insert成员函数是很多必须判断两个值是否相同的函数的代表。但它们以不同的方式完成，find对“相同”的定义是相等，基于operator==。set::insert对“相同”的定义是等价，通常基于operator&lt;。等价是基于在一个有序区间中对象值的相对位置。等价一般在每种标准关联容器（比如，set、multiset、map和multimap）的一部分——排序顺序方面有意义。两个对象x和y如果在关联容器c的排序顺序中没有哪个排在另一个之前，那么它们关于c使用的排序顺序有等价的值。set<widget>的默认比较函数是less<widget>，而默认的less<widget>简单地对Widget调用operator&lt;，所以w1和w2关于operator&lt;有等价的值如果下面表达式为真：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">(w1 &lt; w2) // w1 &lt; w2时它非真</div><div class="line">&amp;&amp;        // 而且</div><div class="line">(w2&lt;w1)   // w2 &lt; w1时它非真</div></pre></td></tr></table></figure></widget></widget></widget></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/04/16/c-01-stlclear/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/04/16/c-01-stlclear/" itemprop="url">
-                  回顾C++之一-STL中的clear
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-04-17T02:50:00+08:00">
-                2017-04-17
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/C/" itemprop="url" rel="index">
-                    <span itemprop="name">C++</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>通常我们可能会写下这样的代码<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; v1;</div><div class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; ++i)</div><div class="line">&#123;</div><div class="line">	v1.push_back(i);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v1 before clear"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v1.size() = "</span>&lt;&lt;v1.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v1.capacity() = "</span>&lt;&lt;v1.capacity()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"></div><div class="line">v1.clear();</div><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v1 after clear"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v1.size() = "</span>&lt;&lt;v1.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v1.capacity() = "</span>&lt;&lt;v1.capacity()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"></div><div class="line"><span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; v2;</div><div class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; ++i)</div><div class="line">&#123;</div><div class="line">	v2.push_back(i);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>运行结果<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">v1 before clear--------------</div><div class="line">v1.size() = <span class="number">100</span></div><div class="line">v1.capacity() = <span class="number">128</span></div><div class="line">v1 after clear--------------</div><div class="line">v1.size() = <span class="number">0</span></div><div class="line">v1.capacity() = <span class="number">128</span></div></pre></td></tr></table></figure></p>
-<p>clear并没有释放掉内存，而仅仅是将size置为0，如果需要立即释放掉内存，可以用一个空的容器和其交换，修改后的代码如下：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v2 before swap"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v2.size() = "</span>&lt;&lt;v2.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v2.capacity() = "</span>&lt;&lt;v2.capacity()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"></div><div class="line"><span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;().swap(v2);</div><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v2 after swap--------------"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v2.size() = "</span>&lt;&lt;v2.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v2.capacity() = "</span>&lt;&lt;v2.capacity()&lt;&lt;<span class="built_in">endl</span>;</div></pre></td></tr></table></figure></p>
-<p>运行结果<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">v2 before swap--------------</div><div class="line">v2.size() = <span class="number">100</span></div><div class="line">v2.capacity() = <span class="number">128</span></div><div class="line">v2 after swap--------------</div><div class="line">v2.size() = <span class="number">0</span></div><div class="line">v2.capacity() = <span class="number">0</span></div></pre></td></tr></table></figure></p>
-<p>c++11中增加了新的方法shrink_to_fit，可以释放掉多余的内存<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">std</span>::<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; v3;</div><div class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; ++i)</div><div class="line">&#123;</div><div class="line">	v3.push_back(i);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v3 before shrink_to_fit--------------"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v3.size() = "</span>&lt;&lt;v3.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v3.capacity() = "</span>&lt;&lt;v3.capacity()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"></div><div class="line">v3.shrink_to_fit();</div><div class="line"><span class="built_in">cout</span>&lt;&lt;<span class="string">"v3 after shrink_to_fit--------------"</span>&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v3.size() = "</span>&lt;&lt;v3.size()&lt;&lt;<span class="built_in">endl</span>;</div><div class="line"><span class="built_in">cout</span>&lt;&lt; <span class="string">"v3.capacity() = "</span>&lt;&lt;v3.capacity()&lt;&lt;<span class="built_in">endl</span>;</div></pre></td></tr></table></figure></p>
-<p>运行结果<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">v3 before shrink_to_fit--------------</div><div class="line">v3.size() = <span class="number">100</span></div><div class="line">v3.capacity() = <span class="number">128</span></div><div class="line">v3 after shrink_to_fit--------------</div><div class="line">v3.size() = <span class="number">100</span></div><div class="line">v3.capacity() = <span class="number">100</span></div></pre></td></tr></table></figure></p>
-<p><em>Question?</em><br>不理解这个方法的作用，设置capacity的本意是预留内存，下次插入元素时不用涉及耗时的内存分配，这样下次插入元素肯定会触发重新分配内存。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/04/11/lucence-01/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/04/11/lucence-01/" itemprop="url">
-                  lucence-01
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-04-11T23:18:51+08:00">
-                2017-04-11
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="lucence简介"><a href="#lucence简介" class="headerlink" title="lucence简介"></a>lucence简介</h2><p>Lucene不是一个完整的全文索引应用，而是是一个用Java写的全文索引引擎工具包，它可以方便的嵌入到各种应用中实现针对应用的全文索引/检索功能。</p>
-<p>Lucene的作者：Lucene的贡献者Doug Cutting是一位资深全文索引/检索专家，曾经是V-Twin搜索引擎(Apple的Copland操作系统的成就之一)的主要开发者，后在Excite担任高级系统架构设计师，目前从事于一些INTERNET底层架构的研究。他贡献出的Lucene的目标是为各种中小型应用程序加入全文检索功能。</p>
-<p>Lucene的发展历程：早先发布在作者自己的www.lucene.com，后来发布在SourceForge，2001年年底成为APACHE基金会jakarta的一个子项目：<a href="http://jakarta.apache.org/lucene/" target="_blank" rel="external">http://jakarta.apache.org/lucene/</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/03/22/generate/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/03/22/generate/" itemprop="url">
-                  generate
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-03-23T03:19:55+08:00">
-                2017-03-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
           
         
       
@@ -1796,7 +2019,7 @@
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1839,7 +2062,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">30</span>
+                <span class="site-state-item-count">68</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -1848,7 +2071,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-count">16</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1857,7 +2080,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-count">3</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -1917,7 +2140,7 @@
         <div class="copyright" >
   
   &copy; 
-  <span itemprop="copyrightYear">2017</span>
+  <span itemprop="copyrightYear">2018</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

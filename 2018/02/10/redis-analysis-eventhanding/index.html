@@ -1,0 +1,940 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="1. Redis事件介绍Redis服务器是一个事件驱动程序。下面先来简单介绍什么是事件驱动。
+所谓事件驱动，就是当你输入一条命令并且按下回车，然后消息被组装成Redis协议的格式发送给Redis服务器，这就会产生一个事件，Redis服务器会接收该命令，处理该命令和发送回复，而当你没有与服务器进行交互时，那么服务器就会处于阻塞等待状态，会让出CPU从而进入睡眠状态，当事件触发时，就会被操作系统唤醒。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis源码剖析和注释（十九）--- Redis 事件处理实现">
+<meta property="og:url" content="http://hlei.io/2018/02/10/redis-analysis-eventhanding/index.html">
+<meta property="og:site_name" content="HeLei Blog">
+<meta property="og:description" content="1. Redis事件介绍Redis服务器是一个事件驱动程序。下面先来简单介绍什么是事件驱动。
+所谓事件驱动，就是当你输入一条命令并且按下回车，然后消息被组装成Redis协议的格式发送给Redis服务器，这就会产生一个事件，Redis服务器会接收该命令，处理该命令和发送回复，而当你没有与服务器进行交互时，那么服务器就会处于阻塞等待状态，会让出CPU从而进入睡眠状态，当事件触发时，就会被操作系统唤醒。">
+<meta property="og:updated_time" content="2018-02-23T08:27:55.755Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Redis源码剖析和注释（十九）--- Redis 事件处理实现">
+<meta name="twitter:description" content="1. Redis事件介绍Redis服务器是一个事件驱动程序。下面先来简单介绍什么是事件驱动。
+所谓事件驱动，就是当你输入一条命令并且按下回车，然后消息被组装成Redis协议的格式发送给Redis服务器，这就会产生一个事件，Redis服务器会接收该命令，处理该命令和发送回复，而当你没有与服务器进行交互时，那么服务器就会处于阻塞等待状态，会让出CPU从而进入睡眠状态，当事件触发时，就会被操作系统唤醒。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://hlei.io/2018/02/10/redis-analysis-eventhanding/"/>
+
+
+
+
+
+  <title> Redis源码剖析和注释（十九）--- Redis 事件处理实现 | HeLei Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">HeLei Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+    
+      <h1 class="site-subtitle" itemprop="description">不要因为走得太远，就忘记为什么而出发</h1>
+    
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/02/10/redis-analysis-eventhanding/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                Redis源码剖析和注释（十九）--- Redis 事件处理实现
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-02-10T18:39:02+08:00">
+                2018-02-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Redis/" itemprop="url" rel="index">
+                    <span itemprop="name">Redis</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="1-Redis事件介绍"><a href="#1-Redis事件介绍" class="headerlink" title="1. Redis事件介绍"></a>1. Redis事件介绍</h2><p>Redis服务器是一个事件驱动程序。下面先来简单介绍什么是事件驱动。</p>
+<p>所谓事件驱动，就是当你输入一条命令并且按下回车，然后消息被组装成Redis协议的格式发送给Redis服务器，这就会产生一个事件，Redis服务器会接收该命令，处理该命令和发送回复，而当你没有与服务器进行交互时，那么服务器就会处于阻塞等待状态，会让出CPU从而进入睡眠状态，当事件触发时，就会被操作系统唤醒。事件驱动使CPU更高效的利用。</p>
+<p>事件驱动是一种概括和抽象，也可以称为I/O多路复用（I/O multiplexing），它的实现方式各个系统都不同，一会会说到Redis的方式。</p>
+<p>在redis服务器中，处理了两类事件：</p>
+<ul>
+<li>文件事件（file event）：Redis服务器通过套接字于客户端（或其他Redis服务器）进行连接，而文件事件就是服务器对套接字操作的抽象。</li>
+<li>时间事件（time event）：Redis服务器的一些操作需要在给定的事件点执行，而时间事件就是服务器对这类定时操作的抽象。</li>
+</ul>
+<h2 id="2-事件的抽象"><a href="#2-事件的抽象" class="headerlink" title="2. 事件的抽象"></a>2. 事件的抽象</h2><p>Redis将这两个事件分别抽象成一个数据结构来管理。</p>
+<h3 id="2-1-文件事件结构"><a href="#2-1-文件事件结构" class="headerlink" title="2.1 文件事件结构"></a>2.1 文件事件结构</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">/* File event structure */</div><div class="line">typedef struct aeFileEvent &#123;</div><div class="line">    // 文件时间类型：AE_NONE，AE_READABLE，AE_WRITABLE</div><div class="line">    int mask; /* one of AE_(READABLE|WRITABLE) */</div><div class="line">    // 可读处理函数</div><div class="line">    aeFileProc *rfileProc;</div><div class="line">    // 可写处理函数</div><div class="line">    aeFileProc *wfileProc;</div><div class="line">    // 客户端传入的数据</div><div class="line">    void *clientData;</div><div class="line">&#125; aeFileEvent;  //文件事件</div></pre></td></tr></table></figure>
+<p>其中rfileProc和wfileProc成员分别为两个函数指针，他们的原型为<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">typedef void aeFileProc(struct aeEventLoop *eventLoop, int fd, void *clientData, int mask)</div></pre></td></tr></table></figure></p>
+<p>这个函数是回调函数，如果当前文件事件所指定的事件类型发生时，则会调用对应的回调函数处理该事件。函数指针与回调函数详解</p>
+<p>当事件就绪时，我们需要知道文件事件的文件描述符还有事件类型才能锁定该事件，因此定义了aeFiredEvent结构统一管理：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">/* A fired event */</div><div class="line">typedef struct aeFiredEvent &#123;</div><div class="line">    // 就绪事件的文件描述符</div><div class="line">    int fd;</div><div class="line">    // 就绪事件类型：AE_NONE，AE_READABLE，AE_WRITABLE</div><div class="line">    int mask;</div><div class="line">&#125; aeFiredEvent; //就绪事件</div></pre></td></tr></table></figure></p>
+<h3 id="2-2-时间事件结构"><a href="#2-2-时间事件结构" class="headerlink" title="2.2 时间事件结构"></a>2.2 时间事件结构</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">/* Time event structure */</div><div class="line">typedef struct aeTimeEvent &#123;</div><div class="line">    // 时间事件的id</div><div class="line">    long long id; /* time event identifier. */</div><div class="line">    // 时间事件到达的时间的秒数</div><div class="line">    long when_sec; /* seconds */</div><div class="line">    // 时间事件到达的时间的毫秒数</div><div class="line">    long when_ms; /* milliseconds */</div><div class="line">    // 时间事件处理函数</div><div class="line">    aeTimeProc *timeProc;</div><div class="line">    // 时间事件终结函数</div><div class="line">    aeEventFinalizerProc *finalizerProc;</div><div class="line">    // 客户端传入的数据</div><div class="line">    void *clientData;</div><div class="line">    // 指向下一个时间事件</div><div class="line">    struct aeTimeEvent *next;</div><div class="line">&#125; aeTimeEvent;  //时间事件</div></pre></td></tr></table></figure>
+<p>从这个结构中可以看出，时间事件表是一个链表，因为它有一个next指针域，指向下一个时间事件。</p>
+<p>和文件事件一样，当时间事件所指定的事件发生时，也会调用对应的回调函数，结构成员timeProc和finalizerProc都是回调函数，函数原型如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">typedef int aeTimeProc(struct aeEventLoop *eventLoop, long long id, void *clientData);</div><div class="line">typedef void aeEventFinalizerProc(struct aeEventLoop *eventLoop, void *clientData);</div></pre></td></tr></table></figure></p>
+<p>虽然对文件事件和时间事件都做了抽象，Redis仍然需要对事件做整体抽象，于是定义了aeEventLoop结构。</p>
+<h3 id="2-3-事件状态结构"><a href="#2-3-事件状态结构" class="headerlink" title="2.3 事件状态结构"></a>2.3 事件状态结构</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">/* State of an event based program */</div><div class="line">typedef struct aeEventLoop &#123;</div><div class="line">    // 当前已注册的最大的文件描述符</div><div class="line">    int maxfd;   /* highest file descriptor currently registered */</div><div class="line">    // 文件描述符监听集合的大小</div><div class="line">    int setsize; /* max number of file descriptors tracked */</div><div class="line">    // 下一个时间事件的ID</div><div class="line">    long long timeEventNextId;</div><div class="line">    // 最后一次执行事件的时间</div><div class="line">    time_t lastTime;     /* Used to detect system clock skew */</div><div class="line">    // 注册的文件事件表</div><div class="line">    aeFileEvent *events; /* Registered events */</div><div class="line">    // 已就绪的文件事件表</div><div class="line">    aeFiredEvent *fired; /* Fired events */</div><div class="line">    // 时间事件的头节点指针</div><div class="line">    aeTimeEvent *timeEventHead;</div><div class="line">    // 事件处理开关</div><div class="line">    int stop;</div><div class="line">    // 多路复用库的事件状态数据</div><div class="line">    void *apidata; /* This is used for polling API specific data */</div><div class="line">    // 执行处理事件之前的函数</div><div class="line">    aeBeforeSleepProc *beforesleep;</div><div class="line">&#125; aeEventLoop;  //事件轮询的状态结构</div></pre></td></tr></table></figure>
+<p>aeEventLoop结构保存了一个void *类型的万能指针apidata，是用来保存轮询事件的状态的，也就是保存底层调用的多路复用库的事件状态，关于Redis的多路复用库的选择，Redis包装了常见的select epoll evport kqueue，他们在编译阶段，根据不同的系统选择性能最高的一个多路复用库作为Redis的多路复用程序的实现，而且所有库实现的接口名称都是相同的，因此Redis多路复用程序底层实现是可以互换的。具体选择库的源码为<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">// IO复用的选择，性能依次下降，Linux支持 &quot;ae_epoll.c&quot; 和 &quot;ae_select.c&quot;</div><div class="line">#ifdef HAVE_EVPORT</div><div class="line">#include &quot;ae_evport.c&quot;</div><div class="line">#else</div><div class="line">    #ifdef HAVE_EPOLL</div><div class="line">    #include &quot;ae_epoll.c&quot;</div><div class="line">    #else</div><div class="line">        #ifdef HAVE_KQUEUE</div><div class="line">        #include &quot;ae_kqueue.c&quot;</div><div class="line">        #else</div><div class="line">        #include &quot;ae_select.c&quot;</div><div class="line">        #endif</div><div class="line">    #endif</div><div class="line">#endif</div></pre></td></tr></table></figure></p>
+<p>也可以通过Redis客户端的命令来查看当前选择的多路复用库，INFO server<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">127.0.0.1:6379&gt; INFO server</div><div class="line"># Server</div><div class="line">……</div><div class="line">multiplexing_api:epoll</div><div class="line">……</div></pre></td></tr></table></figure></p>
+<p>那么，既然知道了多路复用库的选择，那么我们来查看一下apidata保存的epoll模型的事件状态结构：ae_epoll.c文件中<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">typedef struct aeApiState &#123;</div><div class="line">    // epoll事件的文件描述符</div><div class="line">    int epfd;</div><div class="line">    // 事件表</div><div class="line">    struct epoll_event *events;</div><div class="line">&#125; aeApiState;   //事件的状态</div></pre></td></tr></table></figure></p>
+<p>epoll模型的struct epoll_event的结构中定义这自己的事件类型，例如EPOLLIN POLLOUT等等，但是Redis的文件事件结构aeFileEvent中也在mask中定义了自己的事件类型，例如：AE_READABLE AE_WRITABLE等，于是，就需要实现一个中间层将两者的事件类型相联系起来，这也就是之前提到的ae_epoll.c文件中实现的相同的API，我们列出来：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">// 创建一个epoll实例，保存到eventLoop中</div><div class="line">static int aeApiCreate(aeEventLoop *eventLoop)</div><div class="line">// 调整事件表的大小</div><div class="line">static int aeApiResize(aeEventLoop *eventLoop, int setsize)  </div><div class="line">// 释放epoll实例和事件表空间</div><div class="line">static void aeApiFree(aeEventLoop *eventLoop)</div><div class="line">// 在epfd标识的事件表上注册fd的事件</div><div class="line">static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask)</div><div class="line">// 在epfd标识的事件表上注删除fd的事件</div><div class="line">static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int delmask)</div><div class="line">// 等待所监听文件描述符上有事件发生</div><div class="line">static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp)</div><div class="line">// 返回正在使用的IO多路复用库的名字</div><div class="line">static char *aeApiName(void)</div></pre></td></tr></table></figure></p>
+<p>这些API都是调用相应的底层多路复用库来将Redis事件状态结构aeEventLoop所关联，就是将epoll的底层函数封装起来，Redis实现事件时，只需调用这些接口即可。我们查看两个重要的函数的源码，看看是如何实现的</p>
+<ul>
+<li><p>向Redis事件状态结构aeEventLoop的事件表event注册一个事件，对应的是epoll_ctl函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line">// 在epfd标识的事件表上注册fd的事件</div><div class="line">static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask) &#123;</div><div class="line">    aeApiState *state = eventLoop-&gt;apidata;</div><div class="line">    struct epoll_event ee = &#123;0&#125;; /* avoid valgrind warning */</div><div class="line">    /* If the fd was already monitored for some event, we need a MOD</div><div class="line">     * operation. Otherwise we need an ADD operation. */</div><div class="line">    // EPOLL_CTL_ADD，向epfd注册fd的上的event</div><div class="line">    // EPOLL_CTL_MOD，修改fd已注册的event</div><div class="line">    // #define AE_NONE 0           //未设置</div><div class="line">    // #define AE_READABLE 1       //事件可读</div><div class="line">    // #define AE_WRITABLE 2       //事件可写</div><div class="line">    // 判断fd事件的操作，如果没有设置事件，则进行关联mask类型事件，否则进行修改</div><div class="line">    int op = eventLoop-&gt;events[fd].mask == AE_NONE ?</div><div class="line">            EPOLL_CTL_ADD : EPOLL_CTL_MOD;</div><div class="line"></div><div class="line">    // struct epoll_event &#123;</div><div class="line">    //      uint32_t     events;      /* Epoll events */</div><div class="line">    //      epoll_data_t data;        /* User data variable */</div><div class="line">    // &#125;;</div><div class="line">    ee.events = 0;</div><div class="line">    // 如果是修改事件，合并之前的事件类型</div><div class="line">    mask |= eventLoop-&gt;events[fd].mask; /* Merge old events */</div><div class="line">    // 根据mask映射epoll的事件类型</div><div class="line">    if (mask &amp; AE_READABLE) ee.events |= EPOLLIN;   //读事件</div><div class="line">    if (mask &amp; AE_WRITABLE) ee.events |= EPOLLOUT;  //写事件</div><div class="line">    ee.data.fd = fd;    //设置事件所从属的目标文件描述符</div><div class="line">    // 将ee事件注册到epoll中</div><div class="line">    if (epoll_ctl(state-&gt;epfd,op,fd,&amp;ee) == -1) return -1;</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>等待所监听文件描述符上有事件发生，对应着底层epoll_wait函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line">// 等待所监听文件描述符上有事件发生</div><div class="line">static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) &#123;</div><div class="line">    aeApiState *state = eventLoop-&gt;apidata;</div><div class="line">    int retval, numevents = 0;</div><div class="line"></div><div class="line">    // 监听事件表上是否有事件发生</div><div class="line">    retval = epoll_wait(state-&gt;epfd,state-&gt;events,eventLoop-&gt;setsize,</div><div class="line">            tvp ? (tvp-&gt;tv_sec*1000 + tvp-&gt;tv_usec/1000) : -1);</div><div class="line">    // 至少有一个就绪的事件</div><div class="line">    if (retval &gt; 0) &#123;</div><div class="line">        int j;</div><div class="line"></div><div class="line">        numevents = retval;</div><div class="line">        // 遍历就绪的事件表，将其加入到eventLoop的就绪事件表中</div><div class="line">        for (j = 0; j &lt; numevents; j++) &#123;</div><div class="line">            int mask = 0;</div><div class="line">            struct epoll_event *e = state-&gt;events+j;</div><div class="line"></div><div class="line">            // 根据就绪的事件类型，设置mask</div><div class="line">            if (e-&gt;events &amp; EPOLLIN) mask |= AE_READABLE;</div><div class="line">            if (e-&gt;events &amp; EPOLLOUT) mask |= AE_WRITABLE;</div><div class="line">            if (e-&gt;events &amp; EPOLLERR) mask |= AE_WRITABLE;</div><div class="line">            if (e-&gt;events &amp; EPOLLHUP) mask |= AE_WRITABLE;</div><div class="line">            // 添加到就绪事件表中</div><div class="line">            eventLoop-&gt;fired[j].fd = e-&gt;data.fd;</div><div class="line">            eventLoop-&gt;fired[j].mask = mask;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    // 返回就绪的事件个数</div><div class="line">    return numevents;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="3-事件的源码实现"><a href="#3-事件的源码实现" class="headerlink" title="3. 事件的源码实现"></a>3. 事件的源码实现</h2><p>Redis事件的源码全部定义在ae.c文件中，我们从事件的主函数aeMain说起，一步一步深入剖析。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">// 事件轮询的主函数</div><div class="line">void aeMain(aeEventLoop *eventLoop) &#123;</div><div class="line">    eventLoop-&gt;stop = 0;</div><div class="line">    // 一直处理事件</div><div class="line">    while (!eventLoop-&gt;stop) &#123;</div><div class="line">        // 执行处理事件之前的函数</div><div class="line">        if (eventLoop-&gt;beforesleep != NULL)</div><div class="line">            eventLoop-&gt;beforesleep(eventLoop);</div><div class="line">        //处理到时的时间事件和就绪的文件事件</div><div class="line">        aeProcessEvents(eventLoop, AE_ALL_EVENTS);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>这个事件的主函数aeMain很清楚的可以看到，如果服务器一直处理事件，那么就是一个死循环，而一个最典型的事件驱动，就是一个死循环。调用处理事件的函数aeProcessEvents，他们参数是一个事件状态结构aeEventLoop和AE_ALL_EVENTS，源码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div></pre></td><td class="code"><pre><div class="line">// 处理到时的时间事件和就绪的文件事件</div><div class="line">// 函数返回执行的事件个数</div><div class="line">int aeProcessEvents(aeEventLoop *eventLoop, int flags)</div><div class="line">&#123;</div><div class="line">    int processed = 0, numevents;</div><div class="line"></div><div class="line">    /* Nothing to do? return ASAP */</div><div class="line">    // 如果什么事件都没有设置则直接返回</div><div class="line">    if (!(flags &amp; AE_TIME_EVENTS) &amp;&amp; !(flags &amp; AE_FILE_EVENTS)) return 0;</div><div class="line"></div><div class="line">    /* Note that we want call select() even if there are no</div><div class="line">     * file events to process as long as we want to process time</div><div class="line">     * events, in order to sleep until the next time event is ready</div><div class="line">     * to fire. */</div><div class="line">    // 请注意，既然我们要处理时间事件，即使没有要处理的文件事件，我们仍要调用select（），以便在下一次事件准备启动之前进行休眠</div><div class="line"></div><div class="line">    // 当前还没有要处理的文件事件，或者设置了时间时间但是没有设置不阻塞标识</div><div class="line">    if (eventLoop-&gt;maxfd != -1 ||</div><div class="line">        ((flags &amp; AE_TIME_EVENTS) &amp;&amp; !(flags &amp; AE_DONT_WAIT))) &#123;</div><div class="line">        int j;</div><div class="line">        aeTimeEvent *shortest = NULL;</div><div class="line">        struct timeval tv, *tvp;</div><div class="line"></div><div class="line">        // 如果设置了时间事件而没有设置不阻塞标识</div><div class="line">        if (flags &amp; AE_TIME_EVENTS &amp;&amp; !(flags &amp; AE_DONT_WAIT))</div><div class="line">            // 获取最近到时的时间事件</div><div class="line">            shortest = aeSearchNearestTimer(eventLoop);</div><div class="line">        // 获取到了最早到时的时间事件</div><div class="line">        if (shortest) &#123;</div><div class="line">            long now_sec, now_ms;</div><div class="line">            // 获取当前时间</div><div class="line">            aeGetTime(&amp;now_sec, &amp;now_ms);</div><div class="line">            tvp = &amp;tv;</div><div class="line"></div><div class="line">            /* How many milliseconds we need to wait for the next</div><div class="line">             * time event to fire? */</div><div class="line">            // 等待该时间事件到时所需要的时长</div><div class="line">            long long ms =</div><div class="line">                (shortest-&gt;when_sec - now_sec)*1000 +</div><div class="line">                shortest-&gt;when_ms - now_ms;</div><div class="line"></div><div class="line">            // 如果没到时</div><div class="line">            if (ms &gt; 0) &#123;</div><div class="line">                // 保存时长到tvp中</div><div class="line">                tvp-&gt;tv_sec = ms/1000;</div><div class="line">                tvp-&gt;tv_usec = (ms % 1000)*1000;</div><div class="line">            // 如果已经到时，则将tvp的时间设置为0</div><div class="line">            &#125; else &#123;</div><div class="line">                tvp-&gt;tv_sec = 0;</div><div class="line">                tvp-&gt;tv_usec = 0;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">        // 没有获取到了最早到时的时间事件，时间事件链表为空</div><div class="line">        &#125; else &#123;</div><div class="line">            /* If we have to check for events but need to return</div><div class="line">             * ASAP because of AE_DONT_WAIT we need to set the timeout</div><div class="line">             * to zero */</div><div class="line">            // 如果设置了不阻塞标识</div><div class="line">            if (flags &amp; AE_DONT_WAIT) &#123;</div><div class="line">                // 将tvp的时间设置为0，就不会阻塞</div><div class="line">                tv.tv_sec = tv.tv_usec = 0;</div><div class="line">                tvp = &amp;tv;</div><div class="line">            &#125; else &#123;</div><div class="line">                // 阻塞到第一个时间事件的到来</div><div class="line">                /* Otherwise we can block */</div><div class="line">                tvp = NULL; /* wait forever */</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        // 等待所监听文件描述符上有事件发生</div><div class="line">        // 如果tvp为NULL，则阻塞在此，否则等待tvp设置阻塞的时间，就会有时间事件到时</div><div class="line">        // 返回了就绪文件事件的个数</div><div class="line">        numevents = aeApiPoll(eventLoop, tvp);</div><div class="line">        // 遍历就绪文件事件表</div><div class="line">        for (j = 0; j &lt; numevents; j++) &#123;</div><div class="line">            // 获取就绪文件事件的地址</div><div class="line">            aeFileEvent *fe = &amp;eventLoop-&gt;events[eventLoop-&gt;fired[j].fd];</div><div class="line">            // 获取就绪文件事件的类型，文件描述符</div><div class="line">            int mask = eventLoop-&gt;fired[j].mask;</div><div class="line">            int fd = eventLoop-&gt;fired[j].fd;</div><div class="line">            int rfired = 0;</div><div class="line"></div><div class="line">        /* note the fe-&gt;mask &amp; mask &amp; ... code: maybe an already processed</div><div class="line">             * event removed an element that fired and we still didn&apos;t</div><div class="line">             * processed, so we check if the event is still valid. */</div><div class="line">            // 如果是文件可读事件发生</div><div class="line">            if (fe-&gt;mask &amp; mask &amp; AE_READABLE) &#123;</div><div class="line">                // 设置读事件标识 且 调用读事件方法处理读事件</div><div class="line">                rfired = 1;</div><div class="line">                fe-&gt;rfileProc(eventLoop,fd,fe-&gt;clientData,mask);</div><div class="line">            &#125;</div><div class="line">            // 如果是文件可写事件发生</div><div class="line">            if (fe-&gt;mask &amp; mask &amp; AE_WRITABLE) &#123;</div><div class="line">                // 读写事件的执行发法不同，则执行写事件，避免重复执行相同的方法</div><div class="line">                if (!rfired || fe-&gt;wfileProc != fe-&gt;rfileProc)</div><div class="line">                    fe-&gt;wfileProc(eventLoop,fd,fe-&gt;clientData,mask);</div><div class="line">            &#125;</div><div class="line">            processed++;    //执行的事件次数加1</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    /* Check time events */</div><div class="line">    // 执行时间事件</div><div class="line">    if (flags &amp; AE_TIME_EVENTS)</div><div class="line">        processed += processTimeEvents(eventLoop);</div><div class="line"></div><div class="line">    return processed; /* return the number of processed file/time events */</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>刚才提到该函数的一个参数是AE_ALL_EVENTS，他的定义在ae.h中，定义如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">#define AE_FILE_EVENTS 1                                //文件事件</div><div class="line">#define AE_TIME_EVENTS 2                                //时间事件</div><div class="line">#define AE_ALL_EVENTS (AE_FILE_EVENTS|AE_TIME_EVENTS)   //文件和时间事件</div><div class="line">#define AE_DONT_WAIT 4                                  //不阻塞等待标识</div></pre></td></tr></table></figure></p>
+<p>很明显，flags是AE_FILE_EVENTS和AE_TIME_EVENTS或的结果，他们的含义如下：</p>
+<ul>
+<li>如果flags = 0，函数什么都不做，直接返回</li>
+<li>如果flags设置了 AE_ALL_EVENTS ，则执行所有类型的事件</li>
+<li>如果flags设置了 AE_FILE_EVENTS ，则执行文件事件</li>
+<li>如果flags设置了 AE_TIME_EVENTS ，则执行时间事件</li>
+<li>如果flags设置了 AE_DONT_WAIT ，那么函数处理完事件后直接返回，不阻塞等待<br>Redis服务器在没有被事件触发时，就会阻塞等待，因为没有设置AE_DONT_WAIT标识。但是他不会一直的死等待，等待文件事件的到来，因为他还要处理时间时间，因此，在调用aeApiPoll进行监听之前，先从时间事件表中获取一个最近到达的时间时间，根据要等待的时间构建一个struct timeval tv, *tvp结构的变量，这个变量保存着服务器阻塞等待文件事件的最长时间，一旦时间到达而没有触发文件事件，aeApiPoll函数就会停止阻塞，进而调用processTimeEvents处理时间事件，因为Redis服务器设定一个对自身资源和状态进行检查的周期性检查的时间事件，而该函数就是timeProc所指向的回调函数<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData)</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>如果在阻塞等待的最长时间之间，触发了文件事件，就会先执行文件事件，后执行时间事件，因此处理时间事件通常比预设的会晚一点。</p>
+<p>而执行文件事件rfileProc和wfileProc也是调用了回调函数，Redis将文件事件的处理分为了好几种，用于处理不同的网络通信需求，下面列出回调函数的原型：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask)</div><div class="line">void acceptUnixHandler(aeEventLoop *el, int fd, void *privdata, int mask)</div><div class="line">void sendReplyToClient(aeEventLoop *el, int fd, void *privdata, int mask)</div><div class="line">void readQueryFromClient(aeEventLoop *el, int fd, void *privdata, int mask)</div></pre></td></tr></table></figure></p>
+<ul>
+<li>acceptTcpHandler：用于accept client的connect。</li>
+<li>acceptUnixHandler：用于acceptclient的本地connect。</li>
+<li>sendReplyToClient：用于向client发送命令回复。</li>
+<li>readQueryFromClient：用于读入client发送的请求。<br>接下来，我们查看获取最快达到的时间事件的函数aeSearchNearestTimer实现<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">// 寻找第一个快到时的时间事件</div><div class="line">// 这个操作是有用的知道有多少时间可以选择该事件设置为不用推迟任何事件的睡眠中。</div><div class="line">// 如果事件链表没有时间将返回NULL。</div><div class="line">static aeTimeEvent *aeSearchNearestTimer(aeEventLoop *eventLoop)</div><div class="line">&#123;</div><div class="line">    // 时间事件头节点地址</div><div class="line">    aeTimeEvent *te = eventLoop-&gt;timeEventHead;</div><div class="line">    aeTimeEvent *nearest = NULL;</div><div class="line"></div><div class="line">    // 遍历所有的时间事件</div><div class="line">    while(te) &#123;</div><div class="line">        // 寻找第一个快到时的时间事件，保存到nearest中</div><div class="line">        if (!nearest || te-&gt;when_sec &lt; nearest-&gt;when_sec ||</div><div class="line">                (te-&gt;when_sec == nearest-&gt;when_sec &amp;&amp;</div><div class="line">                 te-&gt;when_ms &lt; nearest-&gt;when_ms))</div><div class="line">            nearest = te;</div><div class="line">        te = te-&gt;next;</div><div class="line">    &#125;</div><div class="line">    return nearest;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>这个函数没什么，就是遍历链表，找到最小值。我们重点看执行时间事件的函数processTimeEvents实现<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div></pre></td><td class="code"><pre><div class="line">/* Process time events */</div><div class="line">// 执行时间事件</div><div class="line">static int processTimeEvents(aeEventLoop *eventLoop) &#123;</div><div class="line">    int processed = 0;</div><div class="line">    aeTimeEvent *te, *prev;</div><div class="line">    long long maxId;</div><div class="line">    time_t now = time(NULL);</div><div class="line"></div><div class="line">    // 这里尝试发现时间混乱的情况，上一次处理事件的时间比当前时间还要大</div><div class="line">    // 重置最近一次处理事件的时间</div><div class="line">    if (now &lt; eventLoop-&gt;lastTime) &#123;</div><div class="line">        te = eventLoop-&gt;timeEventHead;</div><div class="line">        while(te) &#123;</div><div class="line">            te-&gt;when_sec = 0;</div><div class="line">            te = te-&gt;next;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    // 设置上一次时间事件处理的时间为当前时间</div><div class="line">    eventLoop-&gt;lastTime = now;</div><div class="line"></div><div class="line">    prev = NULL;</div><div class="line">    te = eventLoop-&gt;timeEventHead;</div><div class="line">    maxId = eventLoop-&gt;timeEventNextId-1;   //当前时间事件表中的最大ID</div><div class="line">    // 遍历时间事件链表</div><div class="line">    while(te) &#123;</div><div class="line">        long now_sec, now_ms;</div><div class="line">        long long id;</div><div class="line"></div><div class="line">        /* Remove events scheduled for deletion. */</div><div class="line">        // 如果时间事件已被删除了</div><div class="line">        if (te-&gt;id == AE_DELETED_EVENT_ID) &#123;</div><div class="line">            aeTimeEvent *next = te-&gt;next;</div><div class="line">            // 从事件链表中删除事件的节点</div><div class="line">            if (prev == NULL)</div><div class="line">                eventLoop-&gt;timeEventHead = te-&gt;next;</div><div class="line">            else</div><div class="line">                prev-&gt;next = te-&gt;next;</div><div class="line">            // 调用时间事件终结方法清楚该事件</div><div class="line">            if (te-&gt;finalizerProc)</div><div class="line">                te-&gt;finalizerProc(eventLoop, te-&gt;clientData);</div><div class="line">            zfree(te);</div><div class="line">            te = next;</div><div class="line">            continue;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        // 确保我们不处理在此迭代中由时间事件创建的时间事件。 请注意，此检查目前无效：我们总是在头节点添加新的计时器，但是如果我们更改实施细节，则该检查可能会再次有用：我们将其保留在未来的防御</div><div class="line">        if (te-&gt;id &gt; maxId) &#123;</div><div class="line">            te = te-&gt;next;</div><div class="line">            continue;</div><div class="line">        &#125;</div><div class="line">        // 获取当前时间</div><div class="line">        aeGetTime(&amp;now_sec, &amp;now_ms);</div><div class="line">        // 找到已经到时的时间事件</div><div class="line">        if (now_sec &gt; te-&gt;when_sec ||</div><div class="line">            (now_sec == te-&gt;when_sec &amp;&amp; now_ms &gt;= te-&gt;when_ms))</div><div class="line">        &#123;</div><div class="line">            int retval;</div><div class="line"></div><div class="line">            id = te-&gt;id;</div><div class="line">            // 调用时间事件处理方法</div><div class="line">            retval = te-&gt;timeProc(eventLoop, id, te-&gt;clientData);</div><div class="line">            // 时间事件次数加1</div><div class="line">            processed++;</div><div class="line">            // 如果不是定时事件，则继续设置它的到时时间</div><div class="line">            if (retval != AE_NOMORE) &#123;</div><div class="line">                aeAddMillisecondsToNow(retval,&amp;te-&gt;when_sec,&amp;te-&gt;when_ms);</div><div class="line">            // 如果是定时时间，则retval为-1，则将其时间事件删除，惰性删除</div><div class="line">            &#125; else &#123;</div><div class="line">                te-&gt;id = AE_DELETED_EVENT_ID;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        // 更新前驱节点指针和后继节点指针</div><div class="line">        prev = te;</div><div class="line">        te = te-&gt;next;</div><div class="line">    &#125;</div><div class="line">    return processed;   //返回执行事件的次数</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>如果时间事件不存在，则就调用finalizerProc指向的回调函数，删除当前的时间事件。如果存在，就调用timeProc指向的回调函数处理时间事件。Redis的时间事件分为两类</p>
+<ul>
+<li>定时事件：让一段程序在指定的时间后执行一次。</li>
+<li>周期性事件：让一段程序每隔指定的时间后执行一次。<br>如果当前的时间事件是周期性，那么就会在将时间周期添加到周期事件的到时时间中。如果是定时事件，则将该时间事件删除。</li>
+</ul>
+<p>至此，Redis事件的实现就剖析完毕，但是事件的其他API，例如：创建事件，删除事件，调整事件表的大小等等都没有列出。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/wechat.png" alt="He Lei WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.png" alt="He Lei Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/02/10/redis-analysis-standalone/" rel="next" title="Redis源码剖析和注释（二十一）--- 单机服务器实现">
+                <i class="fa fa-chevron-left"></i> Redis源码剖析和注释（二十一）--- 单机服务器实现
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/02/10/redis-analysis-redisobject/" rel="prev" title="Redis源码剖析和注释（八）--- redis对象(redisObject)">
+                Redis源码剖析和注释（八）--- redis对象(redisObject) <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="He Lei" />
+          <p class="site-author-name" itemprop="name">He Lei</p>
+          <p class="site-description motion-element" itemprop="description">c/c++/python | redis | recommend algorithm | search engine</p>
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">68</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/mcgrady-forever" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/wuxubj" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-Redis事件介绍"><span class="nav-number">1.</span> <span class="nav-text">1. Redis事件介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-事件的抽象"><span class="nav-number">2.</span> <span class="nav-text">2. 事件的抽象</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-文件事件结构"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 文件事件结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-时间事件结构"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 时间事件结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-事件状态结构"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 事件状态结构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-事件的源码实现"><span class="nav-number">3.</span> <span class="nav-text">3. 事件的源码实现</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">He Lei</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+      search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+      $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = $( "entry", xmlResponse ).map(function() {
+            return {
+              title: $( "title", this ).text(),
+              content: $("content",this).text(),
+              url: $( "url" , this).text()
+            };
+          }).get();
+          var $input = document.getElementById(search_id);
+          var $resultContent = document.getElementById(content_id);
+          $input.addEventListener('input', function(){
+            var matchcounts = 0;
+            var str='<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length > 1) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var content_index = [];
+                var data_title = data.title.trim().toLowerCase();
+                var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                var data_url = decodeURIComponent(data.url);
+                var index_title = -1;
+                var index_content = -1;
+                var first_occur = -1;
+                // only match artiles with not empty titles and contents
+                if(data_title != '') {
+                  keywords.forEach(function(keyword, i) {
+                    index_title = data_title.indexOf(keyword);
+                    index_content = data_content.indexOf(keyword);
+                    if( index_title >= 0 || index_content >= 0 ){
+                      isMatch = true;
+                      if (i == 0) {
+                        first_occur = index_content;
+                      }
+                    }
+
+                  });
+                }
+                // show search results
+                if (isMatch) {
+                  matchcounts += 1;
+                  str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                  var content = data.content.trim().replace(/<[^>]+>/g,"");
+                  if (first_occur >= 0) {
+                    // cut out 100 characters
+                    var start = first_occur - 20;
+                    var end = first_occur + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if(start == 0){
+                      end = 50;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    var match_content = content.substring(start, end);
+                    // highlight all keywords
+                    keywords.forEach(function(keyword){
+                      var regS = new RegExp(keyword, "gi");
+                      match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                    });
+
+                    str += "<p class=\"search-result\">" + match_content +"...</p>"
+                  }
+                  str += "</li>";
+                }
+              })};
+            str += "</ul>";
+            if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+            if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+            $resultContent.innerHTML = str;
+          });
+          proceedsearch();
+        }
+      });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>
