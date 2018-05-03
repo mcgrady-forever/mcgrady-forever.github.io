@@ -87,16 +87,22 @@
 
 
 
-<meta name="description" content="使用Timer类实现12345678910111213141516171819202122232425262728293031323334353637383940public class TimerTest &amp;#123;    public static String getStringDate() &amp;#123;        Date currentTime = new Date();">
+<meta name="description" content="概念cpu利用cache和内存之间交换数据的最小粒度不是字节，而是称为cacheline的一块固定大小的区域，这篇文章也对于cacheline作了很详细的分析
+
+Cache hierarchyCache的层次，一般有L1, L2, L3 （L是level的意思）的cache。通常来说L1，L2是集成  在CPU里面的（可以称之为On-chip cache），而L3是放在CPU外面（可以称之为Off">
 <meta property="og:type" content="article">
-<meta property="og:title" content="java-timer">
-<meta property="og:url" content="http://hlei.io/2017/08/21/java-timer/index.html">
+<meta property="og:title" content="linux-cache-line">
+<meta property="og:url" content="http://hlei.io/2018/04/21/linux-cache-line/index.html">
 <meta property="og:site_name" content="HeLei Blog">
-<meta property="og:description" content="使用Timer类实现12345678910111213141516171819202122232425262728293031323334353637383940public class TimerTest &amp;#123;    public static String getStringDate() &amp;#123;        Date currentTime = new Date();">
-<meta property="og:updated_time" content="2017-11-29T03:48:06.762Z">
+<meta property="og:description" content="概念cpu利用cache和内存之间交换数据的最小粒度不是字节，而是称为cacheline的一块固定大小的区域，这篇文章也对于cacheline作了很详细的分析
+
+Cache hierarchyCache的层次，一般有L1, L2, L3 （L是level的意思）的cache。通常来说L1，L2是集成  在CPU里面的（可以称之为On-chip cache），而L3是放在CPU外面（可以称之为Off">
+<meta property="og:updated_time" content="2018-04-26T10:30:06.583Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="java-timer">
-<meta name="twitter:description" content="使用Timer类实现12345678910111213141516171819202122232425262728293031323334353637383940public class TimerTest &amp;#123;    public static String getStringDate() &amp;#123;        Date currentTime = new Date();">
+<meta name="twitter:title" content="linux-cache-line">
+<meta name="twitter:description" content="概念cpu利用cache和内存之间交换数据的最小粒度不是字节，而是称为cacheline的一块固定大小的区域，这篇文章也对于cacheline作了很详细的分析
+
+Cache hierarchyCache的层次，一般有L1, L2, L3 （L是level的意思）的cache。通常来说L1，L2是集成  在CPU里面的（可以称之为On-chip cache），而L3是放在CPU外面（可以称之为Off">
 
 
 
@@ -124,13 +130,13 @@
 
 
 
-  <link rel="canonical" href="http://hlei.io/2017/08/21/java-timer/"/>
+  <link rel="canonical" href="http://hlei.io/2018/04/21/linux-cache-line/"/>
 
 
 
 
 
-  <title> java-timer | HeLei Blog </title>
+  <title> linux-cache-line | HeLei Blog </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -280,7 +286,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/08/21/java-timer/">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/04/21/linux-cache-line/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="He Lei">
@@ -304,7 +310,7 @@
             
             
               
-                java-timer
+                linux-cache-line
               
             
           </h2>
@@ -319,8 +325,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-08-21T15:28:45+08:00">
-                2017-08-21
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-04-21T15:01:16+08:00">
+                2018-04-21
               </time>
             
 
@@ -329,28 +335,6 @@
             
           </span>
 
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
           
 
           
@@ -377,8 +361,24 @@
       
 
       
-        <h2 id="使用Timer类实现"><a href="#使用Timer类实现" class="headerlink" title="使用Timer类实现"></a>使用Timer类实现</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TimerTest</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">getStringDate</span><span class="params">()</span> </span>&#123;</div><div class="line">        Date currentTime = <span class="keyword">new</span> Date();</div><div class="line">        SimpleDateFormat formatter = <span class="keyword">new</span> SimpleDateFormat(<span class="string">"yyyy-MM-dd HH:mm:ss"</span>);</div><div class="line">        String dateString = formatter.format(currentTime);</div><div class="line">        <span class="keyword">return</span> dateString;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">        <span class="keyword">final</span> TimerTask timerTask1 = <span class="keyword">new</span> TimerTask() &#123;</div><div class="line">            <span class="meta">@Override</span></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">try</span> &#123;</div><div class="line">                    System.out.println(<span class="string">"task2 invoked!"</span>+Thread.currentThread().getId());</div><div class="line">                    System.out.println(<span class="string">"begin: "</span>+getStringDate());</div><div class="line">                    <span class="comment">//Thread.sleep(5000L);</span></div><div class="line">                &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">                    e.printStackTrace();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;;</div><div class="line"></div><div class="line">        <span class="keyword">final</span> TimerTask timerTask2 = <span class="keyword">new</span> TimerTask() &#123;</div><div class="line">            <span class="meta">@Override</span></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">try</span> &#123;</div><div class="line">                    System.out.println(<span class="string">"task2 invoked!"</span>+Thread.currentThread().getId());</div><div class="line">                    System.out.println(<span class="string">"begin: "</span>+getStringDate());</div><div class="line">                    <span class="comment">//Thread.sleep(5000L);</span></div><div class="line">                &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">                    e.printStackTrace();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;;</div><div class="line"></div><div class="line">        Timer timer = <span class="keyword">new</span> Timer();<span class="comment">// 实例化Timer</span></div><div class="line">        timer.schedule(timerTask1, <span class="number">8000</span>);</div><div class="line">        timer.schedule(timerTask2, <span class="number">10000</span>);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>Timer<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"></div></pre></td></tr></table></figure></p>
+        <h1 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h1><p>cpu利用cache和内存之间交换数据的最小粒度不是字节，而是称为<a href="https://en.wikipedia.org/wiki/CPU_cache#Cache_entries" target="_blank" rel="external">cacheline</a>的一块固定大小的区域，<a href="http://cenalulu.github.io/linux/all-about-cpu-cache" target="_blank" rel="external">这篇文章</a>也对于cacheline作了很详细的分析</p>
+<ul>
+<li><p>Cache hierarchy<br>Cache的层次，一般有L1, L2, L3 （L是level的意思）的cache。通常来说L1，L2是集成  在CPU里面的（可以称之为On-chip cache），而L3是放在CPU外面（可以称之为Off-chip cache）。当然这个不是绝对的，不同CPU的做法可能会不太一样。这里面应该还需要加上register，虽然register不是cache，但是把数据放到register里面是能够提高性能的。</p>
+</li>
+<li><p>Cache size<br>Cache的容量决定了有多少代码和数据可以放到Cache里面，有了Cache才有了竞争，才有了替换，才有了优化的空间。如果一个程序的热点(hotspot)已经完全填充了整Cache，那么再从Cache角度考虑优化就是白费力气了，巧妇难为无米之炊。我们优化程序的目标是把程序尽可能放到Cache里面，但是把程序写到能够占满整个Cache还是有一定难度的，这么大的一个Code path，相应的代码得有多少，代码逻辑肯定是相当的复杂（基本上是不可能，至少我没有见过）。</p>
+</li>
+<li><p>Cache line size<br>CPU从内存load数据是一次一个cache line；往内存里面写也是一次一个cache line，所以一个cache line里面的数据最好是读写分开，否则就会相互影响。</p>
+</li>
+<li><p>Cache associative<br>Cache的关联。有全关联(full associative)，内存可以映射到任意一个Cache line；也有N-way关联，这个就是一个哈希表的结构，N就是冲突链的长度，超过了N，就需要替换。</p>
+</li>
+<li><p>Cache type<br>有I-cache（指令cache），D-cache（数据cache），TLB（MMU的cache），每一种又有L1,L2等等，有区分指令和数据的cache，也有不区分指令和数据的cache。</p>
+</li>
+</ul>
+<h1 id="查看cacheline大小的方法"><a href="#查看cacheline大小的方法" class="headerlink" title="查看cacheline大小的方法"></a>查看cacheline大小的方法</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">cat /sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size</div><div class="line"></div><div class="line"># 如何在程序中利用好cacheline</div><div class="line">对于这个问题，brpc的文档中有这样的总结</div><div class="line"></div><div class="line"> 要提高性能，就要避免让CPU频繁同步cacheline。这不单和原子指令本身的性能有关，还会影响到程序的整体性能。最有效的解决方法很直白：尽量避免共享。</div><div class="line"></div><div class="line"> * 一个依赖全局多生产者多消费者队列(MPMC)的程序难有很好的多核扩展性，因为这个队列的极限吞吐取决于同步cache的延时，而不是核心的个数。最好是用多个SPMC或多个MPSC队列，甚至多个SPSC队列代替，在源头就规避掉竞争。</div><div class="line"> * 另一个例子是计数器，如果所有线程都频繁修改一个计数器，性能就会很差，原因同样在于不同的核心在不停地同步同一个cacheline。如果这个计数器只是用作打打日志之类的，那我们完全可以让每个线程修改thread-local变量，在需要时再合并所有线程中的值，性能可能有几十倍的差别。</div></pre></td></tr></table></figure>
+<h1 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h1><ul>
+<li><a href="http://cenalulu.github.io/linux/all-about-cpu-cache/" target="_blank" rel="external">http://cenalulu.github.io/linux/all-about-cpu-cache/</a></li>
+<li><a href="http://igoro.com/archive/gallery-of-processor-cache-effects/" target="_blank" rel="external">http://igoro.com/archive/gallery-of-processor-cache-effects/</a></li>
+</ul>
 
       
     </div>
@@ -430,8 +430,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/06/22/pb-CopyFrom/" rel="next" title="Protocal Buffer trap 1-CopyFrom">
-                <i class="fa fa-chevron-left"></i> Protocal Buffer trap 1-CopyFrom
+              <a href="/2018/04/11/c-new/" rel="next" title="new，operate new和placement new">
+                <i class="fa fa-chevron-left"></i> new，operate new和placement new
               </a>
             
           </div>
@@ -439,10 +439,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/09/05/linux-memory-barrier/" rel="prev" title="linux-memory-barrier">
-                linux-memory-barrier <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -585,7 +581,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#使用Timer类实现"><span class="nav-number">1.</span> <span class="nav-text">使用Timer类实现</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#概念"><span class="nav-number">1.</span> <span class="nav-text">概念</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#查看cacheline大小的方法"><span class="nav-number">2.</span> <span class="nav-text">查看cacheline大小的方法</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文献"><span class="nav-number">3.</span> <span class="nav-text">参考文献</span></a></li></ol></div>
             
 
           </div>
