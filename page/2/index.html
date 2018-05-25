@@ -281,6 +281,674 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/27/debug-memory/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/27/debug-memory/" itemprop="url">
+                  内存问题定位
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-27T14:16:03+08:00">
+                2018-03-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Debug/" itemprop="url" rel="index">
+                    <span itemprop="name">Debug</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="使用glibc的MALLOCCHECK"><a href="#使用glibc的MALLOCCHECK" class="headerlink" title="使用glibc的MALLOCCHECK"></a>使用glibc的MALLOC<em>CHECK</em></h2><p>因为是一个内存问题，考虑使用一些内存调试工具来定位问题。因为OB内部对于内存块有自己的缓存，需要去除它的影响。修改OB内存分配器，让它每次都直接调用c库的malloc和free等，不做缓存。然后，可以使用glibc内置的内存块完整性检查功能。</p>
+<p>使用这一特性，程序无需重新编译，只需要在运行的时候设置环境变量MALLOC<em>CHECK</em>（注意结尾的下划线）。每当在程序运行过程free内存给glibc时，glibc会检查其隐藏的元数据的完整性，如果发现错误就会立即abort。</p>
+<p>用类似下面的命令行启动server程序：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">export MALLOC_CHECK_=2</div><div class="line">./test</div></pre></td></tr></table></figure></p>
+<p>MALLOC<em>CHECK</em>有三种设定,即:</p>
+<ul>
+<li>MALLOC<em>CHECK</em>=0 —– 关闭所有检查.</li>
+<li>MALLOC<em>CHECK</em>=1 —– 当有错误被探测到时,在标准错误输出(stderr)上打印错误信息.</li>
+<li>MALLOC<em>CHECK</em>=2 —– 当有错误被探测到时,不显示错误信息,直接进行中断.</li>
+</ul>
+<p>但这个core能带给我们想信息也很少。我们只是找到了另外一种稍高效地重现问题的方法而已。或许最初看到的core的现象是延后显现而已，其实“更早”的时刻内存就被破坏掉了。</p>
+<h2 id="valgrind"><a href="#valgrind" class="headerlink" title="valgrind"></a>valgrind</h2><p>glibc提供的MALLOC<em>CHECK</em>功能太简单了，有没有更高级点的工具不光能够报告错误，还能分析出问题原因来？我们自然想到了大名鼎鼎的valgrind。用valgrind来检查内存问题，程序也不需要重新编译，只需要使用valgrind来启动：</p>
+<p>nohup valgrind –error-limit=no –suppressions=suppress bin/mergeserver -z 45447 -r 10.232.36.183:45401 -p45441 &gt;nohup.out &amp;</p>
+<p>默认情况下，当valgrind发现了1000中不同的错误，或者总数超过1000万次错误后，会停止报告错误。加了–error-limit=no以后可以禁止这一特性。–suppressions用来屏蔽掉一些不关心的误报的问题。</p>
+<h2 id="AddressSanitizer"><a href="#AddressSanitizer" class="headerlink" title="AddressSanitizer"></a>AddressSanitizer</h2><ol>
+<li>版本要求: LLVM3.1 或者gcc4.8</li>
+<li><p>bug代码示例</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">#include &lt;stdio.h&gt;</div><div class="line">#include &lt;stdlib.h&gt;</div><div class="line"></div><div class="line">int main (int argc,char *argv[])</div><div class="line">&#123;</div><div class="line">        int i;</div><div class="line">        char* p = (char *)malloc(10);</div><div class="line">        char* pt = p;</div><div class="line"></div><div class="line">        for (i = 0;i &lt; 10;i++)</div><div class="line">        &#123;</div><div class="line">                p[i] = &apos;z&apos;;</div><div class="line">        &#125;</div><div class="line">        free (p);</div><div class="line">        //free(pt);</div><div class="line"></div><div class="line">        *p = 1;</div><div class="line">        return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+<li><p>编译&amp;运行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">g++ -fsanitize=address test09.cpp -o test09</div><div class="line">./test09</div></pre></td></tr></table></figure>
+</li>
+<li><p>出错提示<br>[img01]</p>
+</li>
+</ol>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/27/linux-coredump/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/27/linux-coredump/" itemprop="url">
+                  Linux上Core Dump文件的形成和分析
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-27T10:48:16+08:00">
+                2018-03-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>Core，又称之为Core Dump文件，是Unix/Linux操作系统的一种机制，对于线上服务而言，Core令人闻之色变，因为出Core的过程意味着服务暂时不能正常响应，需要恢复，并且随着吐Core进程的内存空间越大，此过程可能持续很长一段时间（例如当进程占用60G+以上内存时，完整Core文件需要15分钟才能完全写到磁盘上），这期间产生的流量损失，不可估量。</p>
+<p>凡事皆有两面性，OS在出Core的同时，虽然会终止掉当前进程，但是也会保留下第一手的现场数据，OS仿佛是一架被按下快门的相机，而照片就是产出的Core文件。里面含有当进程被终止时内存、CPU寄存器等信息，可以供后续开发人员进行调试。</p>
+<p>关于Core产生的原因很多，比如过去一些Unix的版本不支持现代Linux上这种GDB直接附着到进程上进行调试的机制，需要先向进程发送终止信号，然后用工具阅读core文件。在Linux上，我们就可以使用kill向一个指定的进程发送信号或者使用gcore命令来使其主动出Core并退出。如果从浅层次的原因上来讲，出Core意味着当前进程存在BUG，需要程序员修复。从深层次的原因上讲，是当前进程触犯了某些OS层级的保护机制，逼迫OS向当前进程发送诸如SIGSEGV(即signal 11)之类的信号, 例如访问空指针或数组越界出Core，实际上是触犯了OS的内存管理，访问了非当前进程的内存空间，OS需要通过出Core来进行警示，这就好像一个人身体内存在病毒，免疫系统就会通过发热来警示，并导致人体发烧是一个道理（有意思的是，并不是每次数组越界都会出Core，这和OS的内存管理中虚拟页面分配大小和边界有关，即使不出Core，也很有可能读到脏数据，引起后续程序行为紊乱，这是一种很难追查的BUG）。</p>
+<ol>
+<li>修改core文件名格式<br>修改/proc/sys/kernel/core_pattern文件，此文件用于控制Core文件产生的文件名，默认情况下，此文件内容只有一行内容：“core”，此文件支持定制，一般使用%配合不同的字符，这里罗列几种：<ul>
+<li>%p  出Core进程的PID</li>
+<li>%u  出Core进程的UID</li>
+<li>%s  造成Core的signal号</li>
+<li>%t  出Core的时间，从1970-01-0100:00:00开始的秒数</li>
+<li>%e  出Core进程对应的可执行文件名</li>
+</ul>
+</li>
+</ol>
+<p>不能直接修改，需要通过下面的方法：<br> a. vim /etc/sysctl.conf在最后一行添加kernel.core_uses_pid = 1<br> b. 执行sysctl -p</p>
+<ol>
+<li>修改core文件大小</li>
+</ol>
+<ul>
+<li><p>查看core文件的大小<br>ulimit –a </p>
+</li>
+<li><p>修改core文件的大小<br>ulimit –c </p>
+</li>
+</ul>
+<ol>
+<li>文件格式<br>core文件是ELF格式，可以通过 readelf -h命令查看<br>[img01]</li>
+</ol>
+<p>像bmp、exe等文件一样，ELF的文件头包含整个文件的控制结构。它的定义如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">typedef struct elf32_hdr &#123;  </div><div class="line">	unsigned char e_ident[EI_NIDENT];   </div><div class="line">	Elf32_Half    e_type;         /* file type */  </div><div class="line">	Elf32_Half    e_machine;      /* architecture */  </div><div class="line">	Elf32_Word    e_version;  </div><div class="line">	Elf32_Addr    e_entry;    	  /* entry point */  </div><div class="line">	Elf32_Off 	  e_phoff;        /* PH table offset */  </div><div class="line">	Elf32_Off 	  e_shoff;        /* SH table offset */  </div><div class="line">	Elf32_Word    e_flags;  </div><div class="line">	Elf32_Half    e_ehsize;       /* ELF header size in bytes */  </div><div class="line">	Elf32_Half    e_phentsize;    /* PH size */  </div><div class="line">	Elf32_Half    e_phnum;        /* PH number */  </div><div class="line">	Elf32_Half    e_shentsize;    /* SH size */  </div><div class="line">	Elf32_Half    e_shnum;        /* SH number */  </div><div class="line">	Elf32_Half    e_shstrndx;     /* SH name string table index */  </div><div class="line">&#125; Elf32_Ehdr;</div></pre></td></tr></table></figure></p>
+<h1 id="源码"><a href="#源码" class="headerlink" title="源码"></a>源码</h1><p>coredump函数在kernel/fs/exec.c中函数为do_coredump( )，如果coredump生成失败可以在do_coredump函数中增加打印，do_coredump的源代码如下所示。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div></pre></td><td class="code"><pre><div class="line">void do_coredump(long signr, int exit_code, struct pt_regs *regs)</div><div class="line">&#123;</div><div class="line">	struct core_state core_state;</div><div class="line">	char corename[CORENAME_MAX_SIZE + 1];</div><div class="line">	struct mm_struct *mm = current-&gt;mm;</div><div class="line">	struct linux_binfmt * binfmt;</div><div class="line">	const struct cred *old_cred;</div><div class="line">	struct cred *cred;</div><div class="line">	int retval = 0;</div><div class="line">	int flag = 0;</div><div class="line">	int ispipe;</div><div class="line">	static atomic_t core_dump_count = ATOMIC_INIT(0);</div><div class="line">	struct coredump_params cprm = &#123;</div><div class="line">		.signr = signr,</div><div class="line">		.regs = regs,</div><div class="line">		.limit = rlimit(RLIMIT_CORE),</div><div class="line">		/*</div><div class="line">		 * We must use the same mm-&gt;flags while dumping core to avoid</div><div class="line">		 * inconsistency of bit flags, since this flag is not protected</div><div class="line">		 * by any locks.</div><div class="line">		 */</div><div class="line">		.mm_flags = mm-&gt;flags,</div><div class="line">	&#125;;</div><div class="line"></div><div class="line">	audit_core_dumps(signr);</div><div class="line">	binfmt = mm-&gt;binfmt;</div><div class="line"></div><div class="line">	//binfmt-&gt;core_dump根据内核宏初始化赋值core_dump函数，未开宏时为NULL</div><div class="line">	if (!binfmt || !binfmt-&gt;core_dump)</div><div class="line">		goto fail;</div><div class="line">	if (!__get_dumpable(cprm.mm_flags))</div><div class="line">		goto fail;</div><div class="line"></div><div class="line">	cred = prepare_creds();</div><div class="line">	if (!cred)</div><div class="line">		goto fail;</div><div class="line">	/*</div><div class="line">	 *	We cannot trust fsuid as being the &quot;true&quot; uid of the</div><div class="line">	 *	process nor do we know its entire history. We only know it</div><div class="line">	 *	was tainted so we dump it as root in mode 2.</div><div class="line">	 */</div><div class="line">	if (__get_dumpable(cprm.mm_flags) == 2) &#123;</div><div class="line">		/* Setuid core dump mode */</div><div class="line">		flag = O_EXCL;		/* Stop rewrite attacks */</div><div class="line">		cred-&gt;fsuid = 0;	/* Dump root private */</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	retval = coredump_wait(exit_code, &amp;core_state);</div><div class="line">	if (retval &lt; 0)</div><div class="line">		goto fail_creds;</div><div class="line"></div><div class="line">	old_cred = override_creds(cred);</div><div class="line"></div><div class="line">	/*</div><div class="line">	 * Clear any false indication of pending signals that might</div><div class="line">	 * be seen by the filesystem code called to write the core file.</div><div class="line">	 */</div><div class="line">	clear_thread_flag(TIF_SIGPENDING);</div><div class="line"></div><div class="line">	//根据/proc/sys/kernel/core_pattern中值定义core文件名</div><div class="line">	ispipe = format_corename(corename, signr);</div><div class="line"></div><div class="line"> 	if (ispipe) &#123;</div><div class="line">		int dump_count;</div><div class="line">		char **helper_argv;</div><div class="line"></div><div class="line">		if (cprm.limit == 1) &#123;</div><div class="line">			/*</div><div class="line">			 * Normally core limits are irrelevant to pipes, since</div><div class="line">			 * we&apos;re not writing to the file system, but we use</div><div class="line">			 * cprm.limit of 1 here as a speacial value. Any</div><div class="line">			 * non-1 limit gets set to RLIM_INFINITY below, but</div><div class="line">			 * a limit of 0 skips the dump.  This is a consistent</div><div class="line">			 * way to catch recursive crashes.  We can still crash</div><div class="line">			 * if the core_pattern binary sets RLIM_CORE =  !1</div><div class="line">			 * but it runs as root, and can do lots of stupid things</div><div class="line">			 * Note that we use task_tgid_vnr here to grab the pid</div><div class="line">			 * of the process group leader.  That way we get the</div><div class="line">			 * right pid if a thread in a multi-threaded</div><div class="line">			 * core_pattern process dies.</div><div class="line">			 */</div><div class="line">			printk(KERN_WARNING</div><div class="line">				&quot;Process %d(%s) has RLIMIT_CORE set to 1\n&quot;,</div><div class="line">				task_tgid_vnr(current), current-&gt;comm);</div><div class="line">			printk(KERN_WARNING &quot;Aborting core\n&quot;);</div><div class="line">			goto fail_unlock;</div><div class="line">		&#125;</div><div class="line">		cprm.limit = RLIM_INFINITY;</div><div class="line"></div><div class="line">		dump_count = atomic_inc_return(&amp;core_dump_count);</div><div class="line">		if (core_pipe_limit &amp;&amp; (core_pipe_limit &lt; dump_count)) &#123;</div><div class="line">			printk(KERN_WARNING &quot;Pid %d(%s) over core_pipe_limit\n&quot;,</div><div class="line">			       task_tgid_vnr(current), current-&gt;comm);</div><div class="line">			printk(KERN_WARNING &quot;Skipping core dump\n&quot;);</div><div class="line">			goto fail_dropcount;</div><div class="line">		&#125;</div><div class="line"></div><div class="line">		helper_argv = argv_split(GFP_KERNEL, corename+1, NULL);</div><div class="line">		if (!helper_argv) &#123;</div><div class="line">			printk(KERN_WARNING &quot;%s failed to allocate memory\n&quot;,</div><div class="line">			       __func__);</div><div class="line">			goto fail_dropcount;</div><div class="line">		&#125;</div><div class="line"></div><div class="line">		retval = call_usermodehelper_fns(helper_argv[0], helper_argv,</div><div class="line">					NULL, UMH_WAIT_EXEC, umh_pipe_setup,</div><div class="line">					NULL, &amp;cprm);</div><div class="line">		argv_free(helper_argv);</div><div class="line">		if (retval) &#123;</div><div class="line"> 			printk(KERN_INFO &quot;Core dump to %s pipe failed\n&quot;,</div><div class="line">			       corename);</div><div class="line">			goto close_fail;</div><div class="line"> 		&#125;</div><div class="line">	&#125; else &#123;</div><div class="line">		struct inode *inode;</div><div class="line">		</div><div class="line">		//根据进程的soft limit大小，soft limit大于coredump初始设置最小值=PAGE_SZIE</div><div class="line">		if (cprm.limit &lt; binfmt-&gt;min_coredump)</div><div class="line">			goto fail_unlock;</div><div class="line"></div><div class="line">		cprm.file = filp_open(corename,</div><div class="line">				 O_CREAT | 2 | O_NOFOLLOW | O_LARGEFILE | flag,</div><div class="line">				 0600);</div><div class="line">		if (IS_ERR(cprm.file))</div><div class="line">			goto fail_unlock;</div><div class="line"></div><div class="line">		inode = cprm.file-&gt;f_path.dentry-&gt;d_inode;</div><div class="line">		if (inode-&gt;i_nlink &gt; 1)</div><div class="line">			goto close_fail;</div><div class="line">		if (d_unhashed(cprm.file-&gt;f_path.dentry))</div><div class="line">			goto close_fail;</div><div class="line">		/*</div><div class="line">		 * AK: actually i see no reason to not allow this for named</div><div class="line">		 * pipes etc, but keep the previous behaviour for now.</div><div class="line">		 */</div><div class="line">		if (!S_ISREG(inode-&gt;i_mode))</div><div class="line">			goto close_fail;</div><div class="line">		/*</div><div class="line">		 * Dont allow local users get cute and trick others to coredump</div><div class="line">		 * into their pre-created files.</div><div class="line">		 */</div><div class="line">		if (inode-&gt;i_uid != current_fsuid())</div><div class="line">			goto close_fail;</div><div class="line">		if (!cprm.file-&gt;f_op || !cprm.file-&gt;f_op-&gt;write)</div><div class="line">			goto close_fail;</div><div class="line">		if (do_truncate(cprm.file-&gt;f_path.dentry, 0, 0, cprm.file))</div><div class="line">			goto close_fail;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	//执行core_dump函数输出寄存器等信息到core文件中</div><div class="line">	retval = binfmt-&gt;core_dump(&amp;cprm);</div><div class="line">	if (retval)</div><div class="line">		current-&gt;signal-&gt;group_exit_code |= 0x80;</div><div class="line"></div><div class="line">	if (ispipe &amp;&amp; core_pipe_limit)</div><div class="line">		wait_for_dump_helpers(cprm.file);</div><div class="line">close_fail:</div><div class="line">	if (cprm.file)</div><div class="line">		filp_close(cprm.file, NULL);</div><div class="line">fail_dropcount:</div><div class="line">	if (ispipe)</div><div class="line">		atomic_dec(&amp;core_dump_count);</div><div class="line">fail_unlock:</div><div class="line">	coredump_finish(mm);</div><div class="line">	revert_creds(old_cred);</div><div class="line">fail_creds:</div><div class="line">	put_cred(cred);</div><div class="line">fail:</div><div class="line">	return;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/26/distributed-system-zk-install/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/26/distributed-system-zk-install/" itemprop="url">
+                  zookeeper部署
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-26T17:42:44+08:00">
+                2018-03-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/分布式系统/" itemprop="url" rel="index">
+                    <span itemprop="name">分布式系统</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>最新的版本可以通过官网 <a href="http://hadoop.apache.org/zookeeper/来获取，Zookeeper" target="_blank" rel="external">http://hadoop.apache.org/zookeeper/来获取，Zookeeper</a> 的安装非常简单，下面将从单机模式和集群模式两个方面介绍 Zookeeper 的安装和配置。</p>
+<h1 id="单机模式"><a href="#单机模式" class="headerlink" title="单机模式"></a>单机模式</h1><ol>
+<li><p>解压安装包zookerper-3.4.7.tar.gz</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">tar -xzvf zookerper-3.4.7.tar.gz</div></pre></td></tr></table></figure>
+</li>
+<li><p>创建Zookeeper子目录</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">cp -r zookerper-3.4.7 zookerper</div></pre></td></tr></table></figure>
+</li>
+<li><p>修改Zookeeper配置文件conf/zoo.cfg</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line"># The number of milliseconds of each tick</div><div class="line">tickTime=2000</div><div class="line"># The number of ticks that the initial </div><div class="line"># synchronization phase can take</div><div class="line">initLimit=10</div><div class="line"># The number of ticks that can pass between </div><div class="line"># sending a request and getting an acknowledgement</div><div class="line">syncLimit=5</div><div class="line"># the directory where the snapshot is stored.</div><div class="line"># do not use /tmp for storage, /tmp here is just </div><div class="line"># example sakes.</div><div class="line">dataDir=./data</div><div class="line">dataLogDir=./logs</div><div class="line"># the port at which the clients will connect</div><div class="line">clientPort=2181</div><div class="line"># the maximum number of client connections.</div><div class="line"># increase this if you need to handle more clients</div><div class="line">#maxClientCnxns=60</div><div class="line">#</div><div class="line"># Be sure to read the maintenance section of the </div><div class="line"># administrator guide before turning on autopurge.</div><div class="line">#</div><div class="line"># http://zookeeper.apache.org/doc/current/zookeeperAdmin.html#sc_maintenance</div><div class="line">#</div><div class="line"># The number of snapshots to retain in dataDir</div><div class="line">#autopurge.snapRetainCount=3</div><div class="line"># Purge task interval in hours</div><div class="line"># Set to &quot;0&quot; to disable auto purge feature</div><div class="line">#autopurge.purgeInterval=1</div></pre></td></tr></table></figure>
+</li>
+<li><p>运行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ cd bin</div><div class="line">$ ./zkServer.sh start</div></pre></td></tr></table></figure>
+</li>
+<li><p>查看运行状态</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./zkServer.sh status</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<h1 id="伪集群模式"><a href="#伪集群模式" class="headerlink" title="伪集群模式"></a>伪集群模式</h1><ol>
+<li><p>新建两个directory</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">cp -r zookeeper/ zookerper1/</div><div class="line">cp -r zookeeper/ zookerper2/</div></pre></td></tr></table></figure>
+</li>
+<li><p>修改Zookeeper配置文件conf/zoo.cfg,这里配置了3个实例</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">server.1=localhost:2887:3887</div><div class="line">server.2=localhost:2888:3888</div><div class="line">server.3=localhost:2889:3889</div></pre></td></tr></table></figure>
+</li>
+<li><p>分别在data目录下添加myid文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">echo &quot;1&quot; &gt; myid</div><div class="line">echo &quot;2&quot; &gt; myid</div><div class="line">echo &quot;3&quot; &gt; myid</div></pre></td></tr></table></figure>
+</li>
+<li><p>分别运行3个实例</p>
+</li>
+</ol>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/24/mysql-covering-index/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/24/mysql-covering-index/" itemprop="url">
+                  mysql覆盖索引
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-24T00:05:34+08:00">
+                2018-03-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/MySQL/" itemprop="url" rel="index">
+                    <span itemprop="name">MySQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>概念</p>
+<p>如果索引包含所有满足查询需要的数据的索引成为覆盖索引(Covering Index)，也就是平时所说的不需要回表操作</p>
+<p>判断标准</p>
+<p>使用explain，可以通过输出的extra列来判断，对于一个索引覆盖查询，显示为using index,MySQL查询优化器在执行查询前会决定是否有索引覆盖查询</p>
+<p>注意<br>1、覆盖索引也并不适用于任意的索引类型，索引必须存储列的值<br>2、Hash 和full-text索引不存储值，因此MySQL只能使用B-TREE<br>3、并且不同的存储引擎实现覆盖索引都是不同的<br>4、并不是所有的存储引擎都支持它们<br>5、如果要使用覆盖索引，一定要注意SELECT 列表值取出需要的列，不可以是SELECT *，因为如果将所有字段一起做索引会导致索引文件过大，查询性能下降，不能为了利用覆盖索引而这么做</p>
+<p>InnoDB<br>1、覆盖索引查询时除了除了索引本身的包含的列，还可以使用其默认的聚集索引列<br>2、这跟INNOB的索引结构有关系，主索引是B+树索引存储，也即我们所说的数据行即索引，索引即数据<br>3、对于INNODB的辅助索引，它的叶子节点存储的是索引值和指向主键索引的位置，然后需要通过主键在查询表的字段值，所以辅助索引存储了主键的值<br>4、覆盖索引也可以用上INNODB 默认的聚集索引<br>5、innodb引擎的所有储存了主键ID，事务ID，回滚指针,非主键ID，他的查询就会是非主键ID也可覆盖来取得主键ID</p>
+<p>覆盖索引是一种非常强大的工具，能大大提高查询性能，只需要读取索引而不用读取数据有以下一些优点<br>1、索引项通常比记录要小，所以MySQL访问更少的数据<br>2、索引都按值的大小顺序存储，相对于随机访问记录，需要更少的I/O<br>3、大多数据引擎能更好的缓存索引，比如MyISAM只缓存索引<br>4、覆盖索引对于InnoDB表尤其有用，因为InnoDB使用聚集索引组织数据，如果二级索引中包含查询所需的数据，就不再需要在聚集索引中查找了</p>
+<p>在sakila的inventory表中，有一个组合索引(store_id,film_id)，对于只需要访问这两列的查 询，MySQL就可以使用索引，如下<br>表结构<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE `inventory` (</div><div class="line">  `inventory_id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,</div><div class="line">  `film_id` smallint(5) unsigned NOT NULL,</div><div class="line">  `store_id` tinyint(3) unsigned NOT NULL,</div><div class="line">  `last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,</div><div class="line">  PRIMARY KEY (`inventory_id`),</div><div class="line">  KEY `idx_fk_film_id` (`film_id`),</div><div class="line">  KEY `idx_store_id_film_id` (`store_id`,`film_id`),</div><div class="line">  CONSTRAINT `fk_inventory_film` FOREIGN KEY (`film_id`) REFERENCES `film` (`film_id`) ON UPDATE CASCADE,</div><div class="line">  CONSTRAINT `fk_inventory_store` FOREIGN KEY (`store_id`) REFERENCES `store` (`store_id`) ON UPDATE CASCADE</div><div class="line">) ENGINE=InnoDB AUTO_INCREMENT=4582 DEFAULT CHARSET=utf8 |</div></pre></td></tr></table></figure></p>
+<p>查询语句<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">mysql&gt;  EXPLAIN SELECT store_id, film_id FROM sakila.inventory\G</div><div class="line">*************************** 1. row ***************************</div><div class="line">           id: 1</div><div class="line">  select_type: SIMPLE</div><div class="line">        table: inventory</div><div class="line">         type: index</div><div class="line">possible_keys: NULL</div><div class="line">          key: idx_store_id_film_id</div><div class="line">      key_len: 3</div><div class="line">          ref: NULL</div><div class="line">         rows: 4581</div><div class="line">        Extra: Using index</div><div class="line">1 row in set (0.03 sec)</div></pre></td></tr></table></figure></p>
+<p>在大多数引擎中，只有当查询语句所访问的列是索引的一部分时，索引才会覆盖。但是，InnoDB不限于此，InnoDB的二级索引在叶子节点中存储了 primary key的值。因此，sakila.actor表使用InnoDB，而且对于是last_name上有索引，所以，索引能覆盖那些访问actor_id的查 询，如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">mysql&gt; EXPLAIN SELECT actor_id, last_name  FROM sakila.actor WHERE last_name = &apos;HOPPER&apos;\G</div><div class="line">*************************** 1. row ***************************</div><div class="line">           id: 1</div><div class="line">  select_type: SIMPLE</div><div class="line">        table: actor</div><div class="line">         type: ref</div><div class="line">possible_keys: idx_actor_last_name</div><div class="line">          key: idx_actor_last_name</div><div class="line">      key_len: 137</div><div class="line">          ref: const</div><div class="line">         rows: 2</div><div class="line">        Extra: Using where; Using index</div><div class="line">1 row in set (0.00 sec)</div></pre></td></tr></table></figure></p>
+<p>使用索引进行排序</p>
+<p>MySQL中，有两种方式生成有序结果集：一是使用filesort，二是按索引顺序扫描</p>
+<p>利用索引进行排序操作是非常快的，而且可以利用同一索引同时进 行查找和排序操作。当索引的顺序与ORDER BY中的列顺序相同且所有的列是同一方向(全部升序或者全部降序)时，可以使用索引来排序，如果查询是连接多个表，仅当ORDER BY中的所有列都是第一个表的列时才会使用索引，其它情况都会使用filesort<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE `actor` (</div><div class="line">  `actor_id` int(10) unsigned NOT NULL AUTO_INCREMENT,</div><div class="line">  `name` varchar(16) NOT NULL DEFAULT &apos;&apos;,</div><div class="line">  `password` varchar(16) NOT NULL DEFAULT &apos;&apos;,</div><div class="line">  PRIMARY KEY (`actor_id`),</div><div class="line">  KEY `name` (`name`)</div><div class="line">) ENGINE=InnoDB DEFAULT CHARSET=utf8 ;</div><div class="line">insert into actor(name,password) values (&apos;cat01&apos;,&apos;1234567&apos;),(&apos;cat02&apos;,&apos;1234567&apos;),(&apos;ddddd&apos;,&apos;1234567&apos;),(&apos;aaaaa&apos;,&apos;1234567&apos;);</div></pre></td></tr></table></figure></p>
+<p>1、 explain select actor_id from actor order by actor_id \G<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">mysql&gt; explain select actor_id from actor order by actor_id \G</div><div class="line">*************************** 1. row ***************************</div><div class="line">           id: 1</div><div class="line">  select_type: SIMPLE</div><div class="line">        table: actor</div><div class="line">         type: index</div><div class="line">possible_keys: NULL</div><div class="line">          key: PRIMARY</div><div class="line">      key_len: 4</div><div class="line">          ref: NULL</div><div class="line">         rows: 4</div><div class="line">        Extra: Using index</div><div class="line">1 row in set (0.00 sec)</div></pre></td></tr></table></figure></p>
+<p>2、explain select actor_id from actor order by password \G<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">mysql&gt; explain select actor_id from actor order by password \G</div><div class="line">*************************** 1. row ***************************</div><div class="line">           id: 1</div><div class="line">  select_type: SIMPLE</div><div class="line">        table: actor</div><div class="line">         type: ALL</div><div class="line">possible_keys: NULL</div><div class="line">          key: NULL</div><div class="line">      key_len: NULL</div><div class="line">          ref: NULL</div><div class="line">         rows: 4</div><div class="line">        Extra: Using filesort</div><div class="line">1 row in set (0.00 sec)</div></pre></td></tr></table></figure></p>
+<p>3、explain select actor_id from actor order by name \G<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">mysql&gt; explain select actor_id from actor order by name \G</div><div class="line">*************************** 1. row ***************************</div><div class="line">           id: 1</div><div class="line">  select_type: SIMPLE</div><div class="line">        table: actor</div><div class="line">         type: index</div><div class="line">possible_keys: NULL</div><div class="line">          key: name</div><div class="line">      key_len: 50</div><div class="line">          ref: NULL</div><div class="line">         rows: 4</div><div class="line">        Extra: Using index</div><div class="line">1 row in set (0.00 sec)</div></pre></td></tr></table></figure></p>
+<p>当MySQL不能使用索引进行排序时，就会利用自己的排序算法(快速排序算法)在内存(sort buffer)中对数据进行排序，如果内存装载不下，它会将磁盘上的数据进行分块，再对各个数据块进行排序，然后将各个块合并成有序的结果集（实际上就是外排序）</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/23/redis-sentinel/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1381,648 +2049,11 @@ This may render the computer unusable, but it can also be used as a technique if
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/12/os-memory-layout/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/03/12/os-memory-layout/" itemprop="url">
-                  内存布局
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-12T17:25:18+08:00">
-                2018-03-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/OS/" itemprop="url" rel="index">
-                    <span itemprop="name">OS</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="进程的内存空间布局"><a href="#进程的内存空间布局" class="headerlink" title="进程的内存空间布局"></a>进程的内存空间布局</h1><p>进程的内存布局在结构上是有规律的，具体来说对于 linux 系统上的进程，其内存空间一般可以粗略地分为以下几大段【1】，从高内存到低内存排列：</p>
-<ol>
-<li><p>内核态内存空间，其大小一般比较固定（可以编译时调整），但 32 位系统和 64 位系统的值不一样。</p>
-</li>
-<li><p>用户态的堆栈，大小不固定，可以用 ulimit -s 进行调整，默认一般为 8M，从高地址向低地址增长。</p>
-</li>
-<li><p>mmap 区域，进程茫茫内存空间里的主要部分，既可以从高地址到低地址延伸(所谓 flexible layout)，也可以从低到高延伸(所谓 legacy layout)，看进程具体情况【2】【3】。</p>
-</li>
-<li><p>brk 区域，紧邻数据段(甚至贴着)，从低位向高位伸展，但它的大小主要取决于 mmap 如何增长，一般来说，即使是 32 位的进程以传统方式延伸，也有差不多 1 GB 的空间（准确地说是 TASK_SIZE/3 - 代码段数据段，参看 arch/x86/include/asm/processor.h 里的定义)【4】</p>
-</li>
-<li><p>数据段，主要是进程里初始化和未初始化的全局数据总和，当然还有编译器生成一些辅助数据结构等等)，大小取决于具体进程，其位置紧贴着代码段。</p>
-</li>
-<li><p>代码段，主要是进程的指令，包括用户代码和编译器生成的辅助代码，其大小取决于具体程序，但起始位置根据 32 位还是 64 位一般固定(-fPIC, -fPIE等除外【5】)。<br><img src="/2018/03/12/os-memory-layout/os_memory_layout.png" alt="img01"></p>
-</li>
-</ol>
-<h1 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h1><ul>
-<li>【1】<a href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/5/html/Tuning_and_Optimizing_Red_Hat_Enterprise_Linux_for_Oracle_9i_and_10g_Databases/sect-Oracle_9i_and_10g_Tuning_Guide-Growing_the_Oracle_SGA_to_2.7_GB_in_x86_Red_Hat_Enterprise_Linux_2.1_Without_VLM-Linux_Memory_Layout.html" target="_blank" rel="external">https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/5/html/Tuning_and_Optimizing_Red_Hat_Enterprise_Linux_for_Oracle_9i_and_10g_Databases/sect-Oracle_9i_and_10g_Tuning_Guide-Growing_the_Oracle_SGA_to_2.7_GB_in_x86_Red_Hat_Enterprise_Linux_2.1_Without_VLM-Linux_Memory_Layout.html</a></li>
-<li>【2】understanding the linux kernel, page 819, flexible memory region layout: <a href="https://books.google.com.hk/books?id=h0lltXyJ8aIC&amp;pg=PT925&amp;lpg=PT925&amp;dq=linux+flexible+memory&amp;source=bl&amp;ots=gO7rIYb8HR&amp;sig=pirB5pswdHFHSljy57EksxS3ABw&amp;hl=en&amp;sa=X&amp;ved=0ahUKEwjpkfa-2_rRAhVGFJQKHcETDSUQ6AEITDAH#v=onepage&amp;q=linux%20flexible%20memory&amp;f=false" target="_blank" rel="external">https://books.google.com.hk/books?id=h0lltXyJ8aIC&amp;pg=PT925&amp;lpg=PT925&amp;dq=linux+flexible+memory&amp;source=bl&amp;ots=gO7rIYb8HR&amp;sig=pirB5pswdHFHSljy57EksxS3ABw&amp;hl=en&amp;sa=X&amp;ved=0ahUKEwjpkfa-2_rRAhVGFJQKHcETDSUQ6AEITDAH#v=onepage&amp;q=linux%20flexible%20memory&amp;f=false</a></li>
-<li>【3】<a href="https://gist.github.com/CMCDragonkai/10ab53654b2aa6ce55c11cfc5b2432a4" target="_blank" rel="external">https://gist.github.com/CMCDragonkai/10ab53654b2aa6ce55c11cfc5b2432a4</a></li>
-<li>【4】<a href="http://lxr.free-electrons.com/source/arch/x86/include/asm/processor.h#L770" target="_blank" rel="external">http://lxr.free-electrons.com/source/arch/x86/include/asm/processor.h#L770</a></li>
-<li>【5】<a href="https://access.redhat.com/blogs/766093/posts/1975793" target="_blank" rel="external">https://access.redhat.com/blogs/766093/posts/1975793</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/12/c-compile/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/03/12/c-compile/" itemprop="url">
-                  程序的编译与链接
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-12T16:50:34+08:00">
-                2018-03-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/C/" itemprop="url" rel="index">
-                    <span itemprop="name">C++</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="编译过程预览"><a href="#编译过程预览" class="headerlink" title="编译过程预览"></a>编译过程预览</h1><p><img src="/2018/03/12/c-compile/c_compile01.png" alt="img01"></p>
-<h1 id="预处理"><a href="#预处理" class="headerlink" title="预处理"></a>预处理</h1><ul>
-<li>预处理(Prepressing) :   -E 表示只进行预处理, 即 : gcc –E hello.c –o hello.i<ul>
-<li>展开所有 #define 定义的宏</li>
-<li>处理所有条件预编译指令,如 #if, #ifdef</li>
-<li>递归的将 #include 的文件插入到该预编译文件中</li>
-<li>删除各类注释</li>
-<li>添加行和文件标识,如  #2 “hello.c” 2 ,用于调试或编译出错报警</li>
-<li>保留所有的 #pragma 编译指令,编译器要使用</li>
-</ul>
-</li>
-<li>对于C++ 来说,预处理后的文件扩展名是 .ii</li>
-</ul>
-<h1 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h1><ul>
-<li>编译(Compilation):  gcc –S hello.i –o hello.s<br>编译过程就是把预处理完的文件进行一系列词法分析,语法分析,语义分析及优化后生成相应的汇编代码文件.</li>
-<li>现在的gcc 把预处理和编译两个步骤合成一个步骤,C语言使用一个叫做 cc1 的程序来完成,C++则是 cc1plus ,位于 /usr/libexec/gcc/x86_64-redhat-linux/4.1.2/</li>
-<li>gcc 实际上是这些后台程序的包装,它会根据参数要求去调用 cc1(cclplus), 汇编器 as 和链接器 ld</li>
-</ul>
-<h1 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h1><ul>
-<li>链接(Linking):解决一个程序被分割成多个模块后,模块间最后如何组合成一个单一程序的问题.</li>
-<li>链接的主要任务是把各个模块之间相互引用的部分处理好,使各个模块之间能正确的衔接.</li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/12/linux-command/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/03/12/linux-command/" itemprop="url">
-                  linux-command
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-12T10:49:48+08:00">
-                2018-03-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="查看某个进程的线程数量"><a href="#查看某个进程的线程数量" class="headerlink" title="查看某个进程的线程数量"></a>查看某个进程的线程数量</h1><ol>
-<li>根据进程号进行查询：<ul>
-<li><h1 id="pstree-p-进程号"><a href="#pstree-p-进程号" class="headerlink" title="pstree -p 进程号"></a>pstree -p 进程号</h1></li>
-</ul>
-</li>
-</ol>
-<p>example:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~/myspace/test/network$ pstree -p 5629</div><div class="line">test05(5629)─┬─&#123;test05&#125;(5630)</div><div class="line">             ├─&#123;test05&#125;(5631)</div><div class="line">             ├─&#123;test05&#125;(5632)</div><div class="line">             └─&#123;test05&#125;(5633)</div></pre></td></tr></table></figure></p>
-<ul>
-<li><h1 id="top-Hp-进程号"><a href="#top-Hp-进程号" class="headerlink" title="top -Hp 进程号"></a>top -Hp 进程号</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"> PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND </div><div class="line">  5629 chris     20   0 47680 1420 1188 S    0  0.1   0:00.02 test05                                          </div><div class="line"> 5630 chris     20   0 47680 1420 1188 S    0  0.1   0:00.00 test05                                          </div><div class="line"> 5631 chris     20   0 47680 1420 1188 S    0  0.1   0:00.03 test05                                          </div><div class="line"> 5632 chris     20   0 47680 1420 1188 S    0  0.1   0:00.00 test05                                          </div><div class="line"> 5633 chris     20   0 47680 1420 1188 S    0  0.1   0:00.00 test05</div><div class="line"> ``` </div><div class="line"></div><div class="line">2. 根据进程名字进行查询：</div></pre></td></tr></table></figure>
-<h1 id="pstree-p-ps-e-grep-test05-awk-39-print-1-39"><a href="#pstree-p-ps-e-grep-test05-awk-39-print-1-39" class="headerlink" title="pstree -p ps -e | grep test05 | awk &#39;{print $1}&#39;"></a>pstree -p <code>ps -e | grep test05 | awk &#39;{print $1}&#39;</code></h1><h1 id="pstree-p-ps-e-grep-test05-awk-39-print-1-39-wc-l"><a href="#pstree-p-ps-e-grep-test05-awk-39-print-1-39-wc-l" class="headerlink" title="pstree -p ps -e | grep test05 | awk &#39;{print $1}&#39; | wc -l"></a>pstree -p <code>ps -e | grep test05 | awk &#39;{print $1}&#39;</code> | wc -l</h1><p>```<br>执行效果和上面的命令是一样的</p>
-</li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/07/distributed-system-consistent-hashing/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/03/07/distributed-system-consistent-hashing/" itemprop="url">
-                  一致性哈希算法
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-07T17:02:49+08:00">
-                2018-03-07
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/分布式系统/" itemprop="url" rel="index">
-                    <span itemprop="name">分布式系统</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>一些场景希望同样的请求尽量落到一台机器上，比如访问缓存集群时，我们往往希望同一种请求能落到同一个后端上，以充分利用其上已有的缓存，不同的机器承载不同的稳定working set。而不是随机地散落到所有机器上，那样的话会迫使所有机器缓存所有的内容，最终由于存不下形成颠簸而表现糟糕。 我们都知道hash能满足这个要求，比如当有n台服务器时，输入x总是会发送到第hash(x) % n台服务器上。但当服务器变为m台时，hash(x) % n和hash(x) % m很可能都不相等，这会使得几乎所有请求的发送目的地都发生变化，如果目的地是缓存服务，所有缓存将失效，继而对原本被缓存遮挡的数据库或计算服务造成请求风暴，触发雪崩。一致性哈希是一种特殊的哈希算法，在增加服务器时，发向每个老节点的请求中只会有一部分转向新节点，从而实现平滑的迁移。这篇论文中提出了一致性hash的概念。</p>
-<p>一致性hash满足以下四个性质：</p>
-<ul>
-<li>平衡性 (Balance) : 每个节点被选到的概率是O(1/n)。</li>
-<li>单调性 (Monotonicity) : 当新节点加入时， 不会有请求在老节点间移动， 只会从老节点移动到新节点。当有节点被删除时，也不会影响落在别的节点上的请求。</li>
-<li>分散性 (Spread) : 当上游的机器看到不同的下游列表时(在上线时及不稳定的网络中比较常见), 同一个请求尽量映射到少量的节点中。</li>
-<li>负载 (Load) : 当上游的机器看到不同的下游列表的时候， 保证每台下游分到的请求数量尽量一致。</li>
-</ul>
-<h1 id="算法实现"><a href="#算法实现" class="headerlink" title="算法实现"></a>算法实现</h1><p>所有server的32位hash值在32位整数值域上构成一个环(Hash Ring)，环上的每个区间和一个server唯一对应，如果一个key落在某个区间内， 它就被分流到对应的server上。<br><img src="/2018/03/07/distributed-consistent-hashing/chash.png" alt="img01"><br>当删除一个server的， 它对应的区间会归属于相邻的server，所有的请求都会跑过去。当增加一个server时，它会分割某个server的区间并承载落在这个区间上的所有请求。单纯使用Hash Ring很难满足我们上节提到的属性，主要两个问题：</p>
-<ul>
-<li>在机器数量较少的时候， 区间大小会不平衡。</li>
-<li>当一台机器故障的时候， 它的压力会完全转移到另外一台机器， 可能无法承载。<br>为了解决这个问题，我们为每个server计算m个hash值，从而把32位整数值域划分为n*m个区间，当key落到某个区间时，分流到对应的server上。那些额外的hash值使得区间划分更加均匀，被称为Virtual Node。当删除一个server时，它对应的m个区间会分别合入相邻的区间中，那个server上的请求会较为平均地转移到其他server上。当增加server时，它会分割m个现有区间，从对应server上分别转移一些请求过来。</li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/">8</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2065,7 +2096,7 @@ This may render the computer unusable, but it can also be used as a technique if
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">69</span>
+                <span class="site-state-item-count">73</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>

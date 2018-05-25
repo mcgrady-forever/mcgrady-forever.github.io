@@ -95,13 +95,11 @@
 <meta property="og:site_name" content="HeLei Blog">
 <meta property="og:description" content="CLOSE_WAIT在被动关闭连接(对方关闭)情况下，在已经接收到FIN，但是还没有发送自己的FIN的时刻，连接处于CLOSE_WAIT状态。出现大量close_wait的现象，主要原因是某种情况下对方关闭了socket链接，但是我方忙与读或者写，没有关闭连接。代码需要判断socket，一旦读到0，断开连接，read返回负，检查一下errno，如果不是AGAIN，就断开连接。
 解决方法:基本的思想">
-<meta property="og:image" content="http://hlei.io/2017/11/29/network-tcp-machine-state/tcp_machine_state.png">
-<meta property="og:updated_time" content="2018-05-03T12:31:48.172Z">
+<meta property="og:updated_time" content="2018-05-07T04:01:55.872Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="TCP状态机分析（二）CLOSE_WAIT&TIME_WAIT">
 <meta name="twitter:description" content="CLOSE_WAIT在被动关闭连接(对方关闭)情况下，在已经接收到FIN，但是还没有发送自己的FIN的时刻，连接处于CLOSE_WAIT状态。出现大量close_wait的现象，主要原因是某种情况下对方关闭了socket链接，但是我方忙与读或者写，没有关闭连接。代码需要判断socket，一旦读到0，断开连接，read返回负，检查一下errno，如果不是AGAIN，就断开连接。
 解决方法:基本的思想">
-<meta name="twitter:image" content="http://hlei.io/2017/11/29/network-tcp-machine-state/tcp_machine_state.png">
 
 
 
@@ -388,58 +386,30 @@
 <li>代码需要判断socket，一旦read返回0，断开连接，read返回负，检查一下errno，如果不是AGAIN，也断开连接。(注:在UNP 7.5节的图7.6中，可以看到使用select能够检测出对方发送了FIN，再根据这条规则就可以处理CLOSE_WAIT的连接)</li>
 <li>给每一个socket设置一个时间戳last_update，每接收或者是发送成功数据，就用当前时间更新这个时间戳。定期检查所有的时间戳，如果时间戳与当前时间差值超过一定的阈值，就关闭这个socket。</li>
 <li>使用一个Heart-Beat线程，定期向socket发送指定格式的心跳数据包，如果接收到对方的RST报文，说明对方已经关闭了socket，那么我们也关闭这个socket。</li>
-<li>设置SO_KEEPALIVE选项，并修改内核参数,下面会详细介绍<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div></pre></td><td class="code"><pre><div class="line">a. 参数设置</div><div class="line">查看相关的参数</div><div class="line">sysctl -a|grep tcp_keepalive</div><div class="line">net.ipv4.tcp_keepalive_intvl = 30</div><div class="line">net.ipv4.tcp_keepalive_probes = 2</div><div class="line">net.ipv4.tcp_keepalive_time = 160</div><div class="line"></div><div class="line">参数的含义</div><div class="line">tcp_keepalive_intvl:探测消息发送的频率</div><div class="line">tcp_keepalive_probes:TCP发送keepalive探测以确定该连接已经断开的次数</div><div class="line">tcp_keepalive_time:当keepalive打开的情况下，TCP发送keepalive消息的频率</div><div class="line"></div><div class="line">设置相关的参数</div><div class="line">sysctl -w net.ipv4.tcp_keepalive_time = 7500</div><div class="line">也可以直接打开/etc/sysctl.conf</div><div class="line">加入net.ipv4.tcp_keepalive_time = 7500，然后保存退出</div><div class="line"></div><div class="line">让参数生效</div><div class="line">sysctl -p</div><div class="line"></div><div class="line">b. 开启keepalive属性 </div><div class="line">int keepAlive = 1; </div><div class="line">setsockopt(client_fd, SOL_SOCKET, SO_KEEPALIVE, (void*)&amp;keepAlive, sizeof(keepAlive)); </div><div class="line"></div><div class="line">c. 系统调用设置</div><div class="line">这样只会影响单个连接，上面修改内核参数会影响所有设置keepalive属性的连接</div><div class="line">#include &lt;sys/types.h&gt;  </div><div class="line">#include &lt;sys/socket.h&gt;  </div><div class="line">#include &lt;netinet/tcp.h&gt;  </div><div class="line">  </div><div class="line">int keepAlive = 1;          // 开启keepalive属性  </div><div class="line">int keepIdle = 1800;        // 如该连接在1800秒内没有任何数据往来,则进行探测   </div><div class="line">int keepInterval = 3;       // 探测时发包的时间间隔为3秒  </div><div class="line">int keepCount = 2;          // 探测尝试的次数.如果第1次探测包就收到响应了,则后几次的不再发.  </div><div class="line">setsockopt(client_fd, SOL_SOCKET, SO_KEEPALIVE, (void*)&amp;keepAlive, sizeof(keepAlive));  </div><div class="line">setsockopt(client_fd, SOL_TCP, TCP_KEEPIDLE, (void *)&amp;keepIdle, sizeof(keepIdle));  </div><div class="line">setsockopt(client_fd, SOL_TCP,TCP_KEEPINTVL, (void *)&amp;keepInterval, sizeof(keepInterval));  </div><div class="line">setsockopt(client_fd, SOL_TCP, TCP_KEEPCNT, (void *)&amp;keepCount, sizeof(keepCount));</div></pre></td></tr></table></figure>
+<li>设置SO_KEEPALIVE选项，并修改内核参数,下面会详细介绍<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">a. 参数设置</div><div class="line">查看相关的参数,这是当前线上环境的配置</div></pre></td></tr></table></figure>
 </li>
 </ol>
-<p>这篇文章对于一次生产环境遇到的CLOSE_WAIT问题分析很到位<br>转载：<a href="https://mp.weixin.qq.com/s?__biz=MzI4MjA4ODU0Ng==&amp;mid=402163560&amp;idx=1&amp;sn=5269044286ce1d142cca1b5fed3efab1&amp;3rd=MzA3MDU4NTYzMw==&amp;scene=6#rd" target="_blank" rel="external">https://mp.weixin.qq.com/s?__biz=MzI4MjA4ODU0Ng==&amp;mid=402163560&amp;idx=1&amp;sn=5269044286ce1d142cca1b5fed3efab1&amp;3rd=MzA3MDU4NTYzMw==&amp;scene=6#rd</a></p>
-<h2 id="TIME-WAIT"><a href="#TIME-WAIT" class="headerlink" title="TIME_WAIT"></a>TIME_WAIT</h2><p>主动发起close的一方会出现TIME_WAIT，比如nginx到web server之间，TIME_WAIT状态是为了保护TCP协议的正确性，避免端口发生复用后老的TCP连接残留在网络上的报文进入新的连接里。但这也引入了一个问题，临时端口数量有限，耗尽后，新建连接就会报错EADDRNOTAVAIL</p>
-<p>我们来看下，为什么这个状态能影响到一个处理大量连接的服务器，从下面三个方面来说：</p>
-<ul>
-<li>新老连接（相同四元组）在TCP连接表中的slot复用避免</li>
-<li>内核中，socket结构体的内存占用</li>
-<li>额外的CPU开销</li>
-</ul>
-<h3 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h3><ul>
-<li><p>首先要增加临时端口的数量，增加可被消耗的临时端口资源</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sysctl -w &quot;net.ipv4.ip_local_port_range=1024 65535”</div></pre></td></tr></table></figure>
-</li>
-<li><p>然后要加速临时端口回收,可以对内核参数做优化(/etc/sysctl.conf)</p>
-</li>
-</ul>
+<p>sysctl -a|grep tcp_keepalive<br>net.ipv4.tcp_keepalive_intvl = 300<br>net.ipv4.tcp_keepalive_probes = 9<br>net.ipv4.tcp_keepalive_time = 75<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">参数的含义</div></pre></td></tr></table></figure></p>
+<p>tcp_keepalive_intvl: 在TCP保活打开的情况下，最后一次数据交换到TCP发送第一个保活探测包的间隔，即允许的持续空闲时长，或者说每次正常发送心跳的周期。<br>tcp_keepalive_probes: 在tcp_keepalive_time之后，没有接收到对方确认，继续发送保活探测包次数，默认值为9（次）<br>tcp_keepalive_time: tcp_keepalive_time之后，没有接收到对方确认，继续发送保活探测包的发送频率，默认值为75s。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">设置相关的参数</div></pre></td></tr></table></figure></p>
+<p>sysctl -w net.ipv4.tcp_keepalive_time = 75<br>也可以直接打开/etc/sysctl.conf<br>加入net.ipv4.tcp_keepalive_time = 75<br>``</p>
+<p>让参数生效<br>sysctl -p</p>
+<p>(tcp_keepalive_time + tcp_keepalive_intvl * tcp_keepalive_probes)时间内可检测到连接失效与否。</p>
+<p>b. 开启keepalive属性<br>int keepAlive = 1;<br>setsockopt(client_fd, SOL_SOCKET, SO_KEEPALIVE, (void*)&amp;keepAlive, sizeof(keepAlive)); </p>
+<p>c. 系统调用设置<br>这样只会影响单个连接，上面修改内核参数会影响所有设置keepalive属性的连接</p>
+<p>#include <sys types.h="">  </sys></p>
+<p>#include <sys socket.h="">  </sys></p>
+<p>#include <netinet tcp.h="">  </netinet></p>
+<p>int keepAlive = 1;          // 开启keepalive属性<br>int keepIdle = 1800;        // 如该连接在1800秒内没有任何数据往来,则进行探测<br>int keepInterval = 3;       // 探测时发包的时间间隔为3秒<br>int keepCount = 2;          // 探测尝试的次数.如果第1次探测包就收到响应了,则后几次的不再发.<br>setsockopt(client_fd, SOL_SOCKET, SO_KEEPALIVE, (void<em>)&amp;keepAlive, sizeof(keepAlive));<br>setsockopt(client_fd, SOL_TCP, TCP_KEEPIDLE, (void </em>)&amp;keepIdle, sizeof(keepIdle));<br>setsockopt(client_fd, SOL_TCP,TCP_KEEPINTVL, (void <em>)&amp;keepInterval, sizeof(keepInterval));<br>setsockopt(client_fd, SOL_TCP, TCP_KEEPCNT, (void </em>)&amp;keepCount, sizeof(keepCount));<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">这篇文章对于一次生产环境遇到的CLOSE_WAIT问题分析很到位</div><div class="line">转载：https://mp.weixin.qq.com/s?__biz=MzI4MjA4ODU0Ng==&amp;mid=402163560&amp;idx=1&amp;sn=5269044286ce1d142cca1b5fed3efab1&amp;3rd=MzA3MDU4NTYzMw==&amp;scene=6#rd</div><div class="line"></div><div class="line">### 总结</div><div class="line">1. 默认情况下使用keepalive周期为2个小时，如不选择更改，属于误用范畴，造成资源浪费：内核会为每一个连接都打开一个保活计时器，N个连接会打开N个保活计时器。 优势很明显：</div><div class="line">* TCP协议层面保活探测机制，系统内核完全替上层应用自动给做好了</div><div class="line">* 内核层面计时器相比上层应用，更为高效</div><div class="line">* 上层应用只需要处理数据收发、连接异常通知即可</div><div class="line">* 数据包将更为紧凑</div><div class="line">2. 关闭TCP的keepalive，完全使用业务层面心跳保活机制 完全应用掌管心跳，灵活和可控，比如每一个连接心跳周期的可根据需要减少或延长</div><div class="line">业务心跳 + TCP keepalive一起使用，互相作为补充，但TCP保活探测周期和应用的心跳周期要协调，以互补方可，不能够差距过大，否则将达不到设想的效果。朋友的公司所做IM平台业务心跳2-5分钟智能调整 + tcp keepalive 300秒，组合协作，据说效果也不错。</div><div class="line"></div><div class="line">虽然说没有固定的模式可遵循，那么有以下原则可以参考：</div><div class="line">1. 不想折腾，那就弃用TCP Keepalive吧，完全依赖应用层心跳机制，灵活可控性强</div><div class="line">2. 除非可以很好把控TCP Keepalive机制，那就可以根据需要自由使用吧</div><div class="line"></div><div class="line">### http keep-alive与tcp keep-alive</div><div class="line">http keep-alive与tcp keep-alive，不是同一回事，意图不一样。http keep-alive是为了让tcp活得更久一点，以便在同一个连接上传送多个http，提高socket的效率。而tcp keep-alive是TCP的一种检测TCP连接状况的保活机制。</div><div class="line"></div><div class="line">## TIME_WAIT</div><div class="line">主动发起close的一方会出现TIME_WAIT，比如nginx到web server之间，TIME_WAIT状态是为了保护TCP协议的正确性，避免端口发生复用后老的TCP连接残留在网络上的报文进入新的连接里。但这也引入了一个问题，临时端口数量有限，耗尽后，新建连接就会报错EADDRNOTAVAIL</div><div class="line"></div><div class="line">我们来看下，为什么这个状态能影响到一个处理大量连接的服务器，从下面三个方面来说：</div><div class="line">* 新老连接（相同四元组）在TCP连接表中的slot复用避免</div><div class="line">* 内核中，socket结构体的内存占用</div><div class="line">* 额外的CPU开销</div><div class="line"></div><div class="line">### 解决方法</div><div class="line">* 首先要增加临时端口的数量，增加可被消耗的临时端口资源</div></pre></td></tr></table></figure></p>
+<p>sysctl -w “net.ipv4.ip_local_port_range=1024 65535”<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">* 然后要加速临时端口回收,可以对内核参数做优化(/etc/sysctl.conf)</div><div class="line">1. 启用tcp_tw_reuse</div></pre></td></tr></table></figure></p>
+<p>sysctl -w net.ipv4.tcp_timestamps=1<br>sysctl -w net.ipv4.tcp_tw_reuse=1<br>sysctl -p<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">它定义了一个新的TCP选项–两个四字节的timestamp fields时间戳字段，第一个是TCP发送方的当前时钟时间戳，而第二个是从远程主机接收到的最新时间戳。</div><div class="line">启用net.ipv4.tcp_tw_reuse后，如果新的时间戳，比以前存储的时间戳更大，那么linux将会从TIME-WAIT状态的存活连接中，选取一个，重新分配给新的连接出去的TCP连接。</div><div class="line">连出的TIME-WAIT状态连接，仅仅1秒后就可以被重用了</div><div class="line"></div><div class="line">2. 方法更激进些，启用tw_recycle，tw_recycle允许在两个RTT。当多个客户端处于NAT后时，在服务器端开启tw_recycle会引起丢包问题，如果丢SYN包，就会造成新建连接失败</div></pre></td></tr></table></figure></p>
+<p>sysctl -w net.ipv4.tcp_timestamps=1<br>sysctl -w net.ipv4.tcp_tw_recycle=1<br>sysctl -p<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">3. 给socket配置SO_LINGER，on设为1，linger设为0，这样关闭连接后TCP状态从ESTAB直接进入CLOSED，向服务器发rst包而不是fin包来关闭连接。这种方法风险最高，会丢弃buffer里未发送完的数据，不过通过设计协议（客户端和服务器协议上协商后再关闭TCP连接）可以规避这个问题，使用需要小心，选择合适的场景。</div><div class="line"></div><div class="line"></div><div class="line">### 代码验证</div><div class="line">&quot;纸上得来终觉浅，绝知此事要躬行&quot;, 下面我们来验证这样的方法是否真的可行</div><div class="line"></div><div class="line">1. TIME_WAIT过多会耗尽端口，为了模拟端口耗尽的情况，先修改本地临时端口只有一个可用</div></pre></td></tr></table></figure></p>
+<p>sysctl -w “net.ipv4.ip_local_port_range=20000 20000”<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">2. 启动一个server进程</div></pre></td></tr></table></figure></p>
+<p> ./tcp_server05 127.0.0.1<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">3. 第一个客户端连接</div></pre></td></tr></table></figure></p>
+<p>./tcp_client01 127.0.0.1<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">关闭client，查看连接状态</div><div class="line">![img01](/2017/11/29/network-tcp-machine-state/tcp_machine_state.png)</div><div class="line"></div><div class="line">4. 第二个客户端连接</div></pre></td></tr></table></figure></p>
+<p>chris@ubuntu:~/myspace/test/network$ ./tcp_client01 127.0.0.1<br>connect: Cannot assign requested address<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">5. 修改系统参数</div></pre></td></tr></table></figure></p>
+<p>sysctl -w net.ipv4.tcp_tw_reuse=1<br>```</p>
 <ol>
-<li>启用tcp_tw_reuse<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">sysctl -w net.ipv4.tcp_timestamps=1</div><div class="line">sysctl -w net.ipv4.tcp_tw_reuse=1</div><div class="line">sysctl -p</div></pre></td></tr></table></figure>
-</li>
-</ol>
-<p>它定义了一个新的TCP选项–两个四字节的timestamp fields时间戳字段，第一个是TCP发送方的当前时钟时间戳，而第二个是从远程主机接收到的最新时间戳。<br>启用net.ipv4.tcp_tw_reuse后，如果新的时间戳，比以前存储的时间戳更大，那么linux将会从TIME-WAIT状态的存活连接中，选取一个，重新分配给新的连接出去的TCP连接。<br>连出的TIME-WAIT状态连接，仅仅1秒后就可以被重用了</p>
-<ol>
-<li><p>方法更激进些，启用tw_recycle，tw_recycle允许在两个RTT。当多个客户端处于NAT后时，在服务器端开启tw_recycle会引起丢包问题，如果丢SYN包，就会造成新建连接失败</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">sysctl -w net.ipv4.tcp_timestamps=1</div><div class="line">sysctl -w net.ipv4.tcp_tw_recycle=1</div><div class="line">sysctl -p</div></pre></td></tr></table></figure>
-</li>
-<li><p>给socket配置SO_LINGER，on设为1，linger设为0，这样关闭连接后TCP状态从ESTAB直接进入CLOSED，向服务器发rst包而不是fin包来关闭连接。这种方法风险最高，会丢弃buffer里未发送完的数据，不过通过设计协议（客户端和服务器协议上协商后再关闭TCP连接）可以规避这个问题，使用需要小心，选择合适的场景。</p>
-</li>
-</ol>
-<h3 id="代码验证"><a href="#代码验证" class="headerlink" title="代码验证"></a>代码验证</h3><p>“纸上得来终觉浅，绝知此事要躬行”, 下面我们来验证这样的方法是否真的可行</p>
-<ol>
-<li><p>TIME_WAIT过多会耗尽端口，为了模拟端口耗尽的情况，先修改本地临时端口只有一个可用</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sysctl -w &quot;net.ipv4.ip_local_port_range=20000 20000&quot;</div></pre></td></tr></table></figure>
-</li>
-<li><p>启动一个server进程</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./tcp_server05 127.0.0.1</div></pre></td></tr></table></figure>
-</li>
-<li><p>第一个客户端连接</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./tcp_client01 127.0.0.1</div></pre></td></tr></table></figure>
-</li>
-</ol>
-<p>关闭client，查看连接状态<br><img src="/2017/11/29/network-tcp-machine-state/tcp_machine_state.png" alt="img01"></p>
-<ol>
-<li><p>第二个客户端连接</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~/myspace/test/network$ ./tcp_client01 127.0.0.1</div><div class="line">connect: Cannot assign requested address</div></pre></td></tr></table></figure>
-</li>
-<li><p>修改系统参数</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sysctl -w net.ipv4.tcp_tw_reuse=1</div></pre></td></tr></table></figure>
-</li>
-<li><p>重复3、4，可以看到可以成功建立连接</p>
-</li>
+<li>重复3、4，可以看到可以成功建立连接</li>
 </ol>
 <h2 id="参数说明"><a href="#参数说明" class="headerlink" title="参数说明"></a>参数说明</h2><ul>
 <li>tcp_tw_recycle (Boolean; default: disabled; since Linux 2.4)<br>Enable fast recycling of TIME_WAIT sockets.  Enabling this option is not recommended since this causes problems when working with NAT (Network Address Translation).</li>
@@ -587,7 +557,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">69</span>
+                <span class="site-state-item-count">73</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -660,7 +630,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#CLOSE-WAIT"><span class="nav-number">1.</span> <span class="nav-text">CLOSE_WAIT</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TIME-WAIT"><span class="nav-number">2.</span> <span class="nav-text">TIME_WAIT</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#解决方法"><span class="nav-number">2.1.</span> <span class="nav-text">解决方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码验证"><span class="nav-number">2.2.</span> <span class="nav-text">代码验证</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参数说明"><span class="nav-number">3.</span> <span class="nav-text">参数说明</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文献"><span class="nav-number"></span> <span class="nav-text">参考文献</span></a></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#CLOSE-WAIT"><span class="nav-number">1.</span> <span class="nav-text">CLOSE_WAIT</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参数说明"><span class="nav-number">2.</span> <span class="nav-text">参数说明</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文献"><span class="nav-number"></span> <span class="nav-text">参考文献</span></a></div>
             
 
           </div>

@@ -281,6 +281,627 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/12/15/java-concurrent01/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/12/15/java-concurrent01/" itemprop="url">
+                  谈谈Java并发（一）
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-12-15T03:25:53+08:00">
+                2017-12-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>SimpleDateFormat是一个常用的类日期格式化类，这个类不是线程安全的，在多线程环境下调用 format() 和 parse() 方法应该使用同步代码来避免问题。也借由这个问题，进一步来探讨下如何在多线程并发执行的程序中写出安全、高效的代码。</p>
+<p>##发现问题<br>例如我们要把时间格式化后再使用，很容易我们可以写出这样一个DateUtil，每次处理一个请求的时候，就需要创建一个SimpleDateFormat实例对象，然后再丢弃这个对象。大量的对象就这样被创建出来，占用大量的内存和jvm空间。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">public class DateUtil &#123;</div><div class="line">    </div><div class="line">    public static  String formatDate(Date date)throws ParseException&#123;</div><div class="line">         SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;);</div><div class="line">        return sdf.format(date);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    public static Date parse(String strDate) throws ParseException&#123;</div><div class="line">         SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;);</div><div class="line">        return sdf.parse(strDate);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>你也许会说，OK，那我就创建一个静态的simpleDateFormat实例，然后放到一个DateUtil类（如下）<br>中，在使用时直接使用这个实例进行操作，这样问题就解决了。改进后的代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">package com.peidasoft.dateformat;</div><div class="line"></div><div class="line">import java.text.ParseException;</div><div class="line">import java.text.SimpleDateFormat;</div><div class="line">import java.util.Date;</div><div class="line"></div><div class="line">public class DateUtil &#123;</div><div class="line">    private static final  SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;);</div><div class="line">    </div><div class="line">    public static  String formatDate(Date date)throws ParseException&#123;</div><div class="line">        return sdf.format(date);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    public static Date parse(String strDate) throws ParseException&#123;</div><div class="line"></div><div class="line">        return sdf.parse(strDate);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>当然，这个方法的确很不错，在大部分的时间里面都会工作得很好。但当你在生产环境中使用一段时间之后，你就会发现这么一个事实：它不是线程安全的。在正常的测试情况之下，都没有问题，但一旦在生产环境中一定负载情况下时，这个问题就出来了。他会出现各种不同的情况，比如转化的时间不正确，比如报错，比如线程被挂死等等。我们看下面的测试用例，那事实说话：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">public class DateUtilTest &#123;</div><div class="line">    </div><div class="line">    public static class TestSimpleDateFormatThreadSafe extends Thread &#123;</div><div class="line">        @Override</div><div class="line">        public void run() &#123;</div><div class="line">            while(true) &#123;</div><div class="line">                try &#123;</div><div class="line">                    this.join(2000);</div><div class="line">                &#125; catch (InterruptedException e1) &#123;</div><div class="line">                    e1.printStackTrace();</div><div class="line">                &#125;</div><div class="line">                try &#123;</div><div class="line">                    System.out.println(this.getName()+&quot;:&quot;+DateUtil.parse(&quot;2013-05-24 06:02:20&quot;));</div><div class="line">                &#125; catch (ParseException e) &#123;</div><div class="line">                    e.printStackTrace();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;    </div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    </div><div class="line">    public static void main(String[] args) &#123;</div><div class="line">        for(int i = 0; i &lt; 3; i++)&#123;</div><div class="line">            new TestSimpleDateFormatThreadSafe().start();</div><div class="line">        &#125;</div><div class="line">            </div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<pre><code>执行输出如下：
+</code></pre><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">Exception in thread &quot;Thread-1&quot; java.lang.NumberFormatException: multiple points</div><div class="line">    at sun.misc.FloatingDecimal.readJavaFormatString(FloatingDecimal.java:1082)</div><div class="line">    at java.lang.Double.parseDouble(Double.java:510)</div><div class="line">    at java.text.DigitList.getDouble(DigitList.java:151)</div><div class="line">    at java.text.DecimalFormat.parse(DecimalFormat.java:1302)</div><div class="line">    at java.text.SimpleDateFormat.subParse(SimpleDateFormat.java:1589)</div><div class="line">    at java.text.SimpleDateFormat.parse(SimpleDateFormat.java:1311)</div><div class="line">    at java.text.DateFormat.parse(DateFormat.java:335)</div><div class="line">    at com.peidasoft.orm.dateformat.DateNoStaticUtil.parse(DateNoStaticUtil.java:17)</div><div class="line">    at com.peidasoft.orm.dateformat.DateUtilTest$TestSimpleDateFormatThreadSafe.run(DateUtilTest.java:20)</div><div class="line">Exception in thread &quot;Thread-0&quot; java.lang.NumberFormatException: multiple points</div><div class="line">    at sun.misc.FloatingDecimal.readJavaFormatString(FloatingDecimal.java:1082)</div><div class="line">    at java.lang.Double.parseDouble(Double.java:510)</div><div class="line">    at java.text.DigitList.getDouble(DigitList.java:151)</div><div class="line">    at java.text.DecimalFormat.parse(DecimalFormat.java:1302)</div><div class="line">    at java.text.SimpleDateFormat.subParse(SimpleDateFormat.java:1589)</div><div class="line">    at java.text.SimpleDateFormat.parse(SimpleDateFormat.java:1311)</div><div class="line">    at java.text.DateFormat.parse(DateFormat.java:335)</div><div class="line">    at com.peidasoft.orm.dateformat.DateNoStaticUtil.parse(DateNoStaticUtil.java:17)</div><div class="line">    at com.peidasoft.orm.dateformat.DateUtilTest$TestSimpleDateFormatThreadSafe.run(DateUtilTest.java:20)</div><div class="line">Thread-2:Mon May 24 06:02:20 CST 2021</div><div class="line">Thread-2:Fri May 24 06:02:20 CST 2013</div><div class="line">Thread-2:Fri May 24 06:02:20 CST 2013</div><div class="line">Thread-2:Fri May 24 06:02:20 CST 2013</div></pre></td></tr></table></figure>
+<p>##分析问题<br>SimpleDateFormat继承了DateFormat,在DateFormat中定义了一个protected属性的 Calendar类的对象：calendar。只是因为Calendar累的概念复杂，牵扯到时区与本地化等等，Jdk的实现中使用了成员变量来传递参数，这就造成在多线程的时候会出现错误。</p>
+<p>##解决问题</p>
+<ol>
+<li>需要的时候创建新实例：</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">public class DateUtil &#123;</div><div class="line">    </div><div class="line">    public static  String formatDate(Date date)throws ParseException&#123;</div><div class="line">         SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;);</div><div class="line">        return sdf.format(date);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    public static Date parse(String strDate) throws ParseException&#123;</div><div class="line">         SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;);</div><div class="line">        return sdf.parse(strDate);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>说明：在需要用到SimpleDateFormat 的地方新建一个实例，不管什么时候，将有线程安全问题的对象由共享变为局部私有都能避免多线程问题，不过也加重了创建对象的负担。在一般情况下，这样其实对性能影响比不是很明显的。</p>
+<ol>
+<li>使用同步：同步SimpleDateFormat对象<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">public class DateSyncUtil &#123;</div><div class="line"></div><div class="line">    private static SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;);</div><div class="line">      </div><div class="line">    public static String formatDate(Date date)throws ParseException&#123;</div><div class="line">        synchronized(sdf)&#123;</div><div class="line">            return sdf.format(date);</div><div class="line">        &#125;  </div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    public static Date parse(String strDate) throws ParseException&#123;</div><div class="line">        synchronized(sdf)&#123;</div><div class="line">            return sdf.parse(strDate);</div><div class="line">        &#125;</div><div class="line">    &#125; </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>说明：当线程较多时，当一个线程调用该方法时，其他想要调用此方法的线程就要block，多线程并发量大的时候会对性能有一定的影响。</p>
+<ol>
+<li><p>使用ThreadLocal：　</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">public class ConcurrentDateUtil &#123;</div><div class="line"></div><div class="line">    private static ThreadLocal&lt;DateFormat&gt; threadLocal = new ThreadLocal&lt;DateFormat&gt;() &#123;</div><div class="line">        @Override</div><div class="line">        protected DateFormat initialValue() &#123;</div><div class="line">            return new SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;);</div><div class="line">        &#125;</div><div class="line">    &#125;;</div><div class="line"></div><div class="line">    public static Date parse(String dateStr) throws ParseException &#123;</div><div class="line">        return threadLocal.get().parse(dateStr);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    public static String format(Date date) &#123;</div><div class="line">        return threadLocal.get().format(date);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>另外一种写法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">public class ThreadLocalDateUtil &#123;</div><div class="line">    private static final String date_format = &quot;yyyy-MM-dd HH:mm:ss&quot;;</div><div class="line">    private static ThreadLocal&lt;DateFormat&gt; threadLocal = new ThreadLocal&lt;DateFormat&gt;(); </div><div class="line"> </div><div class="line">    public static DateFormat getDateFormat()   </div><div class="line">    &#123;  </div><div class="line">        DateFormat df = threadLocal.get();  </div><div class="line">        if(df==null)&#123;  </div><div class="line">            df = new SimpleDateFormat(date_format);  </div><div class="line">            threadLocal.set(df);  </div><div class="line">        &#125;  </div><div class="line">        return df;  </div><div class="line">    &#125;  </div><div class="line"></div><div class="line">    public static String formatDate(Date date) throws ParseException &#123;</div><div class="line">        return getDateFormat().format(date);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    public static Date parse(String strDate) throws ParseException &#123;</div><div class="line">        return getDateFormat().parse(strDate);</div><div class="line">    &#125;   </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>说明：使用ThreadLocal, 也是将共享变量变为独享，线程独享肯定能比方法独享在并发环境中能减少不少创建对象的开销。如果对性能要求比较高的情况下，一般推荐使用这种方法。</p>
+<p>4.抛弃JDK，使用其他类库中的时间格式化类：<br>a. 使用Apache commons 里的FastDateFormat，宣称是既快又线程安全的SimpleDateFormat, 可惜它只能对日期进行format, 不能对日期串进行解析。<br>b. 使用Joda-Time类库来处理时间相关问题</p>
+<p>##总结<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">由SimpleDateFormat的线程安全问题，我们在遇到多线程并发问题是可以得到如下的解决方案：</div><div class="line">1. 函数内单独创建对象</div><div class="line">2. 采用同步代码</div><div class="line">3. 用threadlocal变量</div><div class="line">4. 采用线程安全的第三方库</div></pre></td></tr></table></figure></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/12/07/linux-file-io/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/12/07/linux-file-io/" itemprop="url">
+                  比较read/write & fread/fwrite
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-12-07T18:21:43+08:00">
+                2017-12-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>UNIX环境下的C对二进制流文件的读写有两套：</p>
+<ol>
+<li>fopen,fread,fwrite,fprintf</li>
+<li>open, read, write</li>
+</ol>
+<p>##区别</p>
+<ol>
+<li>fopen 系列是标准的C库函数；open系列是 POSIX 定义的，是UNIX系统里的system call。<br>也就是说，fopen系列更具有可移植性；而open系列只能用在 POSIX 的操作系统上。</li>
+<li>使用fopen 系列函数时要定义一个指代文件的对象，被称为“文件句柄”（file handler），是一个结构体；而open系列使用的是一个被称为“文件描述符” （file descriptor）的int型整数。</li>
+<li>fopen 系列是级别较高的I/O，读写时使用缓冲；而open系列相对低层，更接近操作系统，读写时没有缓冲。由于能更多地与操作系统打交道，open系列可以访问更改一些fopen系列无法访问的信息，如查看文件的读写权限。这些额外的功能通常因系统而异。</li>
+<li>使用fopen系列函数需要”#include <sdtio.h>“；使用open系列函数需要”#include <fcntl.h>“ ，链接时要之用libc（-lc）</fcntl.h></sdtio.h></li>
+</ol>
+<p>##在开源项目中的运用<br>redis中写日志使用的是第一套,下面是redis的源码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line">void serverLogRaw(int level, const char *msg) &#123;</div><div class="line">    const int syslogLevelMap[] = &#123; LOG_DEBUG, LOG_INFO, LOG_NOTICE, LOG_WARNING &#125;;</div><div class="line">    const char *c = &quot;.-*#&quot;;</div><div class="line">    FILE *fp;</div><div class="line">    char buf[64];</div><div class="line">    int rawmode = (level &amp; LL_RAW);</div><div class="line">    int log_to_stdout = server.logfile[0] == &apos;\0&apos;;</div><div class="line"></div><div class="line">    level &amp;= 0xff; /* clear flags */</div><div class="line">    if (level &lt; server.verbosity) return;</div><div class="line"></div><div class="line">    fp = log_to_stdout ? stdout : fopen(server.logfile,&quot;a&quot;);</div><div class="line">    if (!fp) return;</div><div class="line"></div><div class="line">    if (rawmode) &#123;</div><div class="line">        fprintf(fp,&quot;%s&quot;,msg);</div><div class="line">    &#125; else &#123;</div><div class="line">        int off;</div><div class="line">        struct timeval tv;</div><div class="line">        int role_char;</div><div class="line">        pid_t pid = getpid();</div><div class="line"></div><div class="line">        gettimeofday(&amp;tv,NULL);</div><div class="line">        off = strftime(buf,sizeof(buf),&quot;%d %b %H:%M:%S.&quot;,localtime(&amp;tv.tv_sec));</div><div class="line">        snprintf(buf+off,sizeof(buf)-off,&quot;%03d&quot;,(int)tv.tv_usec/1000);</div><div class="line">        if (server.sentinel_mode) &#123;</div><div class="line">            role_char = &apos;X&apos;; /* Sentinel. */</div><div class="line">        &#125; else if (pid != server.pid) &#123;</div><div class="line">            role_char = &apos;C&apos;; /* RDB / AOF writing child. */</div><div class="line">        &#125; else &#123;</div><div class="line">            role_char = (server.masterhost ? &apos;S&apos;:&apos;M&apos;); /* Slave or Master. */</div><div class="line">        &#125;</div><div class="line">        fprintf(fp,&quot;%d:%c %s %c %s\n&quot;,</div><div class="line">            (int)getpid(),role_char, buf,c[level],msg);</div><div class="line">    &#125;</div><div class="line">    fflush(fp);</div><div class="line"></div><div class="line">    if (!log_to_stdout) fclose(fp);</div><div class="line">    if (server.syslog_enabled) syslog(syslogLevelMap[level], &quot;%s&quot;, msg);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>google开源的日志系统glog写文件操作也采用第一套io函数，在函数LogFileObject::Write</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/11/29/network-tcp-machine-state/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/11/29/network-tcp-machine-state/" itemprop="url">
+                  TCP状态机分析（二）CLOSE_WAIT&TIME_WAIT
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-11-29T01:46:17+08:00">
+                2017-11-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/network/" itemprop="url" rel="index">
+                    <span itemprop="name">network</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="CLOSE-WAIT"><a href="#CLOSE-WAIT" class="headerlink" title="CLOSE_WAIT"></a>CLOSE_WAIT</h2><p>在被动关闭连接(对方关闭)情况下，在已经接收到FIN，但是还没有发送自己的FIN的时刻，连接处于CLOSE_WAIT状态。出现大量close_wait的现象，主要原因是某种情况下对方关闭了socket链接，但是我方忙与读或者写，没有关闭连接。代码需要判断socket，一旦读到0，断开连接，read返回负，检查一下errno，如果不是AGAIN，就断开连接。</p>
+<p>解决方法:<br>基本的思想就是要检测出对方已经关闭的socket，然后关闭它。</p>
+<ol>
+<li>代码需要判断socket，一旦read返回0，断开连接，read返回负，检查一下errno，如果不是AGAIN，也断开连接。(注:在UNP 7.5节的图7.6中，可以看到使用select能够检测出对方发送了FIN，再根据这条规则就可以处理CLOSE_WAIT的连接)</li>
+<li>给每一个socket设置一个时间戳last_update，每接收或者是发送成功数据，就用当前时间更新这个时间戳。定期检查所有的时间戳，如果时间戳与当前时间差值超过一定的阈值，就关闭这个socket。</li>
+<li>使用一个Heart-Beat线程，定期向socket发送指定格式的心跳数据包，如果接收到对方的RST报文，说明对方已经关闭了socket，那么我们也关闭这个socket。</li>
+<li>设置SO_KEEPALIVE选项，并修改内核参数,下面会详细介绍<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">a. 参数设置</div><div class="line">查看相关的参数,这是当前线上环境的配置</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>sysctl -a|grep tcp_keepalive<br>net.ipv4.tcp_keepalive_intvl = 300<br>net.ipv4.tcp_keepalive_probes = 9<br>net.ipv4.tcp_keepalive_time = 75<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">参数的含义</div></pre></td></tr></table></figure></p>
+<p>tcp_keepalive_intvl: 在TCP保活打开的情况下，最后一次数据交换到TCP发送第一个保活探测包的间隔，即允许的持续空闲时长，或者说每次正常发送心跳的周期。<br>tcp_keepalive_probes: 在tcp_keepalive_time之后，没有接收到对方确认，继续发送保活探测包次数，默认值为9（次）<br>tcp_keepalive_time: tcp_keepalive_time之后，没有接收到对方确认，继续发送保活探测包的发送频率，默认值为75s。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">设置相关的参数</div></pre></td></tr></table></figure></p>
+<p>sysctl -w net.ipv4.tcp_keepalive_time = 75<br>也可以直接打开/etc/sysctl.conf<br>加入net.ipv4.tcp_keepalive_time = 75<br>``</p>
+<p>让参数生效<br>sysctl -p</p>
+<p>(tcp_keepalive_time + tcp_keepalive_intvl * tcp_keepalive_probes)时间内可检测到连接失效与否。</p>
+<p>b. 开启keepalive属性<br>int keepAlive = 1;<br>setsockopt(client_fd, SOL_SOCKET, SO_KEEPALIVE, (void*)&amp;keepAlive, sizeof(keepAlive)); </p>
+<p>c. 系统调用设置<br>这样只会影响单个连接，上面修改内核参数会影响所有设置keepalive属性的连接</p>
+<p>#include <sys types.h="">  </sys></p>
+<p>#include <sys socket.h="">  </sys></p>
+<p>#include <netinet tcp.h="">  </netinet></p>
+<p>int keepAlive = 1;          // 开启keepalive属性<br>int keepIdle = 1800;        // 如该连接在1800秒内没有任何数据往来,则进行探测<br>int keepInterval = 3;       // 探测时发包的时间间隔为3秒<br>int keepCount = 2;          // 探测尝试的次数.如果第1次探测包就收到响应了,则后几次的不再发.<br>setsockopt(client_fd, SOL_SOCKET, SO_KEEPALIVE, (void<em>)&amp;keepAlive, sizeof(keepAlive));<br>setsockopt(client_fd, SOL_TCP, TCP_KEEPIDLE, (void </em>)&amp;keepIdle, sizeof(keepIdle));<br>setsockopt(client_fd, SOL_TCP,TCP_KEEPINTVL, (void <em>)&amp;keepInterval, sizeof(keepInterval));<br>setsockopt(client_fd, SOL_TCP, TCP_KEEPCNT, (void </em>)&amp;keepCount, sizeof(keepCount));<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">这篇文章对于一次生产环境遇到的CLOSE_WAIT问题分析很到位</div><div class="line">转载：https://mp.weixin.qq.com/s?__biz=MzI4MjA4ODU0Ng==&amp;mid=402163560&amp;idx=1&amp;sn=5269044286ce1d142cca1b5fed3efab1&amp;3rd=MzA3MDU4NTYzMw==&amp;scene=6#rd</div><div class="line"></div><div class="line">### 总结</div><div class="line">1. 默认情况下使用keepalive周期为2个小时，如不选择更改，属于误用范畴，造成资源浪费：内核会为每一个连接都打开一个保活计时器，N个连接会打开N个保活计时器。 优势很明显：</div><div class="line">* TCP协议层面保活探测机制，系统内核完全替上层应用自动给做好了</div><div class="line">* 内核层面计时器相比上层应用，更为高效</div><div class="line">* 上层应用只需要处理数据收发、连接异常通知即可</div><div class="line">* 数据包将更为紧凑</div><div class="line">2. 关闭TCP的keepalive，完全使用业务层面心跳保活机制 完全应用掌管心跳，灵活和可控，比如每一个连接心跳周期的可根据需要减少或延长</div><div class="line">业务心跳 + TCP keepalive一起使用，互相作为补充，但TCP保活探测周期和应用的心跳周期要协调，以互补方可，不能够差距过大，否则将达不到设想的效果。朋友的公司所做IM平台业务心跳2-5分钟智能调整 + tcp keepalive 300秒，组合协作，据说效果也不错。</div><div class="line"></div><div class="line">虽然说没有固定的模式可遵循，那么有以下原则可以参考：</div><div class="line">1. 不想折腾，那就弃用TCP Keepalive吧，完全依赖应用层心跳机制，灵活可控性强</div><div class="line">2. 除非可以很好把控TCP Keepalive机制，那就可以根据需要自由使用吧</div><div class="line"></div><div class="line">### http keep-alive与tcp keep-alive</div><div class="line">http keep-alive与tcp keep-alive，不是同一回事，意图不一样。http keep-alive是为了让tcp活得更久一点，以便在同一个连接上传送多个http，提高socket的效率。而tcp keep-alive是TCP的一种检测TCP连接状况的保活机制。</div><div class="line"></div><div class="line">## TIME_WAIT</div><div class="line">主动发起close的一方会出现TIME_WAIT，比如nginx到web server之间，TIME_WAIT状态是为了保护TCP协议的正确性，避免端口发生复用后老的TCP连接残留在网络上的报文进入新的连接里。但这也引入了一个问题，临时端口数量有限，耗尽后，新建连接就会报错EADDRNOTAVAIL</div><div class="line"></div><div class="line">我们来看下，为什么这个状态能影响到一个处理大量连接的服务器，从下面三个方面来说：</div><div class="line">* 新老连接（相同四元组）在TCP连接表中的slot复用避免</div><div class="line">* 内核中，socket结构体的内存占用</div><div class="line">* 额外的CPU开销</div><div class="line"></div><div class="line">### 解决方法</div><div class="line">* 首先要增加临时端口的数量，增加可被消耗的临时端口资源</div></pre></td></tr></table></figure></p>
+<p>sysctl -w “net.ipv4.ip_local_port_range=1024 65535”<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">* 然后要加速临时端口回收,可以对内核参数做优化(/etc/sysctl.conf)</div><div class="line">1. 启用tcp_tw_reuse</div></pre></td></tr></table></figure></p>
+<p>sysctl -w net.ipv4.tcp_timestamps=1<br>sysctl -w net.ipv4.tcp_tw_reuse=1<br>sysctl -p<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">它定义了一个新的TCP选项–两个四字节的timestamp fields时间戳字段，第一个是TCP发送方的当前时钟时间戳，而第二个是从远程主机接收到的最新时间戳。</div><div class="line">启用net.ipv4.tcp_tw_reuse后，如果新的时间戳，比以前存储的时间戳更大，那么linux将会从TIME-WAIT状态的存活连接中，选取一个，重新分配给新的连接出去的TCP连接。</div><div class="line">连出的TIME-WAIT状态连接，仅仅1秒后就可以被重用了</div><div class="line"></div><div class="line">2. 方法更激进些，启用tw_recycle，tw_recycle允许在两个RTT。当多个客户端处于NAT后时，在服务器端开启tw_recycle会引起丢包问题，如果丢SYN包，就会造成新建连接失败</div></pre></td></tr></table></figure></p>
+<p>sysctl -w net.ipv4.tcp_timestamps=1<br>sysctl -w net.ipv4.tcp_tw_recycle=1<br>sysctl -p<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">3. 给socket配置SO_LINGER，on设为1，linger设为0，这样关闭连接后TCP状态从ESTAB直接进入CLOSED，向服务器发rst包而不是fin包来关闭连接。这种方法风险最高，会丢弃buffer里未发送完的数据，不过通过设计协议（客户端和服务器协议上协商后再关闭TCP连接）可以规避这个问题，使用需要小心，选择合适的场景。</div><div class="line"></div><div class="line"></div><div class="line">### 代码验证</div><div class="line">&quot;纸上得来终觉浅，绝知此事要躬行&quot;, 下面我们来验证这样的方法是否真的可行</div><div class="line"></div><div class="line">1. TIME_WAIT过多会耗尽端口，为了模拟端口耗尽的情况，先修改本地临时端口只有一个可用</div></pre></td></tr></table></figure></p>
+<p>sysctl -w “net.ipv4.ip_local_port_range=20000 20000”<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">2. 启动一个server进程</div></pre></td></tr></table></figure></p>
+<p> ./tcp_server05 127.0.0.1<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">3. 第一个客户端连接</div></pre></td></tr></table></figure></p>
+<p>./tcp_client01 127.0.0.1<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">关闭client，查看连接状态</div><div class="line">![img01](/2017/11/29/network-tcp-machine-state/tcp_machine_state.png)</div><div class="line"></div><div class="line">4. 第二个客户端连接</div></pre></td></tr></table></figure></p>
+<p>chris@ubuntu:~/myspace/test/network$ ./tcp_client01 127.0.0.1<br>connect: Cannot assign requested address<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">5. 修改系统参数</div></pre></td></tr></table></figure></p>
+<p>sysctl -w net.ipv4.tcp_tw_reuse=1<br>```</p>
+<ol>
+<li>重复3、4，可以看到可以成功建立连接</li>
+</ol>
+<h2 id="参数说明"><a href="#参数说明" class="headerlink" title="参数说明"></a>参数说明</h2><ul>
+<li>tcp_tw_recycle (Boolean; default: disabled; since Linux 2.4)<br>Enable fast recycling of TIME_WAIT sockets.  Enabling this option is not recommended since this causes problems when working with NAT (Network Address Translation).</li>
+<li>tcp_tw_reuse (Boolean; default: disabled; since Linux 2.4.19/2.6)<br>Allow to reuse TIME_WAIT sockets for new connections when it is safe from protocol viewpoint.  It should not be changed without advice/request of technical experts.</li>
+</ul>
+<h1 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h1><ul>
+<li><a href="http://www.cnxct.com/coping-with-the-tcp-time_wait-state-on-busy-linux-servers-in-chinese-and-dont-enable-tcp_tw_recycle/" target="_blank" rel="external">http://www.cnxct.com/coping-with-the-tcp-time_wait-state-on-busy-linux-servers-in-chinese-and-dont-enable-tcp_tw_recycle/</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/10/30/muduo-chapter01/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/10/30/muduo-chapter01/" itemprop="url">
+                  <<Linux多线程服务端编程-使用muduo c++网络库>>笔记（一）
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-10-30T04:33:54+08:00">
+                2017-10-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>##c++主要内存问题及解决方法<br>1、缓冲区溢出<br>solution：使用vector<char>、string或自己编写的BufferClass来管理缓冲区，记录缓冲区的长度，并通过成员函数而不是裸指针修改缓冲区。</char></p>
+<p>2、空悬指针/野指针<br>solution：shared_ptr/weak_ptr</p>
+<p>3、重复释放<br>solution：scoped_ptr，只在对象析构时候释放一次</p>
+<p>4、内存泄漏<br>solution：scoped_ptr，对象析构时候自动释放内存</p>
+<p>5、不配对的new[]/delete<br>solution：把new[]替换为vector/scoped_array</p>
+<p>6、内存碎片<br>solution：todo</p>
+<p>##shared_ptr是否线程安全<br>shared_ptr计数操作是线程安全的，release 1.33.0后在大多数系统中采用无锁的原子操作实现；但对于对象本身的访问不是线程安全的。对于shared_ptr的线程安全问题，boost官方文档中作了详细说明, <a href="http://www.boost.org/doc/libs/1_65_1/libs/smart_ptr/doc/html/smart_ptr.html#shared_ptr" target="_blank" rel="external">http://www.boost.org/doc/libs/1_65_1/libs/smart_ptr/doc/html/smart_ptr.html#shared_ptr</a><br>这里作了下总结：</p>
+<ol>
+<li>多个线程可以同时读一个shared_ptr实例</li>
+<li>不同的线程中可以对不同的shared_ptr实例进行“写操作”（包括operator=、reset、析构）</li>
+<li>一个shared_ptr实例被不同的线程同时读写是不安全的</li>
+</ol>
+<p>代码例子：<br>Reading a shared_ptr from two threads<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">shared_ptr</span>&lt;<span class="keyword">int</span>&gt; p(<span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">42</span>));</div><div class="line"></div><div class="line"><span class="comment">// thread A</span></div><div class="line"><span class="built_in">shared_ptr</span>&lt;<span class="keyword">int</span>&gt; p2(p); <span class="comment">// reads p</span></div><div class="line"></div><div class="line"><span class="comment">// thread B</span></div><div class="line"><span class="built_in">shared_ptr</span>&lt;<span class="keyword">int</span>&gt; p3(p); <span class="comment">// OK, multiple reads are safe</span></div></pre></td></tr></table></figure></p>
+<p>Writing different shared_ptr instances from two threads<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// thread A</span></div><div class="line">p.reset(<span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">1912</span>)); <span class="comment">// writes p</span></div><div class="line"></div><div class="line"><span class="comment">// thread B</span></div><div class="line">p2.reset(); <span class="comment">// OK, writes p2</span></div></pre></td></tr></table></figure></p>
+<p>Reading and writing a shared_ptr from two threads<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// thread A</span></div><div class="line">p = p3; <span class="comment">// reads p3, writes p</span></div><div class="line"></div><div class="line"><span class="comment">// thread B</span></div><div class="line">p3.reset(); <span class="comment">// writes p3; undefined, simultaneous read/write</span></div></pre></td></tr></table></figure></p>
+<p>Reading and destroying a shared_ptr from two threads<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// thread A</span></div><div class="line">p3 = p2; <span class="comment">// reads p2, writes p3</span></div><div class="line"></div><div class="line"><span class="comment">// thread B</span></div><div class="line"><span class="comment">// p2 goes out of scope: undefined, the destructor is considered a "write access"</span></div></pre></td></tr></table></figure></p>
+<p>Writing a shared_ptr from two threads<br><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// thread A</span></div><div class="line">p3.reset(<span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">1</span>));</div><div class="line"></div><div class="line"><span class="comment">// thread B</span></div><div class="line">p3.reset(<span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">2</span>)); <span class="comment">// undefined, multiple writes</span></div></pre></td></tr></table></figure></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/10/17/redis-rdb/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1332,567 +1953,11 @@ Derived print:0(Derived.print)
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/09/05/linux-memory-barrier/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/09/05/linux-memory-barrier/" itemprop="url">
-                  linux-memory-barrier
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-09-05T18:36:12+08:00">
-                2017-09-05
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/08/21/java-timer/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/08/21/java-timer/" itemprop="url">
-                  java-timer
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-08-21T15:28:45+08:00">
-                2017-08-21
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="使用Timer类实现"><a href="#使用Timer类实现" class="headerlink" title="使用Timer类实现"></a>使用Timer类实现</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TimerTest</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">getStringDate</span><span class="params">()</span> </span>&#123;</div><div class="line">        Date currentTime = <span class="keyword">new</span> Date();</div><div class="line">        SimpleDateFormat formatter = <span class="keyword">new</span> SimpleDateFormat(<span class="string">"yyyy-MM-dd HH:mm:ss"</span>);</div><div class="line">        String dateString = formatter.format(currentTime);</div><div class="line">        <span class="keyword">return</span> dateString;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">        <span class="keyword">final</span> TimerTask timerTask1 = <span class="keyword">new</span> TimerTask() &#123;</div><div class="line">            <span class="meta">@Override</span></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">try</span> &#123;</div><div class="line">                    System.out.println(<span class="string">"task2 invoked!"</span>+Thread.currentThread().getId());</div><div class="line">                    System.out.println(<span class="string">"begin: "</span>+getStringDate());</div><div class="line">                    <span class="comment">//Thread.sleep(5000L);</span></div><div class="line">                &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">                    e.printStackTrace();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;;</div><div class="line"></div><div class="line">        <span class="keyword">final</span> TimerTask timerTask2 = <span class="keyword">new</span> TimerTask() &#123;</div><div class="line">            <span class="meta">@Override</span></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">                <span class="keyword">try</span> &#123;</div><div class="line">                    System.out.println(<span class="string">"task2 invoked!"</span>+Thread.currentThread().getId());</div><div class="line">                    System.out.println(<span class="string">"begin: "</span>+getStringDate());</div><div class="line">                    <span class="comment">//Thread.sleep(5000L);</span></div><div class="line">                &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">                    e.printStackTrace();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;;</div><div class="line"></div><div class="line">        Timer timer = <span class="keyword">new</span> Timer();<span class="comment">// 实例化Timer</span></div><div class="line">        timer.schedule(timerTask1, <span class="number">8000</span>);</div><div class="line">        timer.schedule(timerTask2, <span class="number">10000</span>);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>Timer<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"></div></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/06/22/pb-CopyFrom/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/06/22/pb-CopyFrom/" itemprop="url">
-                  Protocal Buffer trap 1-CopyFrom
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-06-22T04:22:38+08:00">
-                2017-06-22
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/C/" itemprop="url" rel="index">
-                    <span itemprop="name">C++</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>最近在使用pb时遇到了这么一个问题，还是废了不少时间去定位，出现coredump的场景类似下面的代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">Student stu;</div><div class="line">Teacher teacher;</div><div class="line"></div><div class="line">stu.CopyFrom(teacher);</div></pre></td></tr></table></figure></p>
-<p>奇怪的是这样居然可以编译通过，查了pb的源码发现类都是共同的基类Message，而有两个overload版本<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">void CopyFrom(const ::google::protobuf::Message&amp; from);</div><div class="line">void CopyFrom(const Student&amp; from);</div></pre></td></tr></table></figure></p>
-<p>终于恍然大悟了！！</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2017/05/18/java-cmd01/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/05/18/java-cmd01/" itemprop="url">
-                  java-cmd01-jps
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-05-18T19:58:12+08:00">
-                2017-05-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="位置"><a href="#位置" class="headerlink" title="位置"></a>位置</h2><p>我们知道，很多Java命令都在jdk的JAVA_HOME/bin目录下面，jps也不例外，他就在bin目录下，所以，他是java自带的一个命令。</p>
-<h2 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h2><p>jps(Java Virtual Machine Process Status Tool)是JDK1.5提供的一个显示当前所有java进程pid的命令，简单实用，非常适合在linux/unix平台上简单察看当前java进程的一些简单情况。</p>
-<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>jdk中的jps命令可以显示当前运行的java进程以及相关参数，它的实现机制如下：<br>java程序在启动以后，会在java.io.tmpdir指定的目录下，就是临时文件夹里，生成一个类似于hsperfdata<em>User的文件夹，这个文件夹里（在Linux中为/tmp/hsperfdata</em>{userName}/），有几个文件，名字就是java进程的pid，因此列出当前运行的java进程，只是把这个目录里的文件名列一下而已。至于系统的参数什么，就可以解析这几个文件获得。</p>
-<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>-q 只显示pid，不显示class名称,jar文件名和传递给main 方法的参数<br>-m 输出传递给main 方法的参数，在嵌入式jvm上可能是null<br>-l 输出应用程序main class的完整package名 或者 应用程序的jar文件完整路径名<br>-v 输出传递给JVM的参数</p>
-<p>PS:jps命令有个地方很不好，似乎只能显示当前用户的java进程，要显示其他用户的还是只能用unix/linux的ps命令</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/4/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><span class="page-number current">5</span><a class="page-number" href="/page/6/">6</a><a class="page-number" href="/page/7/">7</a><a class="extend next" rel="next" href="/page/6/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/4/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><span class="page-number current">5</span><a class="page-number" href="/page/6/">6</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/">8</a><a class="extend next" rel="next" href="/page/6/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1935,7 +2000,7 @@ Derived print:0(Derived.print)
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">69</span>
+                <span class="site-state-item-count">73</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
