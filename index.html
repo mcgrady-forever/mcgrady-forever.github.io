@@ -281,6 +281,400 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/06/07/python-nginx-uwsgi-django/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/06/07/python-nginx-uwsgi-django/" itemprop="url">
+                  Nginx＋uWSGI＋Django部署服务器
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-06-07T10:16:53+08:00">
+                2018-06-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index">
+                    <span itemprop="name">Python</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h1><p>先弄清楚几点概念, 注意大小写区别.</p>
+<ul>
+<li>WSGI - 全称为Python Web Server Gateway Interface, 即Python服务器网关接口. 是为Python语言定义的Web服务器和Web应用程序或Web应用框架之间的一种简单而通用的接口. WSGI只是一种通信协议. 更详细信息请查看维基百科WSGI.<br>通俗一点说就是写Python程序时不想花费大量的时间去处理TCP连接、HTTP的请求和响应等等, 于是就把这些都统一成了一个接口(即WSGI). 然后由专门的Web服务器(uWSGI等)和Web应用框架(Django等)去实现. 既降低了开发门槛又节约了时间.</li>
+<li>uWSGI - uWSGI是一个实现了WSGI协议的Web服务器, uWSGI处理了HTTP的响应解析等, 并转成WSGI协议, 这样我们编写的Web应用程序或Web应用框架才可以对传递过来的信息进行处理.</li>
+<li>uwsgi - uwsgi是实现了WSGI协议的服务器的内部自有协议, 它定义了传输信息的类型, 用于实现了WSGI协议的服务器与其他网络服务器的数据通信.</li>
+</ul>
+<p>了解了基本的概念之后, 就知道了为什么要Django+uWSGI. Django是Python的Web应用框架, 他帮我们做了很多基础工作, 让开发者可以专心的写业务代码. 而uWSGI是实现了WSGI协议的Web服务器, 只有这两者组合在一起, Python的应用程序才可以发挥作用.</p>
+<p>理论上, 有了这一套, 就可以部署到服务器使用了. 而我们还要加上Nginx的原因, 当然是因为Nginx可以做一些uWSGI做不到的事情, 或者把事情做得更好.</p>
+<p>Nginx是一款面向性能设计的HTTP服务器，相较于Apache具有占有内存少，稳定性高等优势. 可以被用作反向代理，负载平衡器 和 HTTP缓存. 所以使用Nginx的最大原因之一就是性能问题. 如果只是个小网站, 不会有很大了流量, 当然uWSGI可以满足要求, 但是在高并发情况下就需要Nginx了, 并且Nginx相比Apache有很大的高并发优势.</p>
+<p>另外, Nginx能带来更好的安全性. 并且可以直接处理静态内容, 不需要通过uWSGI, 让uWSGI专心处理动态内容, 从而提高性能.</p>
+<h1 id="部署过程"><a href="#部署过程" class="headerlink" title="部署过程"></a>部署过程</h1><p>我的机器已经安装了anaconda</p>
+<ol>
+<li><p>打开python虚拟环境</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ conda info <span class="_">-e</span></div><div class="line"><span class="comment"># conda environments:</span></div><div class="line"><span class="comment">#</span></div><div class="line">python27                 /home/chris/anaconda2/envs/python27</div><div class="line"></div><div class="line">$ <span class="built_in">source</span> activate python27</div></pre></td></tr></table></figure>
+</li>
+<li><p>安装nginx</p>
+</li>
+<li><p>安装uwsgi</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">pip install uwsgi</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>安装完成后，出现了如下错误<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"># uwsgi --version</div><div class="line">uwsgi: error while loading shared libraries: libpcre.so.1: cannot open...</div></pre></td></tr></table></figure></p>
+<p>可以按照下面的方法解决：<br><a href="https://stackoverflow.com/questions/43301339/pcre-issue-when-setting-up-wsgi-application" target="_blank" rel="external">https://stackoverflow.com/questions/43301339/pcre-issue-when-setting-up-wsgi-application</a></p>
+<ol>
+<li>在django项目下新建uwsgi.ini文件，配置如下<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line"># uwsig使用配置文件启动</div><div class="line">[uwsgi]</div><div class="line"># 项目目录</div><div class="line">chdir=/home/chris/myspace/python/myblog</div><div class="line"># 指定项目的application</div><div class="line">module=myblog.wsgi:application</div><div class="line"># 指定sock的文件路径   </div><div class="line">socket=127.0.0.1:8080    </div><div class="line">#socket=/home/chris/myspace/python/myblog/script/uwsgi.sock</div><div class="line"># 进程个数       </div><div class="line">workers=5</div><div class="line">pidfile=/home/chris/myspace/python/myblog/script/uwsgi.pid</div><div class="line"># 指定IP端口       </div><div class="line">http=127.0.0.1:8080</div><div class="line"># 指定静态文件</div><div class="line">static-map=/static=/home/chris/myspace/python/myblog/static</div><div class="line"># 启动uwsgi的用户名和用户组</div><div class="line">uid=root</div><div class="line">gid=root</div><div class="line"># 启用主进程</div><div class="line">master=true</div><div class="line"># 自动移除unix Socket和pid文件当服务停止的时候</div><div class="line">vacuum=true</div><div class="line"># 序列化接受的内容，如果可能的话</div><div class="line">thunder-lock=true</div><div class="line"># 启用线程</div><div class="line">enable-threads=true</div><div class="line"># 设置自中断时间</div><div class="line">harakiri=30</div><div class="line"># 设置缓冲</div><div class="line">post-buffering=100004096</div><div class="line"># 设置日志目录</div><div class="line">daemonize=/home/chris/myspace/python/myblog/script/uwsgi.log</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>socket参数这里配置为网络地址<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">socket=127.0.0.1:7070</div></pre></td></tr></table></figure></p>
+<p>但如果Nginx和uWSGI同在一个服务器上，可以使用socket文件的形式<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">socket=/home/chris/myspace/python/myblog/script/uwsgi.sock</div></pre></td></tr></table></figure></p>
+<p>使用netstat查看8080端口，已经在监听，说明服务已启动<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">(python27) $ sudo netstat -apn |grep 8080</div><div class="line">tcp        0      0 127.0.0.1:8080          0.0.0.0:*               LISTEN      19700/uwsgi</div></pre></td></tr></table></figure></p>
+<ol>
+<li>配置nginx</li>
+</ol>
+<p>拷贝nginx默认的配置文件nginx.conf并重命名为nginx_django.conf，配置如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">http &#123;</div><div class="line">    ···</div><div class="line">            server &#123;</div><div class="line">                listen       8000;</div><div class="line">                server_name  localhost;</div><div class="line">                location / &#123;</div><div class="line">                        include     /usr/local/nginx/conf/uwsgi_params;</div><div class="line">                        #include uwsgi_params;</div><div class="line">                        uwsgi_pass  127.0.0.1:8080;</div><div class="line">                        #uwsgi_pass unix:/home/chris/myspace/python/myblog/script/uwsgi.sock;</div><div class="line">                        uwsgi_connect_timeout      300; #nginx跟后端服务器连接超时时间(代理连接超时)</div><div class="line">                        uwsgi_send_timeout         300; #后端服务器数据回传时间(代理发送超时)</div><div class="line">                        uwsgi_read_timeout         300; #连接成功后，后端服务器响应时间(代理接收超时)</div><div class="line">                &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">    ···</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<ol>
+<li><p>启动Nginx</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ nginx -c nginx_django.conf</div></pre></td></tr></table></figure>
+</li>
+<li><p>在浏览器访问nginx配置的端口</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">127.0.0.1:8000/index</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>到这里，就完了用Nginx+uWSGI+Django搭建Web服务。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/06/05/linux-process-thread/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/06/05/linux-process-thread/" itemprop="url">
+                  进程&线程
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-06-05T14:09:48+08:00">
+                2018-06-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="进程"><a href="#进程" class="headerlink" title="进程"></a>进程</h1><h2 id="Linux创建进程采用fork-和exec"><a href="#Linux创建进程采用fork-和exec" class="headerlink" title="Linux创建进程采用fork()和exec()"></a>Linux创建进程采用fork()和exec()</h2><ul>
+<li>fork: 采用复制当前进程的方式来创建子进程，此时子进程与父进程的区别仅在于pid, ppid以及资源统计量(比如挂起的信号)</li>
+<li>exec：读取可执行文件并载入地址空间执行；一般称之为exec函数族，有一系列exec开头的函数，比如execl, execve等</li>
+</ul>
+<h2 id="进程创建"><a href="#进程创建" class="headerlink" title="进程创建"></a>进程创建</h2><ul>
+<li>Linux进程创建： 通过fork()系统调用创建进程</li>
+<li>Linux用户级线程创建：通过pthread库中的pthread_create()创建线程</li>
+<li>Linux内核线程创建： 通过kthread_create()<br>Linux线程，也并非”轻量级进程”，在Linux看来线程是一种进程间共享资源的方式，线程可看做是跟其他进程共享资源的进程。</li>
+</ul>
+<p>fork, vfork, clone根据不同参数调用do_fork：</p>
+<ul>
+<li>pthread_create: flags参数为 CLONE_VM, CLONE_FS, CLONE_FILES, CLONE_SIGHAND</li>
+<li>fork: flags参数为 SIGCHLD</li>
+<li>vfork: flags参数为 CLONE_VFORK, CLONE_VM, SIGCHLD</li>
+</ul>
+<h2 id="fork的具体流程"><a href="#fork的具体流程" class="headerlink" title="fork的具体流程"></a>fork的具体流程</h2><p>进程/线程创建的方法fork(),pthread_create(), 万物归一，最终在linux都是调用do_fork方法。 当然还有vfork其实也是一样的， 通过系统调用到sys_vfork，然后再调用do_fork方法，该方法 现在很少使用，所以下图省略该方法。</p>
+<p><img src="/2018/06/05/linux-process-thread/linux-process01.jpg" alt="img01"></p>
+<p>fork执行流程:</p>
+<ol>
+<li>用户空间调用fork()方法;</li>
+<li>经过syscall陷入内核空间, 内核根据系统调用号找到相应的sys_fork系统调用;</li>
+<li>sys_fork()过程会在调用do_fork(), 该方法参数有一个flags很重要, 代表的是父子进程之间需要共享的资源; 对于进程创建flags=SIGCHLD, 即当子进程退出时向父进程发送SIGCHLD信号;</li>
+<li>do_fork(),会进行一些check过程,之后便是进入核心方法copy_process.</li>
+</ol>
+<h2 id="进程复制"><a href="#进程复制" class="headerlink" title="进程复制"></a>进程复制</h2><p>使用fork函数得到的子进程从父进程的继承了整个进程的地址空间，包括：进程上下文、进程堆栈、内存信息、打开的文件描述符、信号控制设置、进程优先级、进程组号、当前工作目录、根目录、资源限制、控制终端等。</p>
+<p>子进程与父进程的区别在于：</p>
+<ol>
+<li>父进程设置的锁，子进程不继承（因为如果是排它锁，被继承的话，矛盾了）</li>
+<li>各自的进程ID和父进程ID不同</li>
+<li>子进程的未决告警被清除；</li>
+<li>子进程的未决信号集设置为空集。</li>
+</ol>
+<h2 id="写时复制（copy-on-write）"><a href="#写时复制（copy-on-write）" class="headerlink" title="写时复制（copy on write）"></a>写时复制（copy on write）</h2><p>linux系统为了提高系统性能和资源利用率，在fork出一个新进程时，系统并没有真正复制一个副本。</p>
+<p>如果多个进程要读取它们自己的那部分资源的副本，那么复制是不必要的。每个进程只要保存一个指向这个资源的指针就可以了。</p>
+<p>如果一个进程要修改自己的那份资源的“副本”，那么就会复制那份资源。这就是写时复制的含义</p>
+<p>fork 和vfork：<br>在fork还没实现copy on write之前。Unix设计者很关心fork之后立刻执行exec所造成的地址空间浪费，所以引入了vfork系统调用。</p>
+<p>vfork有个限制，子进程必须立刻执行_exit或者exec函数。</p>
+<p>即使fork实现了copy on write，效率也没有vfork高，但是我们不推荐使用vfork，因为几乎每一个vfork的实现，都或多或少存在一定的问题。</p>
+<h2 id="孤儿进程-amp-僵尸进程"><a href="#孤儿进程-amp-僵尸进程" class="headerlink" title="孤儿进程&amp;僵尸进程"></a>孤儿进程&amp;僵尸进程</h2><p>fork系统调用之后，父子进程将交替执行，执行顺序不定。</p>
+<ul>
+<li>孤儿进程：如果父进程先退出，子进程还没退出那么子进程的父进程将变为init进程（托孤给了init进程）。（注：任何一个进程都必须有父进程）</li>
+<li><p>僵尸进程：如果子进程先退出，父进程还没退出，那么子进程必须等到父进程捕获到了子进程的退出状态才真正结束，否则这个时候子进程就成为僵进程（僵尸进程：只保留一些退出信息供父进程查询）</p>
+<pre><code>僵尸进程的影响：
+比如进程采用exit()退出的时候，操作系统会进行一些列的处理工作，包括关闭打开的文件描述符、占用的内存等等，但是，操作系统也会为该进程保留少量的信息，以供父进程使用。例如进程的ID号、进程的退出状态、进程运行的CPU时间等，因而占用了系统的资源。
+在一种极端的情况下，档僵尸进程过多的时候，占用了大量的进程ID，系统将无法产生新的进程，相当于系统的资源被耗尽。
+</code></pre></li>
+<li><p>代码例子-孤儿进程</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cstdio&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cstdlib&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></div><div class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> <span class="keyword">const</span> *argv[])</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> childpid = <span class="number">0</span>;</div><div class="line">	<span class="keyword">int</span> i;</div><div class="line">	</div><div class="line">	<span class="keyword">pid_t</span> pid = fork();</div><div class="line">	<span class="keyword">if</span> (pid == <span class="number">0</span>) &#123;</div><div class="line">		<span class="comment">//child process</span></div><div class="line">		sleep(<span class="number">20</span>);</div><div class="line">		<span class="built_in">printf</span>(<span class="string">"child:%d, parent: %d\n"</span>, getpid(), getppid());</div><div class="line">		</div><div class="line">		</div><div class="line">		<span class="comment">// char * execv_str[] = &#123;"echo", "executed by execv",NULL&#125;;</span></div><div class="line">		<span class="comment">// if (execv("/bin/echo",execv_str) &lt;0 )&#123;</span></div><div class="line">		<span class="comment">// 	perror("error on exec");</span></div><div class="line">		<span class="comment">// 	exit(0);</span></div><div class="line">		<span class="comment">// &#125;</span></div><div class="line">		</div><div class="line">		<span class="built_in">printf</span>(<span class="string">"child process end\n\n"</span>);</div><div class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (pid &gt; <span class="number">0</span>) &#123;</div><div class="line">		<span class="comment">//parent process</span></div><div class="line">		<span class="built_in">printf</span>(<span class="string">"parent: %d\n"</span>, getpid());</div><div class="line">		<span class="comment">//sleep(20);</span></div><div class="line">		<span class="comment">//wait(NULL);</span></div><div class="line">		<span class="built_in">printf</span>(<span class="string">"parent process end\n\n"</span>);</div><div class="line">	&#125; <span class="keyword">else</span> &#123;</div><div class="line">		perror(<span class="string">"fork"</span>);</div><div class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>例子中先让父进程退出，子进程在fork后sleep一段时间，用ps命令查看进程信息，可以看到5083的父进程是1<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ps <span class="_">-e</span>F |grep exec_test</div><div class="line">chris     5083     1  0  3180   172   3 17:01 pts/1    00:00:00 ./exec_test</div><div class="line">chris     5095  4391  0 24366   980   3 17:01 pts/2    00:00:00 grep --color=auto exec_test</div></pre></td></tr></table></figure></p>
+<ul>
+<li>代码例子-僵尸进程<figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cstdio&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;cstdlib&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></div><div class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> <span class="keyword">const</span> *argv[])</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> childpid = <span class="number">0</span>;</div><div class="line">	<span class="keyword">int</span> i;</div><div class="line">	</div><div class="line">	<span class="keyword">pid_t</span> pid = fork();</div><div class="line">	<span class="keyword">if</span> (pid == <span class="number">0</span>) &#123;</div><div class="line">		<span class="comment">//child process</span></div><div class="line">		<span class="comment">//sleep(20);</span></div><div class="line">		<span class="built_in">printf</span>(<span class="string">"child:%d, parent: %d\n"</span>, getpid(), getppid());</div><div class="line">		</div><div class="line">		</div><div class="line">		<span class="comment">// char * execv_str[] = &#123;"echo", "executed by execv",NULL&#125;;</span></div><div class="line">		<span class="comment">// if (execv("/bin/echo",execv_str) &lt;0 )&#123;</span></div><div class="line">		<span class="comment">// 	perror("error on exec");</span></div><div class="line">		<span class="comment">// 	exit(0);</span></div><div class="line">		<span class="comment">// &#125;</span></div><div class="line">		</div><div class="line">		<span class="built_in">printf</span>(<span class="string">"child process end\n\n"</span>);</div><div class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (pid &gt; <span class="number">0</span>) &#123;</div><div class="line">		<span class="comment">//parent process</span></div><div class="line">		<span class="built_in">printf</span>(<span class="string">"parent: %d\n"</span>, getpid());</div><div class="line">		sleep(<span class="number">30</span>);</div><div class="line">		<span class="comment">//wait(NULL);</span></div><div class="line">		<span class="built_in">printf</span>(<span class="string">"parent process end\n\n"</span>);</div><div class="line">	&#125; <span class="keyword">else</span> &#123;</div><div class="line">		perror(<span class="string">"fork"</span>);</div><div class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>父进程不调用wait等待子进程结束，使用ps命令查看进程状态，defunct表示僵尸进程。<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ps <span class="_">-e</span>F |grep exec_test</div><div class="line">chris     5225  3922  0  3181  1116   2 17:17 pts/1    00:00:00 ./exec_test</div><div class="line">chris     5226  5225  0     0     0   3 17:17 pts/1    00:00:00 [exec_test] &lt;defunct&gt;</div></pre></td></tr></table></figure></p>
+<p>也可以这这样查询：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ps <span class="_">-e</span> -o <span class="built_in">stat</span>,ppid,pid,cmd|egrep <span class="string">'^[Zz]'</span></div></pre></td></tr></table></figure></p>
+<h2 id="如何避免僵尸进程"><a href="#如何避免僵尸进程" class="headerlink" title="如何避免僵尸进程"></a>如何避免僵尸进程</h2><p>我们可以使用如下几种方法避免僵尸进程的产生:</p>
+<ol>
+<li>在fork后调用wait/waitpid函数取得子进程退出状态。</li>
+<li>调用fork两次（第一次调用产生一个子进程，第二次调用fork是在第一个子进程中调用，同时将父进程退出（第一个子进程退出），此时的第二个子进程的父进程id为init进程id。</li>
+<li>在程序中显示忽略SIGCHLD信号（子进程退出时会产生一个SIGCHLD信号，我们显示忽略此信号即可）。</li>
+<li>捕获SIGCHLD信号并在捕获程序中调用wait/waitpid函数。</li>
+</ol>
+<h1 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h1><ul>
+<li><a href="http://gityuan.com/2017/08/05/linux-process-fork/" target="_blank" rel="external">http://gityuan.com/2017/08/05/linux-process-fork/</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/05/22/cpp-reference/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1791,313 +2185,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/30/linux-signal/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/03/30/linux-signal/" itemprop="url">
-                  signal
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-30T16:30:12+08:00">
-                2018-03-30
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h1><p>信号是软件中断。很多比较重要的应用程序都需处理信号。首先，每个信号都有一个名字。这些名字都以三个字符 SIG 开头。在头文件 <signal.h> 中，这些信号都被定义为正整数（信号编号）。</signal.h></p>
-<h1 id="所有信号名称"><a href="#所有信号名称" class="headerlink" title="所有信号名称"></a>所有信号名称</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~/myspace/myblog$ kill -l</div><div class="line"> 1) SIGHUP	 2) SIGINT	 3) SIGQUIT	 4) SIGILL	 5) SIGTRAP</div><div class="line"> 6) SIGABRT	 7) SIGBUS	 8) SIGFPE	 9) SIGKILL	10) SIGUSR1</div><div class="line">11) SIGSEGV	12) SIGUSR2	13) SIGPIPE	14) SIGALRM	15) SIGTERM</div><div class="line">16) SIGSTKFLT	17) SIGCHLD	18) SIGCONT	19) SIGSTOP	20) SIGTSTP</div><div class="line">21) SIGTTIN	22) SIGTTOU	23) SIGURG	24) SIGXCPU	25) SIGXFSZ</div><div class="line">26) SIGVTALRM	27) SIGPROF	28) SIGWINCH	29) SIGIO	30) SIGPWR</div><div class="line">31) SIGSYS	34) SIGRTMIN	35) SIGRTMIN+1	36) SIGRTMIN+2	37) SIGRTMIN+3</div><div class="line">38) SIGRTMIN+4	39) SIGRTMIN+5	40) SIGRTMIN+6	41) SIGRTMIN+7	42) SIGRTMIN+8</div><div class="line">43) SIGRTMIN+9	44) SIGRTMIN+10	45) SIGRTMIN+11	46) SIGRTMIN+12	47) SIGRTMIN+13</div><div class="line">48) SIGRTMIN+14	49) SIGRTMIN+15	50) SIGRTMAX-14	51) SIGRTMAX-13	52) SIGRTMAX-12</div><div class="line">53) SIGRTMAX-11	54) SIGRTMAX-10	55) SIGRTMAX-9	56) SIGRTMAX-8	57) SIGRTMAX-7</div><div class="line">58) SIGRTMAX-6	59) SIGRTMAX-5	60) SIGRTMAX-4	61) SIGRTMAX-3	62) SIGRTMAX-2</div><div class="line">63) SIGRTMAX-1	64) SIGRTMAX</div></pre></td></tr></table></figure>
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/30/linux-max-fd/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/03/30/linux-max-fd/" itemprop="url">
-                  Linux最大文件数限制
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-30T11:00:13+08:00">
-                2018-03-30
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>要知道,在linux的世界里,一切皆文件.因此要实现大的并发量的第一步,修改linux系统的文件标识符限制数,也就是文件打开数量的限制</p>
-<h1 id="内核级的总限制-fs-file-max"><a href="#内核级的总限制-fs-file-max" class="headerlink" title="内核级的总限制 fs.file-max"></a>内核级的总限制 fs.file-max</h1><p>man proc 里有这么一段话<br><img src="/2018/03/30/linux-max-fd/linux_max_fd01.png" alt="img01"></p>
-<ul>
-<li><p>查看限制数</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~/myspace/myblog$ sysctl fs.file-max</div><div class="line">fs.file-max = 3000000</div></pre></td></tr></table></figure>
-</li>
-<li><p>修改限制数</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~/myspace/myblog$ sudo sysctl -w fs.file-max=3000000</div><div class="line">[sudo] password for chris: </div><div class="line">fs.file-max = 3000000</div></pre></td></tr></table></figure>
-</li>
-</ul>
-<p>需要永久生效则<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">echo &quot;fs.file-max=3000000&quot; &gt;&gt;/etc/sysctl.conf</div></pre></td></tr></table></figure></p>
-<ul>
-<li>查看使用情况<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~$ sysctl fs.file-nr</div><div class="line">fs.file-nr = 6816	0	3000000</div></pre></td></tr></table></figure>
-</li>
-</ul>
-<p>其中第一个数表示当前系统已分配使用的打开文件描述符数，第二个数为分配后已释放的（目前已不再使用），第三个数等于file-max。</p>
-<h1 id="用户级进程级的限制"><a href="#用户级进程级的限制" class="headerlink" title="用户级进程级的限制"></a>用户级进程级的限制</h1><h2 id="查看资源硬限制数"><a href="#查看资源硬限制数" class="headerlink" title="查看资源硬限制数"></a>查看资源硬限制数</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~$ ulimit -Hn</div><div class="line">4096</div></pre></td></tr></table></figure>
-<h2 id="查看资源软限制数"><a href="#查看资源软限制数" class="headerlink" title="查看资源软限制数"></a>查看资源软限制数</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~$ ulimit -Sn</div><div class="line">1024</div></pre></td></tr></table></figure>
-<pre><code>通过ulimit -Sn设置最大打开文件描述符数的soft limit，注意soft limit不能大于hard limit（ulimit -Hn可查看hard limit），另外ulimit -n默认查看的是soft limit，但是 ulimit -n 204800 则会同时设置soft limit和hard limit。对于非root用户只能设置比原来小的hard limit
-</code></pre><p>若要使修改永久有效，则需要在/etc/security/limits.conf中进行设置，可添加如下两行。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">@work       hard    nofile  6000000</div><div class="line">@work       soft    nofile  4000000</div><div class="line">@work	    soft    core    4000000</div><div class="line">@work	    hard    core    4000000</div><div class="line">@work       hard    nproc   6000000</div><div class="line">@work       soft    nproc   4000000</div></pre></td></tr></table></figure></p>
-<pre><code>以上设置需要注销之后重新登录才能生效：
-设置nofile的hard limit还有一点要注意的就是hard limit不能大于/proc/sys/fs/nr_open，假如hard limit大于nr_open，注销后无法正常登录。可以修改nr_open的值： echo 2000000 &gt; /proc/sys/fs/nr_open
-</code></pre>
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2145,7 +2232,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">73</span>
+                <span class="site-state-item-count">75</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>

@@ -281,6 +281,313 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/30/linux-signal/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/30/linux-signal/" itemprop="url">
+                  signal
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-30T16:30:12+08:00">
+                2018-03-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h1><p>信号是软件中断。很多比较重要的应用程序都需处理信号。首先，每个信号都有一个名字。这些名字都以三个字符 SIG 开头。在头文件 <signal.h> 中，这些信号都被定义为正整数（信号编号）。</signal.h></p>
+<h1 id="所有信号名称"><a href="#所有信号名称" class="headerlink" title="所有信号名称"></a>所有信号名称</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~/myspace/myblog$ kill -l</div><div class="line"> 1) SIGHUP	 2) SIGINT	 3) SIGQUIT	 4) SIGILL	 5) SIGTRAP</div><div class="line"> 6) SIGABRT	 7) SIGBUS	 8) SIGFPE	 9) SIGKILL	10) SIGUSR1</div><div class="line">11) SIGSEGV	12) SIGUSR2	13) SIGPIPE	14) SIGALRM	15) SIGTERM</div><div class="line">16) SIGSTKFLT	17) SIGCHLD	18) SIGCONT	19) SIGSTOP	20) SIGTSTP</div><div class="line">21) SIGTTIN	22) SIGTTOU	23) SIGURG	24) SIGXCPU	25) SIGXFSZ</div><div class="line">26) SIGVTALRM	27) SIGPROF	28) SIGWINCH	29) SIGIO	30) SIGPWR</div><div class="line">31) SIGSYS	34) SIGRTMIN	35) SIGRTMIN+1	36) SIGRTMIN+2	37) SIGRTMIN+3</div><div class="line">38) SIGRTMIN+4	39) SIGRTMIN+5	40) SIGRTMIN+6	41) SIGRTMIN+7	42) SIGRTMIN+8</div><div class="line">43) SIGRTMIN+9	44) SIGRTMIN+10	45) SIGRTMIN+11	46) SIGRTMIN+12	47) SIGRTMIN+13</div><div class="line">48) SIGRTMIN+14	49) SIGRTMIN+15	50) SIGRTMAX-14	51) SIGRTMAX-13	52) SIGRTMAX-12</div><div class="line">53) SIGRTMAX-11	54) SIGRTMAX-10	55) SIGRTMAX-9	56) SIGRTMAX-8	57) SIGRTMAX-7</div><div class="line">58) SIGRTMAX-6	59) SIGRTMAX-5	60) SIGRTMAX-4	61) SIGRTMAX-3	62) SIGRTMAX-2</div><div class="line">63) SIGRTMAX-1	64) SIGRTMAX</div></pre></td></tr></table></figure>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/30/linux-max-fd/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/30/linux-max-fd/" itemprop="url">
+                  Linux最大文件数限制
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-30T11:00:13+08:00">
+                2018-03-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>要知道,在linux的世界里,一切皆文件.因此要实现大的并发量的第一步,修改linux系统的文件标识符限制数,也就是文件打开数量的限制</p>
+<h1 id="内核级的总限制-fs-file-max"><a href="#内核级的总限制-fs-file-max" class="headerlink" title="内核级的总限制 fs.file-max"></a>内核级的总限制 fs.file-max</h1><p>man proc 里有这么一段话<br><img src="/2018/03/30/linux-max-fd/linux_max_fd01.png" alt="img01"></p>
+<ul>
+<li><p>查看限制数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~/myspace/myblog$ sysctl fs.file-max</div><div class="line">fs.file-max = 3000000</div></pre></td></tr></table></figure>
+</li>
+<li><p>修改限制数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~/myspace/myblog$ sudo sysctl -w fs.file-max=3000000</div><div class="line">[sudo] password for chris: </div><div class="line">fs.file-max = 3000000</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>需要永久生效则<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">echo &quot;fs.file-max=3000000&quot; &gt;&gt;/etc/sysctl.conf</div></pre></td></tr></table></figure></p>
+<ul>
+<li>查看使用情况<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~$ sysctl fs.file-nr</div><div class="line">fs.file-nr = 6816	0	3000000</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>其中第一个数表示当前系统已分配使用的打开文件描述符数，第二个数为分配后已释放的（目前已不再使用），第三个数等于file-max。</p>
+<h1 id="用户级进程级的限制"><a href="#用户级进程级的限制" class="headerlink" title="用户级进程级的限制"></a>用户级进程级的限制</h1><h2 id="查看资源硬限制数"><a href="#查看资源硬限制数" class="headerlink" title="查看资源硬限制数"></a>查看资源硬限制数</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~$ ulimit -Hn</div><div class="line">4096</div></pre></td></tr></table></figure>
+<h2 id="查看资源软限制数"><a href="#查看资源软限制数" class="headerlink" title="查看资源软限制数"></a>查看资源软限制数</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">chris@ubuntu:~$ ulimit -Sn</div><div class="line">1024</div></pre></td></tr></table></figure>
+<pre><code>通过ulimit -Sn设置最大打开文件描述符数的soft limit，注意soft limit不能大于hard limit（ulimit -Hn可查看hard limit），另外ulimit -n默认查看的是soft limit，但是 ulimit -n 204800 则会同时设置soft limit和hard limit。对于非root用户只能设置比原来小的hard limit
+</code></pre><p>若要使修改永久有效，则需要在/etc/security/limits.conf中进行设置，可添加如下两行。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">@work       hard    nofile  6000000</div><div class="line">@work       soft    nofile  4000000</div><div class="line">@work	    soft    core    4000000</div><div class="line">@work	    hard    core    4000000</div><div class="line">@work       hard    nproc   6000000</div><div class="line">@work       soft    nproc   4000000</div></pre></td></tr></table></figure></p>
+<pre><code>以上设置需要注销之后重新登录才能生效：
+设置nofile的hard limit还有一点要注意的就是hard limit不能大于/proc/sys/fs/nr_open，假如hard limit大于nr_open，注销后无法正常登录。可以修改nr_open的值： echo 2000000 &gt; /proc/sys/fs/nr_open
+</code></pre>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/27/debug-memory/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1715,340 +2022,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/19/network-thundering-herd/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/03/19/network-thundering-herd/" itemprop="url">
-                  惊群效应
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-19T14:24:47+08:00">
-                2018-03-19
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="什么叫惊群现象"><a href="#什么叫惊群现象" class="headerlink" title="什么叫惊群现象"></a>什么叫惊群现象</h1><p>首先，我们看看维基百科对惊群的定义:</p>
-<pre><code>The thundering herd problem occurs when a large number of processes waiting for an event are awoken when that event occurs, but only one process is able to proceed at a time. After the processes wake up, they all demand the resource and a decision must be made as to which process can continue. After the decision is made, the remaining processes are put back to sleep, only to all wake up again to request access to the resource.
-
-This occurs repeatedly, until there are no more processes to be woken up. Because all the processes use system resources upon waking, it is more efficient if only one process was woken up at a time.
-
-This may render the computer unusable, but it can also be used as a technique if there is no other way to decide which process should continue (for example when programming with semaphores).
-</code></pre><p>惊群简单来说就是多个进程或者线程在等待同一个事件，当事件发生时，所有线程和进程都会被内核唤醒。唤醒后通常只有一个进程获得了该事件并进行处理，其他进程发现获取事件失败后又继续进入了等待状态，在一定程度上降低了系统性能。</p>
-<h1 id="accept-惊群"><a href="#accept-惊群" class="headerlink" title="accept 惊群"></a>accept 惊群</h1><p>具体来说惊群通常发生在服务器的监听等待调用上，服务器创建监听socket，后fork多个进程，在每个进程中调用accept或者epoll_wait等待终端的连接。</p>
-<p>那么这个问题真的存在吗？</p>
-<p>事实上，历史上，Linux 的 accpet 确实存在惊群问题，但现在的内核都解决该问题了。即，当多个进程/线程都阻塞在对同一个 socket 的 accept 调用上时，当有一个新的连接到来，内核只会唤醒一个进程，其他进程保持休眠，压根就不会被唤醒。</p>
-<p>测试代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div></pre></td><td class="code"><pre><div class="line">#include &lt;stdio.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line">#include &lt;sys/types.h&gt;  </div><div class="line">#include &lt;sys/socket.h&gt;  </div><div class="line">#include &lt;netinet/in.h&gt;  </div><div class="line">#include &lt;arpa/inet.h&gt;  </div><div class="line">#include &lt;assert.h&gt;  </div><div class="line">#include &lt;sys/wait.h&gt;</div><div class="line">#include &lt;string.h&gt;</div><div class="line">#include &lt;errno.h&gt;</div><div class="line"></div><div class="line">#define IP   &quot;127.0.0.1&quot;</div><div class="line">#define PORT  8888</div><div class="line">#define WORKER 4</div><div class="line"></div><div class="line">int worker(int listenfd, int i)</div><div class="line">&#123;</div><div class="line">    while (1) &#123;</div><div class="line">        printf(&quot;I am worker %d, begin to accept connection.\n&quot;, i);</div><div class="line">        struct sockaddr_in client_addr;  </div><div class="line">        socklen_t client_addrlen = sizeof( client_addr );  </div><div class="line">        int connfd = accept( listenfd, ( struct sockaddr* )&amp;client_addr, &amp;client_addrlen );  </div><div class="line">        if (connfd != -1) &#123;</div><div class="line">            printf(&quot;worker %d accept a connection success.\t&quot;, i);</div><div class="line">            printf(&quot;ip :%s\t&quot;,inet_ntoa(client_addr.sin_addr));</div><div class="line">            printf(&quot;port: %d \n&quot;,client_addr.sin_port);</div><div class="line">        &#125; else &#123;</div><div class="line">            printf(&quot;worker %d accept a connection failed,error:%s&quot;, i, strerror(errno));</div><div class="line">			close(connfd);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    return 0;</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main()</div><div class="line">&#123;</div><div class="line">    int i = 0;</div><div class="line">    struct sockaddr_in address;  </div><div class="line">    bzero(&amp;address, sizeof(address));  </div><div class="line">    address.sin_family = AF_INET;  </div><div class="line">    inet_pton( AF_INET, IP, &amp;address.sin_addr);  </div><div class="line">    address.sin_port = htons(PORT);  </div><div class="line">    int listenfd = socket(PF_INET, SOCK_STREAM, 0);  </div><div class="line">    assert(listenfd &gt;= 0);  </div><div class="line"></div><div class="line">    int ret = bind(listenfd, (struct sockaddr*)&amp;address, sizeof(address));  </div><div class="line">    assert(ret != -1);  </div><div class="line"></div><div class="line">    ret = listen(listenfd, 5);  </div><div class="line">    assert(ret != -1);  </div><div class="line"></div><div class="line">    for (i = 0; i &lt; WORKER; i++) &#123;</div><div class="line">        printf(&quot;Create worker %d\n&quot;, i+1);</div><div class="line">        pid_t pid = fork();</div><div class="line">        /*child  process */</div><div class="line">        if (pid == 0) &#123;</div><div class="line">            worker(listenfd, i);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        if (pid &lt; 0) &#123;</div><div class="line">            printf(&quot;fork error&quot;);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /*wait child process*/</div><div class="line">    int status;</div><div class="line">    wait(&amp;status);</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>当我们对该服务器发起连接请求（用 telnet/curl 等模拟）时，会看到只有一个进程被唤醒。</p>
-<h1 id="epoll惊群"><a href="#epoll惊群" class="headerlink" title="epoll惊群"></a>epoll惊群</h1><p>如上所述，accept 已经不存在惊群问题，但 epoll 上还是存在惊群问题。即，如果多个进程/线程阻塞在监听同一个 listening socket fd 的 epoll_wait 上，当有一个新的连接到来时，所有的进程都会被唤醒。</p>
-<p>考虑如下场景：</p>
-<p>主进程创建 socket, bind， listen 后，将该 socket 加入到 epoll 中，然后 fork 出多个子进程，每个进程都阻塞在 epoll_wait 上，如果有事件到来，则判断该事件是否是该 socket 上的事件，如果是，说明有新的连接到来了，则进行 accept 操作。为了简化处理，忽略后续的读写以及对 accept 返回的新的套接字的处理，直接断开连接。</p>
-<p>那么，当新的连接到来时，是否每个阻塞在 epoll_wait 上的进程都会被唤醒呢？</p>
-<p>很多博客中提到，测试表明虽然 epoll_wait 不会像 accept 那样只唤醒一个进程/线程，但也不会把所有的进程/线程都唤醒。</p>
-<p>为了验证这个问题，我自己写了一个测试程序：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div></pre></td><td class="code"><pre><div class="line">#include &lt;sys/types.h&gt;</div><div class="line">#include &lt;sys/socket.h&gt;</div><div class="line">#include &lt;sys/epoll.h&gt;</div><div class="line">#include &lt;netdb.h&gt;</div><div class="line">#include &lt;string.h&gt;</div><div class="line">#include &lt;stdio.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line">#include &lt;fcntl.h&gt;</div><div class="line">#include &lt;stdlib.h&gt;</div><div class="line">#include &lt;errno.h&gt;</div><div class="line">#include &lt;sys/wait.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line">#include &lt;netinet/in.h&gt;</div><div class="line">#include &lt;arpa/inet.h&gt;</div><div class="line"></div><div class="line">#define IP   &quot;127.0.0.1&quot;</div><div class="line">#define PORT  8888</div><div class="line">#define PROCESS_NUM 4</div><div class="line">#define MAXEVENTS 64</div><div class="line"></div><div class="line">static int create_and_bind ()</div><div class="line">&#123;</div><div class="line">    int fd = socket(PF_INET, SOCK_STREAM, 0);</div><div class="line">    struct sockaddr_in serveraddr;</div><div class="line">    serveraddr.sin_family = AF_INET;</div><div class="line">    inet_pton( AF_INET, IP, &amp;serveraddr.sin_addr);  </div><div class="line">    serveraddr.sin_port = htons(PORT);</div><div class="line">    bind(fd, (struct sockaddr*)&amp;serveraddr, sizeof(serveraddr));</div><div class="line">    return fd;</div><div class="line">&#125;</div><div class="line"></div><div class="line">static int make_socket_non_blocking (int sfd)</div><div class="line">&#123;</div><div class="line">    int flags, s;</div><div class="line">    flags = fcntl (sfd, F_GETFL, 0);</div><div class="line">    if (flags == -1) &#123;</div><div class="line">        perror (&quot;fcntl&quot;);</div><div class="line">        return -1;</div><div class="line">    &#125;</div><div class="line">    flags |= O_NONBLOCK;</div><div class="line">    s = fcntl (sfd, F_SETFL, flags);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        perror (&quot;fcntl&quot;);</div><div class="line">        return -1;</div><div class="line">    &#125;</div><div class="line">    return 0;</div><div class="line">&#125;</div><div class="line"></div><div class="line">void worker(int sfd, int efd, struct epoll_event *events, int k) &#123;</div><div class="line">    /* The event loop */</div><div class="line">    while (1) &#123;</div><div class="line">        int n, i;</div><div class="line">        n = epoll_wait(efd, events, MAXEVENTS, -1);</div><div class="line">        //sleep(1);</div><div class="line">        printf(&quot;worker  %d return from epoll_wait!\n&quot;, k);</div><div class="line">        for (i = 0; i &lt; n; i++) &#123;</div><div class="line">            if ((events[i].events &amp; EPOLLERR) || (events[i].events &amp; EPOLLHUP) || (!(events[i].events &amp;EPOLLIN))) &#123;</div><div class="line">                /* An error has occured on this fd, or the socket is not ready for reading (why were we notified then?) */</div><div class="line">                fprintf (stderr, &quot;epoll error\n&quot;);</div><div class="line">                close (events[i].data.fd);</div><div class="line">                continue;</div><div class="line">            &#125; else if (sfd == events[i].data.fd) &#123;</div><div class="line">                /* We have a notification on the listening socket, which means one or more incoming connections. */</div><div class="line">                struct sockaddr in_addr;</div><div class="line">                socklen_t in_len;</div><div class="line">                int infd;</div><div class="line">                char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];</div><div class="line">                in_len = sizeof in_addr;</div><div class="line">                infd = accept(sfd, &amp;in_addr, &amp;in_len);</div><div class="line">                if (infd == -1) &#123;</div><div class="line">                    printf(&quot;worker %d accept failed!\n&quot;, k);</div><div class="line">                    break;</div><div class="line">                &#125;</div><div class="line">                printf(&quot;worker %d accept successed!\n&quot;, k);</div><div class="line">                /* Make the incoming socket non-blocking and add it to the list of fds to monitor. */</div><div class="line">                close(infd); </div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main (int argc, char *argv[])</div><div class="line">&#123;</div><div class="line">    int sfd, s;</div><div class="line">    int efd;</div><div class="line">    struct epoll_event event;</div><div class="line">    struct epoll_event *events;</div><div class="line">    sfd = create_and_bind();</div><div class="line">    if (sfd == -1) &#123;</div><div class="line">        abort ();</div><div class="line">    &#125;</div><div class="line">    s = make_socket_non_blocking (sfd);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        abort ();</div><div class="line">    &#125;</div><div class="line">    s = listen(sfd, SOMAXCONN);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        perror (&quot;listen&quot;);</div><div class="line">        abort ();</div><div class="line">    &#125;</div><div class="line">    efd = epoll_create(MAXEVENTS);</div><div class="line">    if (efd == -1) &#123;</div><div class="line">        perror(&quot;epoll_create&quot;);</div><div class="line">        abort();</div><div class="line">    &#125;</div><div class="line">    event.data.fd = sfd;</div><div class="line">    event.events = EPOLLIN | EPOLLEXCLUSIVE;</div><div class="line">    s = epoll_ctl(efd, EPOLL_CTL_ADD, sfd, &amp;event);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        perror(&quot;epoll_ctl&quot;);</div><div class="line">        abort();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /* Buffer where events are returned */</div><div class="line">    events = (struct epoll_event*)calloc(MAXEVENTS, sizeof event);</div><div class="line">    int k;</div><div class="line">    for(k = 0; k &lt; PROCESS_NUM; k++) &#123;</div><div class="line">        printf(&quot;Create worker %d\n&quot;, k+1);</div><div class="line">        int pid = fork();</div><div class="line">        if(pid == 0) &#123;</div><div class="line">            worker(sfd, efd, events, k);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    int status;</div><div class="line">    wait(&amp;status);</div><div class="line">    free (events);</div><div class="line">    close (sfd);</div><div class="line">    return EXIT_SUCCESS;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>运行server端后用telnet连，出现了2个进程被唤醒的情况，并不是每次都出现。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">worker  3 return from epoll_wait!</div><div class="line">worker 3 accept successed!</div><div class="line">worker  2 return from epoll_wait!</div><div class="line">worker 2 accept failed!</div></pre></td></tr></table></figure></p>
-<p>也就是说，到目前为止，还没有得到一个确定的答案。但后来，在下面这篇博客中看到这样一个评论：<a href="http://blog.csdn.net/spch2008/article/details/18301357" target="_blank" rel="external">http://blog.csdn.net/spch2008/article/details/18301357</a></p>
-<p>这个总结，需要进一步阐述，你的实验，看上去是只有4个进程唤醒了，而事实上，其余进程没有被唤醒的原因是你的某个进程已经处理完这个 accept，内核队列上已经没有这个事件，无需唤醒其他进程。你可以在 epoll 获知这个 accept 事件的时候，不要立即去处理，而是 sleep 下，这样所有的进程都会被唤起</p>
-<p>看到这个评论后，我顿时如醍醐灌顶，重新修改了上面的测试程序，即在 epoll_wait 返回后，加了个 sleep 语句，这时再测试，果然发现所有的进程都被唤醒了。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">worker  1 return from epoll_wait!</div><div class="line">worker  3 return from epoll_wait!</div><div class="line">worker 1 accept successed!</div><div class="line">worker 3 accept failed!</div><div class="line">worker  2 return from epoll_wait!</div><div class="line">worker 2 accept failed!</div><div class="line">worker  0 return from epoll_wait!</div><div class="line">worker 0 accept failed!</div></pre></td></tr></table></figure></p>
-<p>所以，epoll_wait上的惊群确实是存在的。</p>
-<h1 id="为什么内核不处理-epoll-惊群"><a href="#为什么内核不处理-epoll-惊群" class="headerlink" title="为什么内核不处理 epoll 惊群"></a>为什么内核不处理 epoll 惊群</h1><p>看到这里，我们可能有疑惑了，为什么内核对 accept 的惊群做了处理，而现在仍然存在 epoll 的惊群现象呢？</p>
-<p>accept 确实应该只能被一个进程调用成功，内核很清楚这一点。但 epoll 不一样，他监听的文件描述符，除了可能后续被 accept 调用外，还有可能是其他网络 IO 事件的，而其他 IO 事件是否只能由一个进程处理，是不一定的，内核不能保证这一点，这是一个由用户决定的事情，例如可能一个文件会由多个进程来读写。所以，对 epoll 的惊群，内核则不予处理。</p>
-<h1 id="Nginx-是如何处理惊群问题的"><a href="#Nginx-是如何处理惊群问题的" class="headerlink" title="Nginx 是如何处理惊群问题的"></a>Nginx 是如何处理惊群问题的</h1><h1 id="使用EPOLLEXCLUSIVE"><a href="#使用EPOLLEXCLUSIVE" class="headerlink" title="使用EPOLLEXCLUSIVE"></a>使用EPOLLEXCLUSIVE</h1><p>Linux 4.5解决了这一问题，使用EPOLLEXCLUSIVE标记，但我自己的系统还没这么新，留待之后验证。<br><a href="http://www.man7.org/linux/man-pages/man2/epoll_ctl.2.html" target="_blank" rel="external">http://www.man7.org/linux/man-pages/man2/epoll_ctl.2.html</a></p>
-<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>现在我们对惊群及 Nginx 的处理总结如下：</p>
-<ul>
-<li>accept 不会有惊群(since linux2.6)，epoll_wait 才会。</li>
-<li>Nginx 的 accept_mutex,并不是解决 accept 惊群问题，而是解决 epoll_wait 惊群问题。</li>
-<li>说Nginx 解决了 epoll_wait 惊群问题，也是不对的，它只是控制是否将监听套接字加入到epoll 中。监听套接字只在一个子进程的 epoll 中，当新的连接来到时，其他子进程当然不会惊醒了。</li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/13/multithread-lock-summary/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/03/13/multithread-lock-summary/" itemprop="url">
-                  各种锁的总结
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-13T11:21:43+08:00">
-                2018-03-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/多线程/" itemprop="url" rel="index">
-                    <span itemprop="name">多线程</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="自旋锁"><a href="#自旋锁" class="headerlink" title="自旋锁"></a>自旋锁</h1><p>自旋锁可以使线程在没有取得锁的时候，不被挂起，而转去执行一个空循环，（即所谓的自旋，就是自己执行空循环），若在若干个空循环后，线程如果可以获得锁，则继续执行。若线程依然不能获得锁，才会被挂起。</p>
-<p>使用自旋锁后，线程被挂起的几率相对减少，线程执行的连贯性相对加强。因此，对于那些锁竞争不是很激烈，锁占用时间很短的并发线程，具有一定的积极意义，但对于锁竞争激烈，单线程锁占用很长时间的并发程序，自旋锁在自旋等待后，往往毅然无法获得对应的锁，不仅仅白白浪费了CPU时间，最终还是免不了被挂起的操作 ，反而浪费了系统的资源。</p>
-<p>在JDK1.6中，Java虚拟机提供-XX:+UseSpinning参数来开启自旋锁，使用-XX:PreBlockSpin参数来设置自旋锁等待的次数。</p>
-<p>在JDK1.7开始，自旋锁的参数被取消，虚拟机不再支持由用户配置自旋锁，自旋锁总是会执行，自旋锁次数也由虚拟机自动调整。</p>
-<p>可能引起的问题：</p>
-<ol>
-<li><p>过多占据CPU时间：如果锁的当前持有者长时间不释放该锁，那么等待者将长时间的占据cpu时间片，导致CPU资源的浪费，因此可以设定一个时间，当锁持有者超过这个时间不释放锁时，等待者会放弃CPU时间片阻塞；</p>
-</li>
-<li><p>死锁问题：试想一下，有一个线程连续两次试图获得自旋锁（比如在递归程序中），第一次这个线程获得了该锁，当第二次试图加锁的时候，检测到锁已被占用（其实是被自己占用），那么这时，线程会一直等待自己释放该锁，而不能继续执行，这样就引起了死锁。因此递归程序使用自旋锁应该遵循以下原则：递归程序决不能在持有自旋锁时调用它自己，也决不能在递归调用时试图获得相同的自旋锁。</p>
-</li>
-</ol>
-<h1 id="阻塞锁"><a href="#阻塞锁" class="headerlink" title="阻塞锁"></a>阻塞锁</h1><p>让线程进入阻塞状态进行等待，当获得相应的信号（唤醒，时间） 时，才可以进入线程的准备就绪状态，准备就绪状态的所有线程，通过竞争，进入运行状态。。</p>
-<p>JAVA中，能够进入\退出、阻塞状态或包含阻塞锁的方法有 ，synchronized 关键字（其中的重量锁），ReentrantLock，Object.wait()\notify()</p>
-<h1 id="可重入锁"><a href="#可重入锁" class="headerlink" title="可重入锁"></a>可重入锁</h1><p>可重入锁，也叫做递归锁，指的是同一线程外层函数获得锁之后，内层递归函数仍然有获取该锁的代码，但不受影响。<br>在JAVA环境下<strong>ReentrantLock</strong>和<strong>synchronized</strong>都是可重入锁</p>
-<p>3、可重入锁</p>
-<p>可重入锁，也叫做递归锁，指的是同一线程 外层函数获得锁之后 ，内层递归函数仍然有获取该锁的代码，但不受影响。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div></pre></td><td class="code"><pre><div class="line">public class Test implements Runnable&#123;</div><div class="line"></div><div class="line">	public synchronized void get()&#123;</div><div class="line">		System.out.println(Thread.currentThread().getId());</div><div class="line">		set();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public synchronized void set()&#123;</div><div class="line">		System.out.println(Thread.currentThread().getId());</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	@Override</div><div class="line">	public void run() &#123;</div><div class="line">		get();</div><div class="line">	&#125;</div><div class="line">	public static void main(String[] args) &#123;</div><div class="line">		Test ss=new Test();</div><div class="line">		new Thread(ss).start();</div><div class="line">		new Thread(ss).start();</div><div class="line">		new Thread(ss).start();</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">public class Test implements Runnable &#123;</div><div class="line">	ReentrantLock lock = new ReentrantLock();</div><div class="line"></div><div class="line">	public void get() &#123;</div><div class="line">		lock.lock();</div><div class="line">		System.out.println(Thread.currentThread().getId());</div><div class="line">		set();</div><div class="line">		lock.unlock();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public void set() &#123;</div><div class="line">		lock.lock();</div><div class="line">		System.out.println(Thread.currentThread().getId());</div><div class="line">		lock.unlock();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	@Override</div><div class="line">	public void run() &#123;</div><div class="line">		get();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public static void main(String[] args) &#123;</div><div class="line">		Test ss = new Test();</div><div class="line">		new Thread(ss).start();</div><div class="line">		new Thread(ss).start();</div><div class="line">		new Thread(ss).start();</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>两个例子最后的结果都是正确的，即 同一个线程id被连续输出两次。</p>
-<p>结果如下：</p>
-<p>Threadid: 8</p>
-<p>Threadid: 8</p>
-<p>Threadid: 10</p>
-<p>Threadid: 10</p>
-<p>Threadid: 9</p>
-<p>Threadid: 9</p>
-<p>可重入锁最大的作用是避免死锁</p>
-<p>我们以自旋锁作为例子，<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">public class SpinLock &#123;  </div><div class="line">    private AtomicReference&lt;Thread&gt; owner =new AtomicReference&lt;&gt;();  </div><div class="line">    public void lock()&#123;  </div><div class="line">        Thread current = Thread.currentThread();  </div><div class="line">        while(!owner.compareAndSet(null, current))&#123;  </div><div class="line">        &#125;  </div><div class="line">    &#125;  </div><div class="line">    public void unlock ()&#123;  </div><div class="line">        Thread current = Thread.currentThread();  </div><div class="line">        owner.compareAndSet(current, null);  </div><div class="line">    &#125;  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>对于自旋锁来说，</p>
-<ol>
-<li>若有同一线程两调用lock() ，会导致第二次调用lock位置进行自旋，产生了死锁<br>说明这个锁并不是可重入的。（在lock函数内，应验证线程是否为已经获得锁的线程）</li>
-<li>若1问题已经解决，当unlock（）第一次调用时，就已经将锁释放了。实际上不应释放锁。</li>
-</ol>
-<p>（采用计数次进行统计）<br>修改之后，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">public class SpinLock1 &#123;</div><div class="line">	private AtomicReference&lt;Thread&gt; owner =new AtomicReference&lt;&gt;();</div><div class="line">	private int count =0;</div><div class="line">	public void lock()&#123;</div><div class="line">		Thread current = Thread.currentThread();</div><div class="line">		if(current==owner.get()) &#123;</div><div class="line">			count++;</div><div class="line">			return ;</div><div class="line">		&#125;</div><div class="line">		while(!owner.compareAndSet(null, current))&#123;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	public void unlock ()&#123;</div><div class="line">		Thread current = Thread.currentThread();</div><div class="line">		if(current==owner.get())&#123;</div><div class="line">			if(count!=0)&#123;</div><div class="line">				count--;</div><div class="line">			&#125;else&#123;</div><div class="line">				owner.compareAndSet(current, null);</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>该自旋锁即为可重入锁。</p>
-<h1 id="悲观锁和乐观锁"><a href="#悲观锁和乐观锁" class="headerlink" title="悲观锁和乐观锁"></a>悲观锁和乐观锁</h1><p>悲观锁(Pessimistic Lock), 顾名思义就是很悲观，每次去拿数据的时候都认为别人会修改，所以每次在拿数据的时候都会上锁，这样别人想拿这个数据就会block直到它拿到锁。传统的关系型数据库里边就用到了很多这种锁机制，比如行锁，表锁等，读锁，写锁等，都是在做操作之前先上锁。独占锁是悲观锁的一种实现</p>
-<p>乐观锁(Optimistic Lock), 顾名思义，就是很乐观，每次去拿数据的时候都认为别人不会修改，所以不会上锁，但是在更新的时候会判断一下在此期间别人有没有去更新这个数据，可以使用版本号等机制。乐观锁适用于多读的应用类型，这样可以提高吞吐量，像数据库如果提供类似于write_condition机制的其实都是提供的乐观锁。使用CAS来保证,保证这个操作的原子性</p>
-<p>两种锁各有优缺点，不可认为一种好于另一种，像乐观锁适用于写比较少的情况下，即冲突真的很少发生的时候，这样可以省去了锁的开销，加大了系统的整个吞吐量。但如果经常产生冲突，上层应用会不断的进行retry，这样反倒是降低了性能，所以这种情况下用悲观锁就比较合适。</p>
-<h1 id="读-写锁"><a href="#读-写锁" class="headerlink" title="读-写锁"></a>读-写锁</h1><p>Lock接口以及对象，使用它，很优雅的控制了竞争资源的安全访问，但是这种锁不区分读写，称这种锁为普通锁。为了提高性能，Java提供了读写锁，在读的地方使用读锁，在写的地方使用写锁，灵活控制，如果没有写锁的情况下，读是无阻塞的,在一定程度上提高了程序的执行效率。</p>
-<p>Java中读写锁有个接口java.util.concurrent.locks.ReadWriteLock，也有具体的实现ReentrantReadWriteLock，详细的API可以查看JavaAPI文档。</p>
-<p>ReentrantReadWriteLock 和 ReentrantLock 不是继承关系，但都是基于 AbstractQueuedSynchronizer 来实现。lock方法是基于CAS来实现的</p>
-<p>ReadWriteLock中暴露了两个Lock对象：<br>在读写锁的加锁策略中，允许多个读操作同时进行，但每次只允许一个写操作。读写锁是一种性能优化的策略。<br>RentrantReadWriteLock在构造时也可以选择是一个非公平的锁（默认）还是公平的锁。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2096,7 +2069,7 @@ This may render the computer unusable, but it can also be used as a technique if
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">73</span>
+                <span class="site-state-item-count">75</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>

@@ -281,6 +281,340 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/19/network-thundering-herd/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/19/network-thundering-herd/" itemprop="url">
+                  惊群效应
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-19T14:24:47+08:00">
+                2018-03-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="什么叫惊群现象"><a href="#什么叫惊群现象" class="headerlink" title="什么叫惊群现象"></a>什么叫惊群现象</h1><p>首先，我们看看维基百科对惊群的定义:</p>
+<pre><code>The thundering herd problem occurs when a large number of processes waiting for an event are awoken when that event occurs, but only one process is able to proceed at a time. After the processes wake up, they all demand the resource and a decision must be made as to which process can continue. After the decision is made, the remaining processes are put back to sleep, only to all wake up again to request access to the resource.
+
+This occurs repeatedly, until there are no more processes to be woken up. Because all the processes use system resources upon waking, it is more efficient if only one process was woken up at a time.
+
+This may render the computer unusable, but it can also be used as a technique if there is no other way to decide which process should continue (for example when programming with semaphores).
+</code></pre><p>惊群简单来说就是多个进程或者线程在等待同一个事件，当事件发生时，所有线程和进程都会被内核唤醒。唤醒后通常只有一个进程获得了该事件并进行处理，其他进程发现获取事件失败后又继续进入了等待状态，在一定程度上降低了系统性能。</p>
+<h1 id="accept-惊群"><a href="#accept-惊群" class="headerlink" title="accept 惊群"></a>accept 惊群</h1><p>具体来说惊群通常发生在服务器的监听等待调用上，服务器创建监听socket，后fork多个进程，在每个进程中调用accept或者epoll_wait等待终端的连接。</p>
+<p>那么这个问题真的存在吗？</p>
+<p>事实上，历史上，Linux 的 accpet 确实存在惊群问题，但现在的内核都解决该问题了。即，当多个进程/线程都阻塞在对同一个 socket 的 accept 调用上时，当有一个新的连接到来，内核只会唤醒一个进程，其他进程保持休眠，压根就不会被唤醒。</p>
+<p>测试代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div></pre></td><td class="code"><pre><div class="line">#include &lt;stdio.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line">#include &lt;sys/types.h&gt;  </div><div class="line">#include &lt;sys/socket.h&gt;  </div><div class="line">#include &lt;netinet/in.h&gt;  </div><div class="line">#include &lt;arpa/inet.h&gt;  </div><div class="line">#include &lt;assert.h&gt;  </div><div class="line">#include &lt;sys/wait.h&gt;</div><div class="line">#include &lt;string.h&gt;</div><div class="line">#include &lt;errno.h&gt;</div><div class="line"></div><div class="line">#define IP   &quot;127.0.0.1&quot;</div><div class="line">#define PORT  8888</div><div class="line">#define WORKER 4</div><div class="line"></div><div class="line">int worker(int listenfd, int i)</div><div class="line">&#123;</div><div class="line">    while (1) &#123;</div><div class="line">        printf(&quot;I am worker %d, begin to accept connection.\n&quot;, i);</div><div class="line">        struct sockaddr_in client_addr;  </div><div class="line">        socklen_t client_addrlen = sizeof( client_addr );  </div><div class="line">        int connfd = accept( listenfd, ( struct sockaddr* )&amp;client_addr, &amp;client_addrlen );  </div><div class="line">        if (connfd != -1) &#123;</div><div class="line">            printf(&quot;worker %d accept a connection success.\t&quot;, i);</div><div class="line">            printf(&quot;ip :%s\t&quot;,inet_ntoa(client_addr.sin_addr));</div><div class="line">            printf(&quot;port: %d \n&quot;,client_addr.sin_port);</div><div class="line">        &#125; else &#123;</div><div class="line">            printf(&quot;worker %d accept a connection failed,error:%s&quot;, i, strerror(errno));</div><div class="line">			close(connfd);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    return 0;</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main()</div><div class="line">&#123;</div><div class="line">    int i = 0;</div><div class="line">    struct sockaddr_in address;  </div><div class="line">    bzero(&amp;address, sizeof(address));  </div><div class="line">    address.sin_family = AF_INET;  </div><div class="line">    inet_pton( AF_INET, IP, &amp;address.sin_addr);  </div><div class="line">    address.sin_port = htons(PORT);  </div><div class="line">    int listenfd = socket(PF_INET, SOCK_STREAM, 0);  </div><div class="line">    assert(listenfd &gt;= 0);  </div><div class="line"></div><div class="line">    int ret = bind(listenfd, (struct sockaddr*)&amp;address, sizeof(address));  </div><div class="line">    assert(ret != -1);  </div><div class="line"></div><div class="line">    ret = listen(listenfd, 5);  </div><div class="line">    assert(ret != -1);  </div><div class="line"></div><div class="line">    for (i = 0; i &lt; WORKER; i++) &#123;</div><div class="line">        printf(&quot;Create worker %d\n&quot;, i+1);</div><div class="line">        pid_t pid = fork();</div><div class="line">        /*child  process */</div><div class="line">        if (pid == 0) &#123;</div><div class="line">            worker(listenfd, i);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        if (pid &lt; 0) &#123;</div><div class="line">            printf(&quot;fork error&quot;);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /*wait child process*/</div><div class="line">    int status;</div><div class="line">    wait(&amp;status);</div><div class="line">    return 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>当我们对该服务器发起连接请求（用 telnet/curl 等模拟）时，会看到只有一个进程被唤醒。</p>
+<h1 id="epoll惊群"><a href="#epoll惊群" class="headerlink" title="epoll惊群"></a>epoll惊群</h1><p>如上所述，accept 已经不存在惊群问题，但 epoll 上还是存在惊群问题。即，如果多个进程/线程阻塞在监听同一个 listening socket fd 的 epoll_wait 上，当有一个新的连接到来时，所有的进程都会被唤醒。</p>
+<p>考虑如下场景：</p>
+<p>主进程创建 socket, bind， listen 后，将该 socket 加入到 epoll 中，然后 fork 出多个子进程，每个进程都阻塞在 epoll_wait 上，如果有事件到来，则判断该事件是否是该 socket 上的事件，如果是，说明有新的连接到来了，则进行 accept 操作。为了简化处理，忽略后续的读写以及对 accept 返回的新的套接字的处理，直接断开连接。</p>
+<p>那么，当新的连接到来时，是否每个阻塞在 epoll_wait 上的进程都会被唤醒呢？</p>
+<p>很多博客中提到，测试表明虽然 epoll_wait 不会像 accept 那样只唤醒一个进程/线程，但也不会把所有的进程/线程都唤醒。</p>
+<p>为了验证这个问题，我自己写了一个测试程序：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div></pre></td><td class="code"><pre><div class="line">#include &lt;sys/types.h&gt;</div><div class="line">#include &lt;sys/socket.h&gt;</div><div class="line">#include &lt;sys/epoll.h&gt;</div><div class="line">#include &lt;netdb.h&gt;</div><div class="line">#include &lt;string.h&gt;</div><div class="line">#include &lt;stdio.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line">#include &lt;fcntl.h&gt;</div><div class="line">#include &lt;stdlib.h&gt;</div><div class="line">#include &lt;errno.h&gt;</div><div class="line">#include &lt;sys/wait.h&gt;</div><div class="line">#include &lt;unistd.h&gt;</div><div class="line">#include &lt;netinet/in.h&gt;</div><div class="line">#include &lt;arpa/inet.h&gt;</div><div class="line"></div><div class="line">#define IP   &quot;127.0.0.1&quot;</div><div class="line">#define PORT  8888</div><div class="line">#define PROCESS_NUM 4</div><div class="line">#define MAXEVENTS 64</div><div class="line"></div><div class="line">static int create_and_bind ()</div><div class="line">&#123;</div><div class="line">    int fd = socket(PF_INET, SOCK_STREAM, 0);</div><div class="line">    struct sockaddr_in serveraddr;</div><div class="line">    serveraddr.sin_family = AF_INET;</div><div class="line">    inet_pton( AF_INET, IP, &amp;serveraddr.sin_addr);  </div><div class="line">    serveraddr.sin_port = htons(PORT);</div><div class="line">    bind(fd, (struct sockaddr*)&amp;serveraddr, sizeof(serveraddr));</div><div class="line">    return fd;</div><div class="line">&#125;</div><div class="line"></div><div class="line">static int make_socket_non_blocking (int sfd)</div><div class="line">&#123;</div><div class="line">    int flags, s;</div><div class="line">    flags = fcntl (sfd, F_GETFL, 0);</div><div class="line">    if (flags == -1) &#123;</div><div class="line">        perror (&quot;fcntl&quot;);</div><div class="line">        return -1;</div><div class="line">    &#125;</div><div class="line">    flags |= O_NONBLOCK;</div><div class="line">    s = fcntl (sfd, F_SETFL, flags);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        perror (&quot;fcntl&quot;);</div><div class="line">        return -1;</div><div class="line">    &#125;</div><div class="line">    return 0;</div><div class="line">&#125;</div><div class="line"></div><div class="line">void worker(int sfd, int efd, struct epoll_event *events, int k) &#123;</div><div class="line">    /* The event loop */</div><div class="line">    while (1) &#123;</div><div class="line">        int n, i;</div><div class="line">        n = epoll_wait(efd, events, MAXEVENTS, -1);</div><div class="line">        //sleep(1);</div><div class="line">        printf(&quot;worker  %d return from epoll_wait!\n&quot;, k);</div><div class="line">        for (i = 0; i &lt; n; i++) &#123;</div><div class="line">            if ((events[i].events &amp; EPOLLERR) || (events[i].events &amp; EPOLLHUP) || (!(events[i].events &amp;EPOLLIN))) &#123;</div><div class="line">                /* An error has occured on this fd, or the socket is not ready for reading (why were we notified then?) */</div><div class="line">                fprintf (stderr, &quot;epoll error\n&quot;);</div><div class="line">                close (events[i].data.fd);</div><div class="line">                continue;</div><div class="line">            &#125; else if (sfd == events[i].data.fd) &#123;</div><div class="line">                /* We have a notification on the listening socket, which means one or more incoming connections. */</div><div class="line">                struct sockaddr in_addr;</div><div class="line">                socklen_t in_len;</div><div class="line">                int infd;</div><div class="line">                char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];</div><div class="line">                in_len = sizeof in_addr;</div><div class="line">                infd = accept(sfd, &amp;in_addr, &amp;in_len);</div><div class="line">                if (infd == -1) &#123;</div><div class="line">                    printf(&quot;worker %d accept failed!\n&quot;, k);</div><div class="line">                    break;</div><div class="line">                &#125;</div><div class="line">                printf(&quot;worker %d accept successed!\n&quot;, k);</div><div class="line">                /* Make the incoming socket non-blocking and add it to the list of fds to monitor. */</div><div class="line">                close(infd); </div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">int main (int argc, char *argv[])</div><div class="line">&#123;</div><div class="line">    int sfd, s;</div><div class="line">    int efd;</div><div class="line">    struct epoll_event event;</div><div class="line">    struct epoll_event *events;</div><div class="line">    sfd = create_and_bind();</div><div class="line">    if (sfd == -1) &#123;</div><div class="line">        abort ();</div><div class="line">    &#125;</div><div class="line">    s = make_socket_non_blocking (sfd);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        abort ();</div><div class="line">    &#125;</div><div class="line">    s = listen(sfd, SOMAXCONN);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        perror (&quot;listen&quot;);</div><div class="line">        abort ();</div><div class="line">    &#125;</div><div class="line">    efd = epoll_create(MAXEVENTS);</div><div class="line">    if (efd == -1) &#123;</div><div class="line">        perror(&quot;epoll_create&quot;);</div><div class="line">        abort();</div><div class="line">    &#125;</div><div class="line">    event.data.fd = sfd;</div><div class="line">    event.events = EPOLLIN | EPOLLEXCLUSIVE;</div><div class="line">    s = epoll_ctl(efd, EPOLL_CTL_ADD, sfd, &amp;event);</div><div class="line">    if (s == -1) &#123;</div><div class="line">        perror(&quot;epoll_ctl&quot;);</div><div class="line">        abort();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /* Buffer where events are returned */</div><div class="line">    events = (struct epoll_event*)calloc(MAXEVENTS, sizeof event);</div><div class="line">    int k;</div><div class="line">    for(k = 0; k &lt; PROCESS_NUM; k++) &#123;</div><div class="line">        printf(&quot;Create worker %d\n&quot;, k+1);</div><div class="line">        int pid = fork();</div><div class="line">        if(pid == 0) &#123;</div><div class="line">            worker(sfd, efd, events, k);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    int status;</div><div class="line">    wait(&amp;status);</div><div class="line">    free (events);</div><div class="line">    close (sfd);</div><div class="line">    return EXIT_SUCCESS;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>运行server端后用telnet连，出现了2个进程被唤醒的情况，并不是每次都出现。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">worker  3 return from epoll_wait!</div><div class="line">worker 3 accept successed!</div><div class="line">worker  2 return from epoll_wait!</div><div class="line">worker 2 accept failed!</div></pre></td></tr></table></figure></p>
+<p>也就是说，到目前为止，还没有得到一个确定的答案。但后来，在下面这篇博客中看到这样一个评论：<a href="http://blog.csdn.net/spch2008/article/details/18301357" target="_blank" rel="external">http://blog.csdn.net/spch2008/article/details/18301357</a></p>
+<p>这个总结，需要进一步阐述，你的实验，看上去是只有4个进程唤醒了，而事实上，其余进程没有被唤醒的原因是你的某个进程已经处理完这个 accept，内核队列上已经没有这个事件，无需唤醒其他进程。你可以在 epoll 获知这个 accept 事件的时候，不要立即去处理，而是 sleep 下，这样所有的进程都会被唤起</p>
+<p>看到这个评论后，我顿时如醍醐灌顶，重新修改了上面的测试程序，即在 epoll_wait 返回后，加了个 sleep 语句，这时再测试，果然发现所有的进程都被唤醒了。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">worker  1 return from epoll_wait!</div><div class="line">worker  3 return from epoll_wait!</div><div class="line">worker 1 accept successed!</div><div class="line">worker 3 accept failed!</div><div class="line">worker  2 return from epoll_wait!</div><div class="line">worker 2 accept failed!</div><div class="line">worker  0 return from epoll_wait!</div><div class="line">worker 0 accept failed!</div></pre></td></tr></table></figure></p>
+<p>所以，epoll_wait上的惊群确实是存在的。</p>
+<h1 id="为什么内核不处理-epoll-惊群"><a href="#为什么内核不处理-epoll-惊群" class="headerlink" title="为什么内核不处理 epoll 惊群"></a>为什么内核不处理 epoll 惊群</h1><p>看到这里，我们可能有疑惑了，为什么内核对 accept 的惊群做了处理，而现在仍然存在 epoll 的惊群现象呢？</p>
+<p>accept 确实应该只能被一个进程调用成功，内核很清楚这一点。但 epoll 不一样，他监听的文件描述符，除了可能后续被 accept 调用外，还有可能是其他网络 IO 事件的，而其他 IO 事件是否只能由一个进程处理，是不一定的，内核不能保证这一点，这是一个由用户决定的事情，例如可能一个文件会由多个进程来读写。所以，对 epoll 的惊群，内核则不予处理。</p>
+<h1 id="Nginx-是如何处理惊群问题的"><a href="#Nginx-是如何处理惊群问题的" class="headerlink" title="Nginx 是如何处理惊群问题的"></a>Nginx 是如何处理惊群问题的</h1><h1 id="使用EPOLLEXCLUSIVE"><a href="#使用EPOLLEXCLUSIVE" class="headerlink" title="使用EPOLLEXCLUSIVE"></a>使用EPOLLEXCLUSIVE</h1><p>Linux 4.5解决了这一问题，使用EPOLLEXCLUSIVE标记，但我自己的系统还没这么新，留待之后验证。<br><a href="http://www.man7.org/linux/man-pages/man2/epoll_ctl.2.html" target="_blank" rel="external">http://www.man7.org/linux/man-pages/man2/epoll_ctl.2.html</a></p>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>现在我们对惊群及 Nginx 的处理总结如下：</p>
+<ul>
+<li>accept 不会有惊群(since linux2.6)，epoll_wait 才会。</li>
+<li>Nginx 的 accept_mutex,并不是解决 accept 惊群问题，而是解决 epoll_wait 惊群问题。</li>
+<li>说Nginx 解决了 epoll_wait 惊群问题，也是不对的，它只是控制是否将监听套接字加入到epoll 中。监听套接字只在一个子进程的 epoll 中，当新的连接来到时，其他子进程当然不会惊醒了。</li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/13/multithread-lock-summary/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="He Lei">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.gif">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="HeLei Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2018/03/13/multithread-lock-summary/" itemprop="url">
+                  各种锁的总结
+                </a>
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-13T11:21:43+08:00">
+                2018-03-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/多线程/" itemprop="url" rel="index">
+                    <span itemprop="name">多线程</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="自旋锁"><a href="#自旋锁" class="headerlink" title="自旋锁"></a>自旋锁</h1><p>自旋锁可以使线程在没有取得锁的时候，不被挂起，而转去执行一个空循环，（即所谓的自旋，就是自己执行空循环），若在若干个空循环后，线程如果可以获得锁，则继续执行。若线程依然不能获得锁，才会被挂起。</p>
+<p>使用自旋锁后，线程被挂起的几率相对减少，线程执行的连贯性相对加强。因此，对于那些锁竞争不是很激烈，锁占用时间很短的并发线程，具有一定的积极意义，但对于锁竞争激烈，单线程锁占用很长时间的并发程序，自旋锁在自旋等待后，往往毅然无法获得对应的锁，不仅仅白白浪费了CPU时间，最终还是免不了被挂起的操作 ，反而浪费了系统的资源。</p>
+<p>在JDK1.6中，Java虚拟机提供-XX:+UseSpinning参数来开启自旋锁，使用-XX:PreBlockSpin参数来设置自旋锁等待的次数。</p>
+<p>在JDK1.7开始，自旋锁的参数被取消，虚拟机不再支持由用户配置自旋锁，自旋锁总是会执行，自旋锁次数也由虚拟机自动调整。</p>
+<p>可能引起的问题：</p>
+<ol>
+<li><p>过多占据CPU时间：如果锁的当前持有者长时间不释放该锁，那么等待者将长时间的占据cpu时间片，导致CPU资源的浪费，因此可以设定一个时间，当锁持有者超过这个时间不释放锁时，等待者会放弃CPU时间片阻塞；</p>
+</li>
+<li><p>死锁问题：试想一下，有一个线程连续两次试图获得自旋锁（比如在递归程序中），第一次这个线程获得了该锁，当第二次试图加锁的时候，检测到锁已被占用（其实是被自己占用），那么这时，线程会一直等待自己释放该锁，而不能继续执行，这样就引起了死锁。因此递归程序使用自旋锁应该遵循以下原则：递归程序决不能在持有自旋锁时调用它自己，也决不能在递归调用时试图获得相同的自旋锁。</p>
+</li>
+</ol>
+<h1 id="阻塞锁"><a href="#阻塞锁" class="headerlink" title="阻塞锁"></a>阻塞锁</h1><p>让线程进入阻塞状态进行等待，当获得相应的信号（唤醒，时间） 时，才可以进入线程的准备就绪状态，准备就绪状态的所有线程，通过竞争，进入运行状态。。</p>
+<p>JAVA中，能够进入\退出、阻塞状态或包含阻塞锁的方法有 ，synchronized 关键字（其中的重量锁），ReentrantLock，Object.wait()\notify()</p>
+<h1 id="可重入锁"><a href="#可重入锁" class="headerlink" title="可重入锁"></a>可重入锁</h1><p>可重入锁，也叫做递归锁，指的是同一线程外层函数获得锁之后，内层递归函数仍然有获取该锁的代码，但不受影响。<br>在JAVA环境下<strong>ReentrantLock</strong>和<strong>synchronized</strong>都是可重入锁</p>
+<p>3、可重入锁</p>
+<p>可重入锁，也叫做递归锁，指的是同一线程 外层函数获得锁之后 ，内层递归函数仍然有获取该锁的代码，但不受影响。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div></pre></td><td class="code"><pre><div class="line">public class Test implements Runnable&#123;</div><div class="line"></div><div class="line">	public synchronized void get()&#123;</div><div class="line">		System.out.println(Thread.currentThread().getId());</div><div class="line">		set();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public synchronized void set()&#123;</div><div class="line">		System.out.println(Thread.currentThread().getId());</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	@Override</div><div class="line">	public void run() &#123;</div><div class="line">		get();</div><div class="line">	&#125;</div><div class="line">	public static void main(String[] args) &#123;</div><div class="line">		Test ss=new Test();</div><div class="line">		new Thread(ss).start();</div><div class="line">		new Thread(ss).start();</div><div class="line">		new Thread(ss).start();</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">public class Test implements Runnable &#123;</div><div class="line">	ReentrantLock lock = new ReentrantLock();</div><div class="line"></div><div class="line">	public void get() &#123;</div><div class="line">		lock.lock();</div><div class="line">		System.out.println(Thread.currentThread().getId());</div><div class="line">		set();</div><div class="line">		lock.unlock();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public void set() &#123;</div><div class="line">		lock.lock();</div><div class="line">		System.out.println(Thread.currentThread().getId());</div><div class="line">		lock.unlock();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	@Override</div><div class="line">	public void run() &#123;</div><div class="line">		get();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	public static void main(String[] args) &#123;</div><div class="line">		Test ss = new Test();</div><div class="line">		new Thread(ss).start();</div><div class="line">		new Thread(ss).start();</div><div class="line">		new Thread(ss).start();</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>两个例子最后的结果都是正确的，即 同一个线程id被连续输出两次。</p>
+<p>结果如下：</p>
+<p>Threadid: 8</p>
+<p>Threadid: 8</p>
+<p>Threadid: 10</p>
+<p>Threadid: 10</p>
+<p>Threadid: 9</p>
+<p>Threadid: 9</p>
+<p>可重入锁最大的作用是避免死锁</p>
+<p>我们以自旋锁作为例子，<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">public class SpinLock &#123;  </div><div class="line">    private AtomicReference&lt;Thread&gt; owner =new AtomicReference&lt;&gt;();  </div><div class="line">    public void lock()&#123;  </div><div class="line">        Thread current = Thread.currentThread();  </div><div class="line">        while(!owner.compareAndSet(null, current))&#123;  </div><div class="line">        &#125;  </div><div class="line">    &#125;  </div><div class="line">    public void unlock ()&#123;  </div><div class="line">        Thread current = Thread.currentThread();  </div><div class="line">        owner.compareAndSet(current, null);  </div><div class="line">    &#125;  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>对于自旋锁来说，</p>
+<ol>
+<li>若有同一线程两调用lock() ，会导致第二次调用lock位置进行自旋，产生了死锁<br>说明这个锁并不是可重入的。（在lock函数内，应验证线程是否为已经获得锁的线程）</li>
+<li>若1问题已经解决，当unlock（）第一次调用时，就已经将锁释放了。实际上不应释放锁。</li>
+</ol>
+<p>（采用计数次进行统计）<br>修改之后，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">public class SpinLock1 &#123;</div><div class="line">	private AtomicReference&lt;Thread&gt; owner =new AtomicReference&lt;&gt;();</div><div class="line">	private int count =0;</div><div class="line">	public void lock()&#123;</div><div class="line">		Thread current = Thread.currentThread();</div><div class="line">		if(current==owner.get()) &#123;</div><div class="line">			count++;</div><div class="line">			return ;</div><div class="line">		&#125;</div><div class="line">		while(!owner.compareAndSet(null, current))&#123;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	public void unlock ()&#123;</div><div class="line">		Thread current = Thread.currentThread();</div><div class="line">		if(current==owner.get())&#123;</div><div class="line">			if(count!=0)&#123;</div><div class="line">				count--;</div><div class="line">			&#125;else&#123;</div><div class="line">				owner.compareAndSet(current, null);</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>该自旋锁即为可重入锁。</p>
+<h1 id="悲观锁和乐观锁"><a href="#悲观锁和乐观锁" class="headerlink" title="悲观锁和乐观锁"></a>悲观锁和乐观锁</h1><p>悲观锁(Pessimistic Lock), 顾名思义就是很悲观，每次去拿数据的时候都认为别人会修改，所以每次在拿数据的时候都会上锁，这样别人想拿这个数据就会block直到它拿到锁。传统的关系型数据库里边就用到了很多这种锁机制，比如行锁，表锁等，读锁，写锁等，都是在做操作之前先上锁。独占锁是悲观锁的一种实现</p>
+<p>乐观锁(Optimistic Lock), 顾名思义，就是很乐观，每次去拿数据的时候都认为别人不会修改，所以不会上锁，但是在更新的时候会判断一下在此期间别人有没有去更新这个数据，可以使用版本号等机制。乐观锁适用于多读的应用类型，这样可以提高吞吐量，像数据库如果提供类似于write_condition机制的其实都是提供的乐观锁。使用CAS来保证,保证这个操作的原子性</p>
+<p>两种锁各有优缺点，不可认为一种好于另一种，像乐观锁适用于写比较少的情况下，即冲突真的很少发生的时候，这样可以省去了锁的开销，加大了系统的整个吞吐量。但如果经常产生冲突，上层应用会不断的进行retry，这样反倒是降低了性能，所以这种情况下用悲观锁就比较合适。</p>
+<h1 id="读-写锁"><a href="#读-写锁" class="headerlink" title="读-写锁"></a>读-写锁</h1><p>Lock接口以及对象，使用它，很优雅的控制了竞争资源的安全访问，但是这种锁不区分读写，称这种锁为普通锁。为了提高性能，Java提供了读写锁，在读的地方使用读锁，在写的地方使用写锁，灵活控制，如果没有写锁的情况下，读是无阻塞的,在一定程度上提高了程序的执行效率。</p>
+<p>Java中读写锁有个接口java.util.concurrent.locks.ReadWriteLock，也有具体的实现ReentrantReadWriteLock，详细的API可以查看JavaAPI文档。</p>
+<p>ReentrantReadWriteLock 和 ReentrantLock 不是继承关系，但都是基于 AbstractQueuedSynchronizer 来实现。lock方法是基于CAS来实现的</p>
+<p>ReadWriteLock中暴露了两个Lock对象：<br>在读写锁的加锁策略中，允许多个读操作同时进行，但每次只允许一个写操作。读写锁是一种性能优化的策略。<br>RentrantReadWriteLock在构造时也可以选择是一个非公平的锁（默认）还是公平的锁。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/03/12/os-memory-layout/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1741,473 +2075,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/02/23/redis-analysis-replicatesource/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/02/23/redis-analysis-replicatesource/" itemprop="url">
-                  Redis源码剖析和注释（二十二）--- Redis 复制(replicate)源码详细解析
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-02-23T20:08:12+08:00">
-                2018-02-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Redis/" itemprop="url" rel="index">
-                    <span itemprop="name">Redis</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="1-复制的介绍"><a href="#1-复制的介绍" class="headerlink" title="1. 复制的介绍"></a>1. 复制的介绍</h2><p>Redis为了解决单点数据库问题，会把数据复制多个副本部署到其他节点上，通过复制，实现Redis的高可用性，实现对数据的冗余备份，保证数据和服务的高度可靠性。</p>
-<h2 id="2-复制的实现"><a href="#2-复制的实现" class="headerlink" title="2. 复制的实现"></a>2. 复制的实现</h2><h3 id="2-1-主从关系的建立"><a href="#2-1-主从关系的建立" class="headerlink" title="2.1 主从关系的建立"></a>2.1 主从关系的建立</h3><p>复制的建立方法有三种。</p>
-<ol>
-<li>在redis.conf文件中配置slaveof <masterip> <masterport>选项，然后指定该配置文件启动Redis生效。</masterport></masterip></li>
-<li>在redis-server启动命令后加上–slaveof <masterip> <masterport>启动生效。</masterport></masterip></li>
-<li>直接使用 slaveof <masterip> <masterport>命令在从节点执行生效。<br>无论是通过哪一种方式来建立主从复制，都是从节点来执行slaveof命令，那么从节点执行了这个命令到底做了什么，我们上源码：<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div></pre></td><td class="code"><pre><div class="line">// SLAVEOF host port命令实现</div><div class="line">void slaveofCommand(client *c) &#123;</div><div class="line">    // 如果当前处于集群模式，不能进行复制操作</div><div class="line">    if (server.cluster_enabled) &#123;</div><div class="line">        addReplyError(c,&quot;SLAVEOF not allowed in cluster mode.&quot;);</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // SLAVEOF NO ONE命令使得这个从节点关闭复制功能，并从从节点转变回主节点，原来同步所得的数据集不会被丢弃。</div><div class="line">    if (!strcasecmp(c-&gt;argv[1]-&gt;ptr,&quot;no&quot;) &amp;&amp;</div><div class="line">        !strcasecmp(c-&gt;argv[2]-&gt;ptr,&quot;one&quot;)) &#123;</div><div class="line">        // 如果保存了主节点IP</div><div class="line">        if (server.masterhost) &#123;</div><div class="line">            // 取消复制操作，设置服务器为主服务器</div><div class="line">            replicationUnsetMaster();</div><div class="line">            // 获取client的每种信息，并以sds形式返回，并打印到日志中</div><div class="line">            sds client = catClientInfoString(sdsempty(),c);</div><div class="line">            serverLog(LL_NOTICE,&quot;MASTER MODE enabled (user request from &apos;%s&apos;)&quot;,</div><div class="line">                client);</div><div class="line">            sdsfree(client);</div><div class="line">        &#125;</div><div class="line">    // SLAVEOF host port</div><div class="line">    &#125; else &#123;</div><div class="line">        long port;</div><div class="line"></div><div class="line">        // 获取端口号</div><div class="line">        if ((getLongFromObjectOrReply(c, c-&gt;argv[2], &amp;port, NULL) != C_OK))</div><div class="line">            return;</div><div class="line"></div><div class="line">        // 如果已存在从属于masterhost主节点且命令参数指定的主节点和masterhost相等，端口也相等，直接返回</div><div class="line">        if (server.masterhost &amp;&amp; !strcasecmp(server.masterhost,c-&gt;argv[1]-&gt;ptr)</div><div class="line">            &amp;&amp; server.masterport == port) &#123;</div><div class="line">            serverLog(LL_NOTICE,&quot;SLAVE OF would result into synchronization with the master we are already connected with. No operation performed.&quot;);</div><div class="line">            addReplySds(c,sdsnew(&quot;+OK Already connected to specified master\r\n&quot;));</div><div class="line">            return;</div><div class="line">        &#125;</div><div class="line">        // 第一次执行设置端口和ip，或者是重新设置端口和IP</div><div class="line">        // 设置服务器复制操作的主节点IP和端口</div><div class="line">        replicationSetMaster(c-&gt;argv[1]-&gt;ptr, port);</div><div class="line">        // 获取client的每种信息，并以sds形式返回，并打印到日志中</div><div class="line">        sds client = catClientInfoString(sdsempty(),c);</div><div class="line">        serverLog(LL_NOTICE,&quot;SLAVE OF %s:%d enabled (user request from &apos;%s&apos;)&quot;,</div><div class="line">            server.masterhost, server.masterport, client);</div><div class="line">        sdsfree(client);</div><div class="line">    &#125;</div><div class="line">    // 回复ok</div><div class="line">    addReply(c,shared.ok);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-</masterport></masterip></li>
-</ol>
-<p>当从节点的client执行SLAVEOF命令后，该命令会被构建成Redis协议格式，发送给从节点服务器，然后节点服务器会调用slaveofCommand()函数执行该命令。</p>
-<p>而SLAVEOF命令做的操作并不多，主要以下三步：</p>
-<ul>
-<li>判断当前环境是否在集群模式下，因为集群模式下不行执行该命令。</li>
-<li>是否执行的是SLAVEOF NO ONE命令，该命令会断开主从的关系，设置当前节点为主节点服务器。</li>
-<li>设置从节点所属主节点的IP和port。调用了replicationSetMaster()函数。</li>
-</ul>
-<p>SLAVEOF命令能做的只有这么多，我们来具体看下replicationSetMaster()函数的代码，看看它做了哪些与复制相关的操作。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">// 设置复制操作的主节点IP和端口</div><div class="line">void replicationSetMaster(char *ip, int port) &#123;</div><div class="line">    // 按需清除原来的主节点信息</div><div class="line">    sdsfree(server.masterhost);</div><div class="line">    // 设置ip和端口</div><div class="line">    server.masterhost = sdsnew(ip);</div><div class="line">    server.masterport = port;</div><div class="line">    // 如果有其他的主节点，在释放</div><div class="line">    // 例如服务器1是服务器2的主节点，现在服务器2要同步服务器3，服务器3要成为服务器2的主节点，因此要释放服务器1</div><div class="line">    if (server.master) freeClient(server.master);</div><div class="line">    // 解除所有客户端的阻塞状态</div><div class="line">    disconnectAllBlockedClients(); /* Clients blocked in master, now slave. */</div><div class="line">    // 关闭所有从节点服务器的连接，强制从节点服务器进行重新同步操作</div><div class="line">    disconnectSlaves(); /* Force our slaves to resync with us as well. */</div><div class="line">    // 释放主节点结构的缓存，不会执行部分重同步PSYNC</div><div class="line">    replicationDiscardCachedMaster(); /* Don&apos;t try a PSYNC. */</div><div class="line">    // 释放复制积压缓冲区</div><div class="line">    freeReplicationBacklog(); /* Don&apos;t allow our chained slaves to PSYNC. */</div><div class="line">    // 取消执行复制操作</div><div class="line">    cancelReplicationHandshake();</div><div class="line">    // 设置复制必须重新连接主节点的状态</div><div class="line">    server.repl_state = REPL_STATE_CONNECT;</div><div class="line">    // 初始化复制的偏移量</div><div class="line">    server.master_repl_offset = 0;</div><div class="line">    // 清零连接断开的时长</div><div class="line">    server.repl_down_since = 0;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>由代码知，replicationSetMaster()函数执行操作的也很简单，总结为两步：</p>
-<ul>
-<li>清理之前所属的主节点的信息。</li>
-<li>设置新的主节点IP和port等。<br>因为，当前从节点有可能之前从属于另外的一个主节点服务器，因此要清理所有关于之前主节点的缓存、关闭旧的连接等等。然后设置该从节点的新主节点，设置了IP和port，还设置了以下状态：<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">// 设置复制必须重新连接主节点的状态</div><div class="line">server.repl_state = REPL_STATE_CONNECT;</div><div class="line">// 初始化全局复制的偏移量</div><div class="line">server.master_repl_offset = 0;</div></pre></td></tr></table></figure>
-</li>
-</ul>
-<p>然后，就没有然后了，然后就会执行复制操作吗？这也没有什么关于复制的操作执行了，那么复制操作是怎么开始的呢？</p>
-<h3 id="2-2-主从网络连接建立"><a href="#2-2-主从网络连接建立" class="headerlink" title="2.2 主从网络连接建立"></a>2.2 主从网络连接建立</h3><p>slaveof命令是一个异步命令，执行命令时，从节点保存主节点的信息，确立主从关系后就会立即返回，后续的复制流程在节点内部异步执行。那么，如何触发复制的执行呢？</p>
-<p>周期性执行的函数：replicationCron()函数，该函数被服务器的时间事件的回调函数serverCron()所调用，而serverCron()函数在Redis服务器初始化时，被设置为时间事件的处理函数。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">// void initServer(void) Redis服务器初始化</div><div class="line">aeCreateTimeEvent(server.el, 1, serverCron, NULL, NULL)</div></pre></td></tr></table></figure></p>
-<p>replicationCron()函数执行频率为1秒一次：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">// 节选自serverCron函数</div><div class="line">// 周期性执行复制的任务</div><div class="line">run_with_period(1000) replicationCron();</div></pre></td></tr></table></figure></p>
-<p>主从关系建立后，从节点服务器的server.repl_state被设置为REPL_STATE_CONNECT，而replicationCron()函数会被每秒执行一次，该函数会发现我（从节点）现在有主节点了，而且我要的状态是要连接主节点（REPL_STATE_CONNECT）。</p>
-<p>replicationCron()函数处理这以情况的代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">/* Check if we should connect to a MASTER */</div><div class="line">// 如果处于要必须连接主节点的状态，尝试连接</div><div class="line">if (server.repl_state == REPL_STATE_CONNECT) &#123;</div><div class="line">    serverLog(LL_NOTICE,&quot;Connecting to MASTER %s:%d&quot;,</div><div class="line">        server.masterhost, server.masterport);</div><div class="line">    // 以非阻塞的方式连接主节点</div><div class="line">    if (connectWithMaster() == C_OK) &#123;</div><div class="line">        serverLog(LL_NOTICE,&quot;MASTER &lt;-&gt; SLAVE sync started&quot;);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>replicationCron()函数根据从节点的状态，调用connectWithMaster()非阻塞连接主节点。代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">// 以非阻塞的方式连接主节点</div><div class="line">int connectWithMaster(void) &#123;</div><div class="line">    int fd;</div><div class="line"></div><div class="line">    // 连接主节点</div><div class="line">    fd = anetTcpNonBlockBestEffortBindConnect(NULL,</div><div class="line">        server.masterhost,server.masterport,NET_FIRST_BIND_ADDR);</div><div class="line">    if (fd == -1) &#123;</div><div class="line">        serverLog(LL_WARNING,&quot;Unable to connect to MASTER: %s&quot;,</div><div class="line">            strerror(errno));</div><div class="line">        return C_ERR;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 监听主节点fd的可读和可写事件的发生，并设置其处理程序为syncWithMaster</div><div class="line">    if (aeCreateFileEvent(server.el,fd,AE_READABLE|AE_WRITABLE,syncWithMaster,NULL) == AE_ERR)</div><div class="line">    &#123;</div><div class="line">        close(fd);</div><div class="line">        serverLog(LL_WARNING,&quot;Can&apos;t create readable event for SYNC&quot;);</div><div class="line">        return C_ERR;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 最近一次读到RDB文件内容的时间</div><div class="line">    server.repl_transfer_lastio = server.unixtime;</div><div class="line">    // 从节点和主节点的同步套接字</div><div class="line">    server.repl_transfer_s = fd;</div><div class="line">    // 处于和主节点正在连接的状态</div><div class="line">    server.repl_state = REPL_STATE_CONNECTING;</div><div class="line">    return C_OK;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>connectWithMaster()函数执行的操作可以总结为：</p>
-<ul>
-<li>根据IP和port非阻塞的方式连接主节点，得到主从节点进行通信的文件描述符fd，并保存到从节点服务器server.repl_transfer_s中，并且将刚才的REPL_STATE_CONNECT状态设置为REPL_STATE_CONNECTING。</li>
-<li>监听fd的可读和可写事件，并且设置事件发生的处理程序syncWithMaster()函数。<br>至此，主从网络建立就完成了。</li>
-</ul>
-<h3 id="2-3-发送PING命令"><a href="#2-3-发送PING命令" class="headerlink" title="2.3 发送PING命令"></a>2.3 发送PING命令</h3><p>主从建立网络时，同时注册fd的AE_READABLE|AE_WRITABLE事件，因此会触发一个AE_WRITABLE事件，调用syncWithMaster()函数，处理写事件。</p>
-<p>根据当前的REPL_STATE_CONNECTING状态，从节点向主节点发送PING命令，PING命令的目的有：</p>
-<ul>
-<li>检测主从节点之间的网络是否可用。</li>
-<li>检查主从节点当前是否接受处理命令。<br>syncWithMaster()函数中相关操作的代码如下：<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">/* Send a PING to check the master is able to reply without errors. */</div><div class="line">// 如果复制的状态为REPL_STATE_CONNECTING，发送一个PING去检查主节点是否能正确回复一个PONG</div><div class="line">if (server.repl_state == REPL_STATE_CONNECTING) &#123;</div><div class="line">    serverLog(LL_NOTICE,&quot;Non blocking connect for SYNC fired the event.&quot;);</div><div class="line">    // 暂时取消接听fd的写事件，以便等待PONG回复时，注册可读事件</div><div class="line">    aeDeleteFileEvent(server.el,fd,AE_WRITABLE);</div><div class="line">    // 设置复制状态为等待PONG回复</div><div class="line">    server.repl_state = REPL_STATE_RECEIVE_PONG;</div><div class="line">    // 发送一个PING命令</div><div class="line">    err = sendSynchronousCommand(SYNC_CMD_WRITE,fd,&quot;PING&quot;,NULL);</div><div class="line">    if (err) goto write_error;</div><div class="line">    return;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-</li>
-</ul>
-<p>发送PING命令主要的操作是：</p>
-<ul>
-<li>先取消监听fd的写事件，因为接下来要读主节点服务器发送过来的PONG回复，因此只监听可读事件的发生。</li>
-<li>设置从节点的复制状态为REPL_STATE_RECEIVE_PONG。等待一个主节点回复一个PONG命令。</li>
-<li>以写的方式调用sendSynchronousCommand()函数发送一个PING命令给主节点。<br>主节点服务器从fd会读到一个PING命令，然后会回复一个PONG命令到fd中，执行的命令就是addReply(c,shared.pong);。</li>
-</ul>
-<p>此时，会触发fd的可读事件，调用syncWithMaster()函数来处理，此时从节点的复制状态为REPL_STATE_RECEIVE_PONG，等待主节点回复PONG。syncWithMaster()函数中处理这一状态的代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">/* Receive the PONG command. */</div><div class="line">// 如果复制的状态为REPL_STATE_RECEIVE_PONG，等待接受PONG命令</div><div class="line">if (server.repl_state == REPL_STATE_RECEIVE_PONG) &#123;</div><div class="line">   // 从主节点读一个PONG命令sendSynchronousCommand</div><div class="line">   err = sendSynchronousCommand(SYNC_CMD_READ,fd,NULL);</div><div class="line"></div><div class="line">    // 只接受两种有效的回复。一种是 &quot;+PONG&quot;，一种是认证错误&quot;-NOAUTH&quot;。</div><div class="line">    // 旧版本的返回有&quot;-ERR operation not permitted&quot;</div><div class="line">    if (err[0] != &apos;+&apos; &amp;&amp;</div><div class="line">        strncmp(err,&quot;-NOAUTH&quot;,7) != 0 &amp;&amp;</div><div class="line">        strncmp(err,&quot;-ERR operation not permitted&quot;,28) != 0)</div><div class="line">    &#123;   // 没有收到正确的PING命令的回复</div><div class="line">        serverLog(LL_WARNING,&quot;Error reply to PING from master: &apos;%s&apos;&quot;,err);</div><div class="line">        sdsfree(err);</div><div class="line">        goto error;</div><div class="line">     &#125; else &#123;</div><div class="line">       serverLog(LL_NOTICE,&quot;Master replied to PING, replication can continue...&quot;);</div><div class="line">     &#125;</div><div class="line">     sdsfree(err);</div><div class="line">     // 已经收到PONG，更改状态设置为发送认证命令AUTH给主节点</div><div class="line">     server.repl_state = REPL_STATE_SEND_AUTH;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>在这里，以读的方式调用sendSynchronousCommand()，并将读到的”+PONG\r\n”返回到err中，如果从节点正确接收到主节点发送的PONG命令，会将从节点的复制状态设置为server.repl_state = REPL_STATE_SEND_AUTH。等待进行权限的认证。</p>
-<h3 id="2-4-认证权限"><a href="#2-4-认证权限" class="headerlink" title="2.4 认证权限"></a>2.4 认证权限</h3><p>权限认证会在syncWithMaster()函数继续执行，紧接着刚才的代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">/* AUTH with the master if required. */</div><div class="line">// 如果需要，发送AUTH认证给主节点</div><div class="line">if (server.repl_state == REPL_STATE_SEND_AUTH) &#123;</div><div class="line">   // 如果服务器设置了认证密码</div><div class="line">   if (server.masterauth) &#123;</div><div class="line">        // 写AUTH给主节点</div><div class="line">        err = sendSynchronousCommand(SYNC_CMD_WRITE,fd,&quot;AUTH&quot;,server.masterauth,NULL);</div><div class="line">        if (err) goto write_error;</div><div class="line">        // 设置状态为等待接受认证回复</div><div class="line">        server.repl_state = REPL_STATE_RECEIVE_AUTH;</div><div class="line">        return;</div><div class="line">    // 如果没有设置认证密码，直接设置复制状态为发送端口号给主节点</div><div class="line">    &#125; else &#123;</div><div class="line">        server.repl_state = REPL_STATE_SEND_PORT;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>如果从节点的服务器设置了认证密码，则会以写方式调用sendSynchronousCommand()函数，将AUTH命令和密码写到fd中，并且将从节点的复制状态设置为server.repl_state = REPL_STATE_RECEIVE_AUTH，接受AUTH的验证。</p>
-<p>如果从节点服务器没有设置认证密码，就直接将从节点的复制状态设置为server.repl_state = REPL_STATE_SEND_PORT，准发发送一个端口号。</p>
-<p>主节点会读取到AUTH命令，调用authCommand()函数来处理，主节点服务器会比较从节点发送过来的server.masterauth和主节点服务器保存的server.requirepass是否一致，如果一致，会回复一个”+OK\r\n”。</p>
-<p>当主节点将回复写到fd时，又会触发从节点的可读事件，紧接着调用syncWithMaster()函数来处理接收AUTH认证结果：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">/* Receive AUTH reply. */</div><div class="line">// 接受AUTH认证的回复</div><div class="line">if (server.repl_state == REPL_STATE_RECEIVE_AUTH) &#123;</div><div class="line">    // 从主节点读回复</div><div class="line">    err = sendSynchronousCommand(SYNC_CMD_READ,fd,NULL);</div><div class="line">    // 回复错误，认证失败</div><div class="line">    if (err[0] == &apos;-&apos;) &#123;</div><div class="line">        serverLog(LL_WARNING,&quot;Unable to AUTH to MASTER: %s&quot;,err);</div><div class="line">        sdsfree(err);</div><div class="line">        goto error;</div><div class="line">    &#125;</div><div class="line">    sdsfree(err);</div><div class="line">    // 设置复制状态为发送端口号给主节点</div><div class="line">    server.repl_state = REPL_STATE_SEND_PORT;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>以读方式从fd中读取一个回复，判断认证是否成功，认证成功，则会将从节点的复制状态设置为server.repl_state = REPL_STATE_SEND_PORT表示要发送一个端口号给主节点。这和没有设置认证的情况结果相同。</p>
-<h3 id="2-5-发送端口号"><a href="#2-5-发送端口号" class="headerlink" title="2.5 发送端口号"></a>2.5 发送端口号</h3><p>从节点在认证完权限后，会继续在syncWithMaster()函数执行，处理发送端口号的状态。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">/* Set the slave port, so that Master&apos;s INFO command can list the</div><div class="line"> * slave listening port correctly. */</div><div class="line">// 如果复制状态是，发送从节点端口号给主节点，主节点的INFO命令就能够列出从节点正在监听的端口号</div><div class="line">if (server.repl_state == REPL_STATE_SEND_PORT) &#123;</div><div class="line">    // 获取端口号</div><div class="line">    sds port = sdsfromlonglong(server.slave_announce_port ?</div><div class="line">        server.slave_announce_port : server.port);</div><div class="line">    // 将端口号写给主节点</div><div class="line">    err = sendSynchronousCommand(SYNC_CMD_WRITE,fd,&quot;REPLCONF&quot;,&quot;listening-port&quot;,port, NULL);</div><div class="line">    sdsfree(port);</div><div class="line">    if (err) goto write_error;</div><div class="line">    sdsfree(err);</div><div class="line">    // 设置复制状态为接受端口号</div><div class="line">    server.repl_state = REPL_STATE_RECEIVE_PORT;</div><div class="line">    return;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>发送端口号，以REPLCONF listening-port命令的方式，写到fd中。然后将复制状态设置为server.repl_state = REPL_STATE_RECEIVE_PORT，等待接受主节点的回复。</p>
-<p>主节点从fd中读到REPLCONF listening-port <port>命令，调用replconfCommand()命令来处理，而replconfCommand()函数的定义就在replication.c文件中，REPLCONF命令可以设置多种不同的选项，解析到端口号后，将端口号保存从节点对应client状态的c-&gt;slave_listening_port = port中。最终回复一个”+OK\r\n”状态的回复，写在fd中。</port></p>
-<p>当主节点将回复写到fd时，又会触发从节点的可读事件，紧接着调用syncWithMaster()函数来处理接受端口号，验证主节点是否正确的接收到从节点的端口号。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">/* Receive REPLCONF listening-port reply. */</div><div class="line">// 复制状态为接受端口号</div><div class="line">if (server.repl_state == REPL_STATE_RECEIVE_PORT) &#123;</div><div class="line">    // 从主节点读取端口号</div><div class="line">    err = sendSynchronousCommand(SYNC_CMD_READ,fd,NULL);</div><div class="line">    /* Ignore the error if any, not all the Redis versions support</div><div class="line">     * REPLCONF listening-port. */</div><div class="line">    // 忽略所有的错误，因为不是所有的Redis版本都支持REPLCONF listening-port命令</div><div class="line">    if (err[0] == &apos;-&apos;) &#123;</div><div class="line">        serverLog(LL_NOTICE,&quot;(Non critical) Master does not understand REPLCONF listening-port: %s&quot;, err);</div><div class="line">    &#125;</div><div class="line">    sdsfree(err);</div><div class="line">    // 设置复制状态为发送IP</div><div class="line">    server.repl_state = REPL_STATE_SEND_IP;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>如果主节点正确的接收到从节点的端口号，会将从节点的复制状态设置为server.repl_state = REPL_STATE_SEND_IP表示要送一个IP给主节点。</p>
-<h3 id="2-6-发送-IP-地址"><a href="#2-6-发送-IP-地址" class="headerlink" title="2.6 发送 IP 地址"></a>2.6 发送 IP 地址</h3><p>从节点发送完端口号并且正确收到主节点的回复后，紧接着syncWithMaster()函数执行发送IP的代码。发送IP和发送端口号过程几乎一致。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">// 复制状态为发送IP</div><div class="line">if (server.repl_state == REPL_STATE_SEND_IP) &#123;</div><div class="line">    // 将IP写给主节点</div><div class="line">    err = sendSynchronousCommand(SYNC_CMD_WRITE,fd,&quot;REPLCONF&quot;,&quot;ip-address&quot;,server.slave_announce_ip, NULL);</div><div class="line">    if (err) goto write_error;</div><div class="line">    sdsfree(err);</div><div class="line">    // 设置复制状态为接受IP</div><div class="line">    server.repl_state = REPL_STATE_RECEIVE_IP;</div><div class="line">    return;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>同样是以REPLCONF ip-address命令的方式，将从节点的IP写到fd中。并且设置从节点的复制状态为server.repl_state = REPL_STATE_RECEIVE_IP，等待接受主节点的回复。然后就直接返回，等待fd可读发生。</p>
-<p>主节点仍然会调用replication.c文件中实现的replconfCommand()函数来处理REPLCONF命令，解析出REPLCONF ip-address ip命令，保存从节点的ip到主节点的对应从节点的client的c-&gt;slave_ip中。然后回复”+OK\r\n”状态，写到fd中。</p>
-<p>此时，从节点监听到fd触发了可读事件，会调用syncWithMaster()函数来处理，验证主节点是否正确接收到从节点的IP。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">/* Receive REPLCONF ip-address reply. */</div><div class="line">// 复制状态为接受IP回复</div><div class="line">if (server.repl_state == REPL_STATE_RECEIVE_IP) &#123;</div><div class="line">    // 从主节点读一个IP回复</div><div class="line">    err = sendSynchronousCommand(SYNC_CMD_READ,fd,NULL);</div><div class="line">    // 错误回复</div><div class="line">    if (err[0] == &apos;-&apos;) &#123;</div><div class="line">        serverLog(LL_NOTICE,&quot;(Non critical) Master does not understand REPLCONF ip-address: %s&quot;, err);</div><div class="line">    &#125;</div><div class="line">    sdsfree(err);</div><div class="line">    // 设置复制状态为发送一个capa（能力？能否解析出RDB文件的EOF流格式）</div><div class="line">    server.repl_state = REPL_STATE_SEND_CAPA;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>如果主节点正确接收了从节点IP，就会设置从节点的复制状态server.repl_state = REPL_STATE_SEND_CAPA表示发送从节点的能力（capability）。</p>
-<h3 id="2-7-发送能力（capability）"><a href="#2-7-发送能力（capability）" class="headerlink" title="2.7 发送能力（capability）"></a>2.7 发送能力（capability）</h3><p>发送能力和发送端口和IP也是如出一辙，紧接着syncWithMaster()函数执行发送capa的代码。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">// 复制状态为发送capa，通知主节点从节点的能力</div><div class="line">if (server.repl_state == REPL_STATE_SEND_CAPA) &#123;</div><div class="line">    // 将从节点的capa写给主节点</div><div class="line">    err = sendSynchronousCommand(SYNC_CMD_WRITE,fd,&quot;REPLCONF&quot;,&quot;capa&quot;,&quot;eof&quot;,NULL);</div><div class="line">    if (err) goto write_error;</div><div class="line">    sdsfree(err);</div><div class="line">    // 设置复制状态为接受从节点的capa</div><div class="line">    server.repl_state = REPL_STATE_RECEIVE_CAPA;</div><div class="line">    return;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>从节点将REPLCONF capa eof命令发送给主节点，写到fd中。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">目前只支持一种能力，就是能够解析出RDB文件的EOF流格式。用于无盘复制的方式中。</div></pre></td></tr></table></figure></p>
-<p>主节点仍然会调用replication.c文件中实现的replconfCommand()函数来处理REPLCONF命令，解析出REPLCONF capa eof命令，将eof对应的标识，按位与到主节点的对应从节点的client的c-&gt;slave_capa中。然后回复”+OK\r\n”状态，写到fd中。</p>
-<p>此时，从节点监听到fd触发了可读事件，会调用syncWithMaster()函数来处理，验证主节点是否正确接收到从节点的capa。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">/* Receive CAPA reply. */</div><div class="line">// 复制状态为接受从节点的capa回复</div><div class="line">if (server.repl_state == REPL_STATE_RECEIVE_CAPA) &#123;</div><div class="line">    // 从主节点读取capa回复</div><div class="line">    err = sendSynchronousCommand(SYNC_CMD_READ,fd,NULL);</div><div class="line">    // 错误回复</div><div class="line">    if (err[0] == &apos;-&apos;) &#123;</div><div class="line">        serverLog(LL_NOTICE,&quot;(Non critical) Master does not understand REPLCONF capa: %s&quot;, err);</div><div class="line">    &#125;</div><div class="line">    sdsfree(err);</div><div class="line">    // 设置复制状态为发送PSYNC命令</div><div class="line">    server.repl_state = REPL_STATE_SEND_PSYNC;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>如果主节点正确接收了从节点capa，就会设置从节点的复制状态server.repl_state = REPL_STATE_SEND_PSYNC表示发送一个PSYNC命令</p>
-<h3 id="2-8-发送PSYNC命令"><a href="#2-8-发送PSYNC命令" class="headerlink" title="2.8 发送PSYNC命令"></a>2.8 发送PSYNC命令</h3><p>从节点发送PSYNC命令给主节点，尝试进行同步主节点的数据集。同步分为两种：</p>
-<ul>
-<li>全量同步：第一次执行复制的场景。</li>
-<li>部分同步：用于主从复制因为网络中断等原因造成数据丢失的场景。<br>因为这是第一次执行同步，因此会进行全量同步。<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">// 复制状态为发送PSYNC命令。尝试进行部分重同步。</div><div class="line">// 如果没有缓冲主节点的结构，slaveTryPartialResynchronization()函数将会至少尝试使用PSYNC去进行一个全同步，这样就能得到主节点的运行runid和全局复制偏移量。并且在下次重连接时可以尝试进行部分重同步。</div><div class="line">if (server.repl_state == REPL_STATE_SEND_PSYNC) &#123;</div><div class="line">    // 向主节点发送一个部分重同步命令PSYNC，参数0表示不读主节点的回复，只获取主节点的运行runid和全局复制偏移量</div><div class="line">    if (slaveTryPartialResynchronization(fd,0) == PSYNC_WRITE_ERROR) &#123;</div><div class="line">        // 发送PSYNC出错</div><div class="line">        err = sdsnew(&quot;Write error sending the PSYNC command.&quot;);</div><div class="line">        goto write_error;</div><div class="line">    &#125;</div><div class="line">    // 设置复制状态为等待接受一个PSYNC回复</div><div class="line">    server.repl_state = REPL_STATE_RECEIVE_PSYNC;</div><div class="line">    return;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-</li>
-</ul>
-<p>从节点调用slaveTryPartialResynchronization()函数尝试进行重同步，注意第二个参数是0。因为slaveTryPartialResynchronization()分成两部分，一部分是写，一部分是读，因为第二个参数是0，因此执行写的一部分，发送一个PSYNC命令给主节点。只列举出写的部分<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line">/* Writing half */</div><div class="line">// 如果read_reply为0，则该函数往socket上会写入一个PSYNC命令</div><div class="line">if (!read_reply) &#123;</div><div class="line">    // 将repl_master_initial_offset设置为-1表示主节点的run_id和全局复制偏移量是无效的。</div><div class="line">    // 如果能使用PSYNC命令执行一个全量同步，会正确设置全复制偏移量，以便这个信息被正确传播主节点的所有从节点中</div><div class="line">    server.repl_master_initial_offset = -1;</div><div class="line"></div><div class="line">    // 主节点的缓存不为空，可以尝试进行部分重同步。PSYNC &lt;master_run_id&gt; &lt;repl_offset&gt;</div><div class="line">    if (server.cached_master) &#123;</div><div class="line">        // 保存缓存runid</div><div class="line">        psync_runid = server.cached_master-&gt;replrunid;</div><div class="line">        // 获取已经复制的偏移量</div><div class="line">        snprintf(psync_offset,sizeof(psync_offset),&quot;%lld&quot;, server.cached_master-&gt;reploff+1);</div><div class="line">        serverLog(LL_NOTICE,&quot;Trying a partial resynchronization (request %s:%s).&quot;, psync_runid, psync_offset);</div><div class="line">    // 主节点的缓存为空，发送PSYNC ? -1。请求全量同步</div><div class="line">    &#125; else &#123;</div><div class="line">        serverLog(LL_NOTICE,&quot;Partial resynchronization not possible (no cached master)&quot;);</div><div class="line">        psync_runid = &quot;?&quot;;</div><div class="line">        memcpy(psync_offset,&quot;-1&quot;,3);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /* Issue the PSYNC command */</div><div class="line">    // 发送一个PSYNC命令给主节点</div><div class="line">    reply = sendSynchronousCommand(SYNC_CMD_WRITE,fd,&quot;PSYNC&quot;,psync_runid,psync_offset,NULL);</div><div class="line">    // 写成功失败会返回一个&quot;-&quot;开头的字符串</div><div class="line">    if (reply != NULL) &#123;</div><div class="line">        serverLog(LL_WARNING,&quot;Unable to send PSYNC to master: %s&quot;,reply);</div><div class="line">        sdsfree(reply);</div><div class="line">        // 删除文件的可读事件，返回写错误PSYNC_WRITE_ERROR</div><div class="line">        aeDeleteFileEvent(server.el,fd,AE_READABLE);</div><div class="line">        return PSYNC_WRITE_ERROR;</div><div class="line">    &#125;</div><div class="line">    // 返回等待回复的标识PSYNC_WAIT_REPLY，调用者会将read_reply设置为1，然后再次调用该函数，执行下面的读部分。</div><div class="line">    return PSYNC_WAIT_REPLY;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>由于从节点是第一次和主节点进行同步操作，因此从节点缓存的主节点client状态erver.cached_master为空，所以就会发送一个PSYNC ? -1命令给主节点，表示进行一次全量同步。</p>
-<p>主节点会接收到PSYNC ? -1命令，然后调用replication.c文件中实现的syncCommand()函数处理PSYNC命令。</p>
-<p>syncCommand()函数先会判断执行的是PSYNC还是SYNC命令，如果是PSYNC命令会调用masterTryPartialResynchronization()命令执行部分同步，但是由于这是第一次执行复制操作，所以会执行失败。进而执行全量同步。</p>
-<p>syncCommand()函数的代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div></pre></td><td class="code"><pre><div class="line">/* SYNC and PSYNC command implemenation. */</div><div class="line">// SYNC and PSYNC 命令实现</div><div class="line">void syncCommand(client *c) &#123;</div><div class="line">    ..........//为了简洁，删除一些判断条件的代码</div><div class="line"></div><div class="line">    // 尝试执行一个部分同步PSYNC的命令，则masterTryPartialResynchronization()会回复一个 &quot;+FULLRESYNC &lt;runid&gt; &lt;offset&gt;&quot;,如果失败则执行全量同步</div><div class="line">    // 所以，从节点会如果和主节点连接断开，从节点会知道runid和offset，随后会尝试执行PSYNC</div><div class="line">    // 如果是执行PSYNC命令</div><div class="line">    if (!strcasecmp(c-&gt;argv[0]-&gt;ptr,&quot;psync&quot;)) &#123;</div><div class="line">        // 主节点尝试执行部分重同步，执行成功返回C_OK</div><div class="line">        if (masterTryPartialResynchronization(c) == C_OK) &#123;</div><div class="line">            // 可以执行PSYNC命令，则将接受PSYNC命令的个数加1</div><div class="line">            server.stat_sync_partial_ok++;</div><div class="line">            // 不需要执行后面的全量同步，直接返回</div><div class="line">            return; /* No full resync needed, return. */</div><div class="line">        // 不能执行PSYNC部分重同步，需要进行全量同步</div><div class="line">        &#125; else &#123;</div><div class="line">            char *master_runid = c-&gt;argv[1]-&gt;ptr;</div><div class="line">            // 从节点以强制全量同步为目的，所以不能执行部分重同步，因此增加PSYNC命令失败的次数</div><div class="line">            if (master_runid[0] != &apos;?&apos;) server.stat_sync_partial_err++;</div><div class="line">        &#125;</div><div class="line">    // 执行SYNC命令</div><div class="line">    &#125; else &#123;</div><div class="line">        // 设置标识，执行SYNC命令，不接受REPLCONF ACK</div><div class="line">        c-&gt;flags |= CLIENT_PRE_PSYNC;</div><div class="line">    &#125;</div><div class="line">    // 全量重同步次数加1</div><div class="line">    server.stat_sync_full++;</div><div class="line"></div><div class="line">    // 设置client状态为：从服务器节点等待BGSAVE节点的开始</div><div class="line">    c-&gt;replstate = SLAVE_STATE_WAIT_BGSAVE_START;</div><div class="line">    // 执行SYNC命令后是否关闭TCP_NODELAY</div><div class="line">    if (server.repl_disable_tcp_nodelay)</div><div class="line">        // 是的话，则启用nagle算法</div><div class="line">        anetDisableTcpNoDelay(NULL, c-&gt;fd); /* Non critical if it fails. */</div><div class="line">    // 保存主服务器传来的RDB文件的fd，设置为-1</div><div class="line">    c-&gt;repldbfd = -1;</div><div class="line">    // 设置client状态为从节点，标识client是一个从服务器</div><div class="line">    c-&gt;flags |= CLIENT_SLAVE;</div><div class="line">    // 添加到服务器从节点链表中</div><div class="line">    listAddNodeTail(server.slaves,c);</div><div class="line"></div><div class="line">    /* CASE 1: BGSAVE is in progress, with disk target. */</div><div class="line">    // 情况1. 正在执行 BGSAVE ，且是同步到磁盘上</div><div class="line">    if (server.rdb_child_pid != -1 &amp;&amp;</div><div class="line">        server.rdb_child_type == RDB_CHILD_TYPE_DISK)</div><div class="line">    &#123;</div><div class="line">        client *slave;</div><div class="line">        listNode *ln;</div><div class="line">        listIter li;</div><div class="line"></div><div class="line">        listRewind(server.slaves,&amp;li);</div><div class="line">        // 遍历从节点链表</div><div class="line">        while((ln = listNext(&amp;li))) &#123;</div><div class="line">            slave = ln-&gt;value;</div><div class="line">            // 如果有从节点已经创建子进程执行写RDB操作，等待完成，那么退出循环</div><div class="line">            // 从节点的状态为 SLAVE_STATE_WAIT_BGSAVE_END 在情况三中被设置</div><div class="line">            if (slave-&gt;replstate == SLAVE_STATE_WAIT_BGSAVE_END) break;</div><div class="line">        &#125;</div><div class="line">        // 对于这个从节点，我们检查它是否具有触发当前BGSAVE操作的能力</div><div class="line">        if (ln &amp;&amp; ((c-&gt;slave_capa &amp; slave-&gt;slave_capa) == slave-&gt;slave_capa)) &#123;</div><div class="line">            // 将slave的输出缓冲区所有内容拷贝给c的所有输出缓冲区中</div><div class="line">            copyClientOutputBuffer(c,slave);</div><div class="line">            // 设置全量重同步从节点的状态，设置部分重同步的偏移量</div><div class="line">            replicationSetupSlaveForFullResync(c,slave-&gt;psync_initial_offset);</div><div class="line">            serverLog(LL_NOTICE,&quot;Waiting for end of BGSAVE for SYNC&quot;);</div><div class="line">        &#125; else &#123;</div><div class="line">            serverLog(LL_NOTICE,&quot;Can&apos;t attach the slave to the current BGSAVE. Waiting for next BGSAVE for SYNC&quot;);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">    /* CASE 2: BGSAVE is in progress, with socket target. */</div><div class="line">    // 情况2. 正在执行BGSAVE，且是无盘同步，直接写到socket中</div><div class="line">    &#125; else if (server.rdb_child_pid != -1 &amp;&amp;</div><div class="line">               server.rdb_child_type == RDB_CHILD_TYPE_SOCKET)</div><div class="line">    &#123;</div><div class="line">        // 虽然有子进程在执行写RDB，但是它直接写到socket中，所以等待下次执行BGSAVE</div><div class="line">        serverLog(LL_NOTICE,&quot;Current BGSAVE has socket target. Waiting for next BGSAVE for SYNC&quot;);</div><div class="line"></div><div class="line">    /* CASE 3: There is no BGSAVE is progress. */</div><div class="line">    // 情况3：没有执行BGSAVE的进程</div><div class="line">    &#125; else &#123;</div><div class="line">        // 服务器支持无盘同步</div><div class="line">        if (server.repl_diskless_sync &amp;&amp; (c-&gt;slave_capa &amp; SLAVE_CAPA_EOF)) &#123;</div><div class="line">            // 无盘同步复制的子进程被创建在replicationCron()中，因为想等待更多的从节点可以到来而延迟</div><div class="line">            if (server.repl_diskless_sync_delay)</div><div class="line">                serverLog(LL_NOTICE,&quot;Delay next BGSAVE for diskless SYNC&quot;);</div><div class="line">        // 服务器不支持无盘复制</div><div class="line">        &#125; else &#123;</div><div class="line">            // 如果没有正在执行BGSAVE，且没有进行写AOF文件，则开始为复制执行BGSAVE，并且是将RDB文件写到磁盘上</div><div class="line">            if (server.aof_child_pid == -1) &#123;</div><div class="line">                startBgsaveForReplication(c-&gt;slave_capa);</div><div class="line">            &#125; else &#123;</div><div class="line">                serverLog(LL_NOTICE,</div><div class="line">                    &quot;No BGSAVE in progress, but an AOF rewrite is active. BGSAVE for replication delayed&quot;);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 只有一个从节点，且backlog为空，则创建一个新的backlog</div><div class="line">    if (listLength(server.slaves) == 1 &amp;&amp; server.repl_backlog == NULL)</div><div class="line">        createReplicationBacklog();</div><div class="line">    return;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>首先先明确，主节点执行处理从节点发来PSYNC命令的操作。所以主节点会将从节点视为自己的从节点客户端来操作。会将从节点的复制设置为SLAVE_STATE_WAIT_BGSAVE_START状态表示</p>
-<p>主节点执行全量同步的情况有三种：</p>
-<ul>
-<li>主节点服务器正在执行BGSAVE命令，且将RDB文件写到磁盘上。<br>这种情况，如果有已经设置过全局重同步偏移量的从节点，可以共用输出缓冲区的数据。</li>
-<li>主节点服务器正在执行BGSAVE命令，且将RDB文件写到网络socket上，无盘同步。<br>由于本次BGSAVE命令直接将RDB写到socket中，因此只能等待下一BGSAVE。</li>
-<li>主节点服务器没有正在执行BGSAVE。<br>如果也没有进行AOF持久化的操作，那么开始为复制操作执行BGSAVE，生成一个写到磁盘上的RDB文件。<br>我们针对第三种情况来分析。调用了startBgsaveForReplication()来开始执行BGSAVE命令。我们贴出主要的代码：<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line">// 开始为复制执行BGSAVE，根据配置选择磁盘或套接字作为RDB发送的目标，在开始之前确保冲洗脚本缓存</div><div class="line">// mincapa参数是SLAVE_CAPA_*按位与的结果</div><div class="line">int startBgsaveForReplication(int mincapa) &#123;</div><div class="line">    int retval;</div><div class="line">    // 是否直接写到socket</div><div class="line">    int socket_target = server.repl_diskless_sync &amp;&amp; (mincapa &amp; SLAVE_CAPA_EOF);</div><div class="line">    listIter li;</div><div class="line">    listNode *ln;</div><div class="line"></div><div class="line">    if (socket_target)</div><div class="line">        // 直接写到socket中</div><div class="line">        // fork一个子进程将rdb写到 状态为等待BGSAVE开始 的从节点的socket中</div><div class="line">        retval = rdbSaveToSlavesSockets();</div><div class="line">    else</div><div class="line">        // 否则后台进行RDB持久化BGSAVE操作，保存到磁盘上</div><div class="line">        retval = rdbSaveBackground(server.rdb_filename);</div><div class="line"></div><div class="line">    ......</div><div class="line"></div><div class="line">    // 如果是直接写到socket中，rdbSaveToSlavesSockets()已经会设置从节点为全量复制</div><div class="line">    // 否则直接写到磁盘上，执行以下代码</div><div class="line">    if (!socket_target) &#123;</div><div class="line">        listRewind(server.slaves,&amp;li);</div><div class="line">        // 遍历从节点链表</div><div class="line">        while((ln = listNext(&amp;li))) &#123;</div><div class="line">            client *slave = ln-&gt;value;</div><div class="line">            // 设置等待全量同步的从节点的状态</div><div class="line">            if (slave-&gt;replstate == SLAVE_STATE_WAIT_BGSAVE_START) &#123;</div><div class="line">                    // 设置要执行全量重同步从节点的状态</div><div class="line">                    replicationSetupSlaveForFullResync(slave,</div><div class="line">                            getPsyncInitialOffset());</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-</li>
-</ul>
-<p>replicationSetupSlaveForFullResync()函数源码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">int replicationSetupSlaveForFullResync(client *slave, long long offset) &#123;</div><div class="line">    char buf[128];</div><div class="line">    int buflen;</div><div class="line"></div><div class="line">    // 设置全量重同步的偏移量</div><div class="line">    slave-&gt;psync_initial_offset = offset;</div><div class="line">    // 设置从节点复制状态，开始累计差异数据</div><div class="line">    slave-&gt;replstate = SLAVE_STATE_WAIT_BGSAVE_END;</div><div class="line">    // 将slaveseldb设置为-1，是为了强制发送一个select命令在复制流中</div><div class="line">    server.slaveseldb = -1;</div><div class="line"></div><div class="line">    // 如果从节点的状态是CLIENT_PRE_PSYNC，则表示是Redis是2.8之前的版本，则不将这些信息发送给从节点。</div><div class="line">    // 因为在2.8之前只支持SYNC的全量复制同步，而在之后的版本提供了部分的重同步</div><div class="line">    if (!(slave-&gt;flags &amp; CLIENT_PRE_PSYNC)) &#123;</div><div class="line">        buflen = snprintf(buf,sizeof(buf),&quot;+FULLRESYNC %s %lld\r\n&quot;,</div><div class="line">                          server.runid,offset);</div><div class="line">        // 否则会将全量复制的信息写给从节点</div><div class="line">        if (write(slave-&gt;fd,buf,buflen) != buflen) &#123;</div><div class="line">            freeClientAsync(slave);</div><div class="line">            return C_ERR;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    return C_OK;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>哇，主节点终于回复从节点的PSYNC命令了，回复了一个+FULLRESYNC，写到主从同步的fd。表示要进行全量同步啊！！！</p>
-<p>此时，从节点的复制状态一定为REPL_STATE_RECEIVE_PSYNC，fd的读事件发生，调用syncWithMaster()函数进行处理。</p>
-<p>处理这种情况的代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">// 那么尝试进行第二次部分重同步，从主节点读取指令来决定执行部分重同步还是全量同步</div><div class="line">psync_result = slaveTryPartialResynchronization(fd,1);</div></pre></td></tr></table></figure></p>
-<p>这次的第二个参数是1，因此会执行该函数的读部分。(因为这个函数有两个部分，上一次执行了写部分，因为第二个参数是0)<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div></pre></td><td class="code"><pre><div class="line">/* Reading half */</div><div class="line">// 从主节点读一个命令保存在reply中</div><div class="line">reply = sendSynchronousCommand(SYNC_CMD_READ,fd,NULL);</div><div class="line">if (sdslen(reply) == 0) &#123;</div><div class="line">    // 主节点为了保持连接的状态，可能会在接收到PSYNC命令后发送一个空行</div><div class="line">    sdsfree(reply);</div><div class="line">    // 所以就返回PSYNC_WAIT_REPLY，调用者会将read_reply设置为1，然后再次调用该函数。</div><div class="line">    return PSYNC_WAIT_REPLY;</div><div class="line">&#125;</div><div class="line">// 如果读到了一个命令，删除fd的可读事件</div><div class="line">aeDeleteFileEvent(server.el,fd,AE_READABLE);</div><div class="line"></div><div class="line">// 接受到的是&quot;+FULLRESYNC&quot;，表示进行一次全量同步</div><div class="line">if (!strncmp(reply,&quot;+FULLRESYNC&quot;,11)) &#123;</div><div class="line">    char *runid = NULL, *offset = NULL;</div><div class="line">    // 解析回复中的内容，将runid和复制偏移量提取出来</div><div class="line">    runid = strchr(reply,&apos; &apos;);</div><div class="line">    if (runid) &#123;</div><div class="line">        runid++;    //定位到runid的地址</div><div class="line">        offset = strchr(runid,&apos; &apos;);</div><div class="line">        if (offset) offset++;   //定位offset</div><div class="line">    &#125;</div><div class="line">    // 如果runid和offset任意为空，那么发生不期望错误</div><div class="line">    if (!runid || !offset || (offset-runid-1) != CONFIG_RUN_ID_SIZE) &#123;</div><div class="line">        serverLog(LL_WARNING,&quot;Master replied with wrong +FULLRESYNC syntax.&quot;);</div><div class="line">        // 将主节点的运行ID重置为0</div><div class="line">        memset(server.repl_master_runid,0,CONFIG_RUN_ID_SIZE+1);</div><div class="line">    // runid和offset获取成功</div><div class="line">    &#125; else &#123;</div><div class="line">        // 设置服务器保存的主节点的运行ID</div><div class="line">        memcpy(server.repl_master_runid, runid, offset-runid-1);</div><div class="line">        server.repl_master_runid[CONFIG_RUN_ID_SIZE] = &apos;\0&apos;;</div><div class="line">        // 主节点的偏移量</div><div class="line">        server.repl_master_initial_offset = strtoll(offset,NULL,10);</div><div class="line">        serverLog(LL_NOTICE,&quot;Full resync from master: %s:%lld&quot;,server.repl_master_runid,          server.repl_master_initial_offset);</div><div class="line">    &#125;</div><div class="line">    // 执行全量同步，所以缓存的主节点结构没用了，将其清空</div><div class="line">    replicationDiscardCachedMaster();</div><div class="line">    sdsfree(reply);</div><div class="line">    // 返回执行的状态</div><div class="line">    return PSYNC_FULLRESYNC;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// 接受到的是&quot;+CONTINUE&quot;，表示进行一次部分重同步</div><div class="line">if (!strncmp(reply,&quot;+CONTINUE&quot;,9)) &#123;</div><div class="line">    serverLog(LL_NOTICE,&quot;Successful partial resynchronization with master.&quot;);</div><div class="line">    sdsfree(reply);</div><div class="line">    // 因为执行部分重同步，因此要使用缓存的主节点结构，所以将其设置为当前的主节点，被同步的主节点</div><div class="line">    replicationResurrectCachedMaster(fd);</div><div class="line">    // 返回执行的状态</div><div class="line">    return PSYNC_CONTINUE;</div><div class="line">&#125;</div><div class="line"></div><div class="line">// 接收到了错误，两种情况。</div><div class="line">// 1. 主节点不支持PSYNC命令，Redis版本低于2.8</div><div class="line">// 2. 从主节点读取了一个不期望的回复</div><div class="line">if (strncmp(reply,&quot;-ERR&quot;,4)) &#123;</div><div class="line">    /* If it&apos;s not an error, log the unexpected event. */</div><div class="line">    serverLog(LL_WARNING,&quot;Unexpected reply to PSYNC from master: %s&quot;, reply);</div><div class="line">&#125; else &#123;</div><div class="line">    serverLog(LL_NOTICE,&quot;Master does not support PSYNC or is in error state (reply: %s)&quot;, reply);</div><div class="line">&#125;</div><div class="line">sdsfree(reply);</div><div class="line">replicationDiscardCachedMaster();</div><div class="line">// 发送不支持PSYNC命令的状态</div><div class="line">return PSYNC_NOT_SUPPORTED;</div></pre></td></tr></table></figure></p>
-<p>至此，从节点监听主节点的读命令事件已经完成，所以取消监听了读事件。等到主节点开始传送数据给从节点时，从节点会新创建读事件。</p>
-<p>该函数可以解析出主节点发过来的命令是哪一个，一共有三种：</p>
-<ul>
-<li>“+FULLRESYNC”：代表要进行一次全量复制。</li>
-<li>“+CONTINUE”：代表要进行一次部分重同步。</li>
-<li>“-ERR”：发生了错误。有两种可能：Redis版本过低不支持PSYNC命令和从节点读到一个错误回复。<br>我们关注第一个全量同步的操作。如果读到了主节点发来的”+FULLRESYNC”，那么会将同时发来的主节点运行ID和全局的复制偏移量保存到从节点的服务器属性中server.repl_master_runid和server.repl_master_initial_offset。然后返回PSYNC_FULLRESYNC。</li>
-</ul>
-<p>回到syncWithMaster函数，继续处理全量同步。由于要进行全量同步，如果当前从节点还作为其他节点的主节点，因此要断开所有从节点的连接，让他们也重新同步当前节点。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div></pre></td><td class="code"><pre><div class="line">// 执行到这里，psync_result == PSYNC_FULLRESYNC或PSYNC_NOT_SUPPORTED</div><div class="line">    // 准备一个合适临时文件用来写入和保存主节点传来的RDB文件数据</div><div class="line">    while(maxtries--) &#123;</div><div class="line">        // 设置文件的名字</div><div class="line">        snprintf(tmpfile,256,</div><div class="line">            &quot;temp-%d.%ld.rdb&quot;,(int)server.unixtime,(long int)getpid());</div><div class="line">        // 以读写，可执行权限打开临时文件</div><div class="line">        dfd = open(tmpfile,O_CREAT|O_WRONLY|O_EXCL,0644);</div><div class="line">        // 打开成功，跳出循环</div><div class="line">        if (dfd != -1) break;</div><div class="line">        sleep(1);</div><div class="line">    &#125;</div><div class="line">    /* Setup the non blocking download of the bulk file. */</div><div class="line">    // 监听一个fd的读事件，并设置该事件的处理程序为readSyncBulkPayload</div><div class="line">    if (aeCreateFileEvent(server.el,fd, AE_READABLE,readSyncBulkPayload,NULL)</div><div class="line">            == AE_ERR)</div><div class="line">    &#123;</div><div class="line">        serverLog(LL_WARNING,</div><div class="line">            &quot;Can&apos;t create readable event for SYNC: %s (fd=%d)&quot;,</div><div class="line">            strerror(errno),fd);</div><div class="line">        goto error;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 复制状态为正从主节点接受RDB文件</div><div class="line">    server.repl_state = REPL_STATE_TRANSFER;</div><div class="line">    // 初始化RDB文件的大小</div><div class="line">    server.repl_transfer_size = -1;</div><div class="line">    // 已读的大小</div><div class="line">    server.repl_transfer_read = 0;</div><div class="line">    // 最近一个执行fsync的偏移量为0</div><div class="line">    server.repl_transfer_last_fsync_off = 0;</div><div class="line">    // 传输RDB文件的临时fd</div><div class="line">    server.repl_transfer_fd = dfd;</div><div class="line">    // 最近一次读到RDB文件内容的时间</div><div class="line">    server.repl_transfer_lastio = server.unixtime;</div><div class="line">    // 保存RDB文件的临时文件名</div><div class="line">    server.repl_transfer_tmpfile = zstrdup(tmpfile);</div><div class="line">    return;</div></pre></td></tr></table></figure></p>
-<p> 准备好了所有，接下来就要等待主节点来发送RDB文件了。因此上面做了这三件事：</p>
-<ul>
-<li>打开一个临时文件，用来保存主节点发来的RDB文件数据的。</li>
-<li>监听fd的读事件，等待主节点发送RDB文件数据，触发可读事件执行readSyncBulkPayload()函数，该函数就会把主节点发来的数据读到一个缓冲区中，然后将缓冲区的数据写到刚才打开的临时文件中，接着要载入到从节点的数据库中，最后同步到磁盘中。</li>
-<li>设置复制操作的状态为server.repl_state = REPL_STATE_TRANSFER。并且初始化复制的信息，例如：RDB文件的大小，偏移量，等等。（具体看上面的代码）<br>主节点要发送RDB文件，但是回复完”+FULLRESYNC”就再也没有操作了。而子节点创建了监听主节点写RDB文件的事件，等待主节点来写，才调用readSyncBulkPayload()函数来处理。这又有问题了，到底主节点什么时候发送RDB文件呢？如果不是主动执行，那么一定就在周期性函数内被执行。</li>
-</ul>
-<p>它的调用关系如下：</p>
-<p>serverCron()-&gt;backgroundSaveDoneHandler()-&gt;backgroundSaveDoneHandlerDisk()-&gt;updateSlavesWaitingBgsave()</p>
-<p>updateSlavesWaitingBgsave()函数定义在replication.c中，主要操作有两步，我们简单介绍：</p>
-<ul>
-<li>只读打开主节点的临时RDB文件，然后设置从节点client复制状态为SLAVE_STATE_SEND_BULK。</li>
-<li>立刻创建监听可写的事件，并设置sendBulkToSlave()函数为可写事件的处理程序。<br>当主节点执行周期性函数时，主节点会先清除之前监听的可写事件，然后立即监听新的可写事件，这样就会触发可写的事件，调用sendBulkToSlave()函数将RDB文件写入到fd中，触发从节点的读事件，从节点调用readSyncBulkPayload()函数，来将RDB文件的数据载入数据库中，至此，就保证了主从同步了。</li>
-</ul>
-<p>我们来简单介绍sendBulkToSlave()函数在写RDB文件时做了什么：</p>
-<ul>
-<li>将RDB文件的大小写给从节点，以协议格式的字符串表示的大小。</li>
-<li>从RDB文件的repldbfd中读出RDB文件数据，然后写到主从同步的fd中。</li>
-<li>写入完成后，又一次取消监听文件可写事件，等待下一次发送缓冲区数据时在监听触发，并且调用putSlaveOnline()函数将从节点client的复制状态设置为SLAVE_STATE_ONLINE。表示已经发送RDB文件完毕，发送缓存更新。</li>
-</ul>
-<h3 id="2-9-发送输出缓冲区数据"><a href="#2-9-发送输出缓冲区数据" class="headerlink" title="2.9 发送输出缓冲区数据"></a>2.9 发送输出缓冲区数据</h3><p>主节点发送完RDB文件后，调用putSlaveOnline()函数将从节点client的复制状态设置为SLAVE_STATE_ONLINE，表示已经发送RDB文件完毕，要发送缓存更新了。于是会新创建一个事件，监听写事件的发生，设置sendReplyToClient为可写的处理程序，而且会将从节点client当做私有数据闯入sendReplyToClient()当做发送缓冲区的对象。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">aeCreateFileEvent(server.el, slave-&gt;fd, AE_WRITABLE,sendReplyToClient, slave)</div></pre></td></tr></table></figure></p>
-<p>创建可写事件的时候，就会触发第一次可写，执行sendReplyToClient()，该函数还直接调用了riteToClient(fd,privdata,1)函数，于是将从节点client输出缓冲区的数据发送给了从节点服务器。</p>
-<p>riteToClient()函数数据Redis网络连接库的函数，定义在network.c中，具体分析请看：Redis 网络连接库源码分析</p>
-<p>这样就保证主从服务器的数据库状态一致了。</p>
-<h3 id="2-10-命令传播"><a href="#2-10-命令传播" class="headerlink" title="2.10 命令传播"></a>2.10 命令传播</h3><p>主从节点在第一次全量同步之后就达到了一致，但是之后主节点如果执行了写命令，主节点的数据库状态就又可能发生变化，导致主从再次不一致。为了让主从节点回到一致状态，主机的执行命令后都需要将命令传播到从节点。</p>
-<p>传播时会调用server.c中的propagate()函数，如果传播到从节点会调用replicationFeedSlaves(server.slaves,dbid,argv,argc)函数，该函数则会将执行的命令以协议的传输格式写到从节点client的输出缓冲区中，这就是为什么主节点会将从节点client的输出缓冲区发送到从节点（具体见标题2.9），也会添加到server.repl_backlog中。</p>
-<p>我们来看看replicationFeedSlaves()函数的实现：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div></pre></td><td class="code"><pre><div class="line">// 将参数列表中的参数发送给从服务器</div><div class="line">void replicationFeedSlaves(list *slaves, int dictid, robj **argv, int argc) &#123;</div><div class="line">    listNode *ln;</div><div class="line">    listIter li;</div><div class="line">    int j, len;</div><div class="line">    char llstr[LONG_STR_SIZE];</div><div class="line"></div><div class="line">    // 如果没有backlog且没有从节点服务器，直接返回</div><div class="line">    if (server.repl_backlog == NULL &amp;&amp; listLength(slaves) == 0) return;</div><div class="line"></div><div class="line">    /* We can&apos;t have slaves attached and no backlog. */</div><div class="line">    serverAssert(!(listLength(slaves) != 0 &amp;&amp; server.repl_backlog == NULL));</div><div class="line"></div><div class="line">    // 如果当前从节点使用的数据库不是目标的数据库，则要生成一个select命令</div><div class="line">    if (server.slaveseldb != dictid) &#123;</div><div class="line">        robj *selectcmd;</div><div class="line"></div><div class="line">        // 0 &lt;= id &lt; 10 ，可以使用共享的select命令对象</div><div class="line">        if (dictid &gt;= 0 &amp;&amp; dictid &lt; PROTO_SHARED_SELECT_CMDS) &#123;</div><div class="line">            selectcmd = shared.select[dictid];</div><div class="line">        // 否则自行按照协议格式构建select命令对象</div><div class="line">        &#125; else &#123;</div><div class="line">            int dictid_len;</div><div class="line"></div><div class="line">            dictid_len = ll2string(llstr,sizeof(llstr),dictid);</div><div class="line">            selectcmd = createObject(OBJ_STRING,</div><div class="line">                sdscatprintf(sdsempty(),</div><div class="line">                &quot;*2\r\n$6\r\nSELECT\r\n$%d\r\n%s\r\n&quot;,</div><div class="line">                dictid_len, llstr));</div><div class="line">        &#125;</div><div class="line">        // 将select 命令添加到backlog中</div><div class="line">        if (server.repl_backlog) feedReplicationBacklogWithObject(selectcmd);</div><div class="line"></div><div class="line">        // 发送给从服务器</div><div class="line">        listRewind(slaves,&amp;li);</div><div class="line">        // 遍历所有的从服务器节点</div><div class="line">        while((ln = listNext(&amp;li))) &#123;</div><div class="line">            client *slave = ln-&gt;value;</div><div class="line">            // 从节点服务器状态为等待BGSAVE的开始，因此跳过回复，遍历下一个节点</div><div class="line">            if (slave-&gt;replstate == SLAVE_STATE_WAIT_BGSAVE_START) continue;</div><div class="line">            // 添加select命令到当前从节点的回复中</div><div class="line">            addReply(slave,selectcmd);</div><div class="line">        &#125;</div><div class="line">        // 释放临时对象</div><div class="line">        if (dictid &lt; 0 || dictid &gt;= PROTO_SHARED_SELECT_CMDS)</div><div class="line">            decrRefCount(selectcmd);</div><div class="line">    &#125;</div><div class="line">    // 设置当前从节点使用的数据库ID</div><div class="line">    server.slaveseldb = dictid;</div><div class="line"></div><div class="line">    // 将命令写到backlog中</div><div class="line">    if (server.repl_backlog) &#123;</div><div class="line">        char aux[LONG_STR_SIZE+3];</div><div class="line"></div><div class="line">        // 将参数个数构建成协议标准的字符串</div><div class="line">        // *&lt;argc&gt;\r\n</div><div class="line">        aux[0] = &apos;*&apos;;</div><div class="line">        len = ll2string(aux+1,sizeof(aux)-1,argc);</div><div class="line">        aux[len+1] = &apos;\r&apos;;</div><div class="line">        aux[len+2] = &apos;\n&apos;;</div><div class="line">        // 添加到backlog中</div><div class="line">        feedReplicationBacklog(aux,len+3);</div><div class="line"></div><div class="line">        // 遍历所有的参数</div><div class="line">        for (j = 0; j &lt; argc; j++) &#123;</div><div class="line">            // 返回参数对象的长度</div><div class="line">            long objlen = stringObjectLen(argv[j]);</div><div class="line"></div><div class="line">            // 构建成协议标准的字符串，并添加到backlog中</div><div class="line">            // $&lt;len&gt;\r\n&lt;argv&gt;\r\n</div><div class="line">            aux[0] = &apos;$&apos;;</div><div class="line">            len = ll2string(aux+1,sizeof(aux)-1,objlen);</div><div class="line">            aux[len+1] = &apos;\r&apos;;</div><div class="line">            aux[len+2] = &apos;\n&apos;;</div><div class="line">            // 添加$&lt;len&gt;\r\n</div><div class="line">            feedReplicationBacklog(aux,len+3);</div><div class="line">            // 添加参数对象&lt;argv&gt;</div><div class="line">            feedReplicationBacklogWithObject(argv[j]);</div><div class="line">            // 添加\r\n</div><div class="line">            feedReplicationBacklog(aux+len+1,2);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    // 将命令写到每一个从节点中</div><div class="line">    listRewind(server.slaves,&amp;li);</div><div class="line">    // 遍历从节点链表</div><div class="line">    while((ln = listNext(&amp;li))) &#123;</div><div class="line">        client *slave = ln-&gt;value;</div><div class="line"></div><div class="line">        // 从节点服务器状态为等待BGSAVE的开始，因此跳过回复，遍历下一个节点</div><div class="line">        if (slave-&gt;replstate == SLAVE_STATE_WAIT_BGSAVE_START) continue;</div><div class="line"></div><div class="line">        // 将命令写给正在等待初次SYNC的从节点（所以这些命令在输出缓冲区中排队，直到初始SYNC完成），或已经与主节点同步</div><div class="line">        /* Add the multi bulk length. */</div><div class="line">        // 添加回复的长度</div><div class="line">        addReplyMultiBulkLen(slave,argc);</div><div class="line"></div><div class="line">        // 将所有的参数列表添加到从节点的输出缓冲区</div><div class="line">        for (j = 0; j &lt; argc; j++)</div><div class="line">            addReplyBulk(slave,argv[j]);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>和AOF持久化一样，再给从节点client写命令时，会将SELECT命令强制写入，以保证命令正确读到数据库中。</p>
-<p>不仅写入了从节点client的输出缓冲区，而且还会将命令记录到主节点服务器的复制积压缓冲区server.repl_backlog中，这是为了网络闪断后进行部分重同步。</p>
-<h2 id="3-部分重同步实现"><a href="#3-部分重同步实现" class="headerlink" title="3. 部分重同步实现"></a>3. 部分重同步实现</h2><p>刚才剖析完全量同步，但是没有考虑特殊的情况。如果在传输RDB文件的过程中，网络发生故障，主节点和从节点的连接中断，Redis会咋么做呢？</p>
-<p>Redis 2.8 版本之前会在进行一次连接然后进行全量复制，但是这样效率非常地下，之后的版本都提供了部分重同步的实现。那么我们就分析一下部分重同步的实现过程。</p>
-<p>部分重同步在复制的过程中，相当于标题2.8的发送PSYNC命令的部分，其他所有的部分都要进行，他只是主节点回复从节点的命令不同，回复+CONTINUE则执行部分重同步，回复+FULLRESYNC则执行全量同步。</p>
-<h3 id="3-1-心跳机制"><a href="#3-1-心跳机制" class="headerlink" title="3.1 心跳机制"></a>3.1 心跳机制</h3><p>主节点是如何发现和从节点连接中断？在主从节点建立连接后，他们之间都维护者长连接并彼此发送心跳命令。主从节点彼此都有心跳机制，各自模拟成对方的客户端进行通信。</p>
-<ul>
-<li>主节点默认每隔10秒发送PING命令，判断从节点的连接状态。 </li>
-<li><p>文件配置项：repl-ping-salve-period，默认是10</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">// 首先，根据当前节点发送PING命令给从节点的频率发送PING命令 </div><div class="line">// 如果当前节点是某以节点的 主节点 ，那么发送PING给从节点</div><div class="line">if ((replication_cron_loops % server.repl_ping_slave_period) == 0) &#123;</div><div class="line">    // 创建PING命令对象</div><div class="line">    ping_argv[0] = createStringObject(&quot;PING&quot;,4);</div><div class="line">    // 将PING发送给从服务器</div><div class="line">    replicationFeedSlaves(server.slaves, server.slaveseldb, ping_argv, 1);</div><div class="line">    decrRefCount(ping_argv[0]);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-</li>
-<li><p>从节点在主线程中每隔1秒发送REPLCONF ACK <offset>命令，给主节点报告自己当前复制偏移量。</offset></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">// 定期发送ack给主节点，旧版本的Redis除外</div><div class="line">if (server.masterhost &amp;&amp; server.master &amp;&amp; !(server.master-&gt;flags &amp; CLIENT_PRE_PSYNC))</div><div class="line">    // 发送一个REPLCONF ACK命令给主节点去报告关于当前处理的offset。</div><div class="line">    replicationSendAck();</div></pre></td></tr></table></figure>
-</li>
-</ul>
-<p>在周期性函数replicationCron()，每次都要检查和主节点处于连接状态的从节点和主节点的交互时间是否超时，如果超时则会调用cancelReplicationHandshake()函数，取消和主节点的连接。等到下一个周期在和主节点重新建立连接，进行复制。</p>
-<h3 id="3-2-复制积压缓冲区-backlog"><a href="#3-2-复制积压缓冲区-backlog" class="headerlink" title="3.2 复制积压缓冲区(backlog)"></a>3.2 复制积压缓冲区(backlog)</h3><p>复制积压缓冲区是一个大小为1M的循环队列。主节点在命令传播时，不仅会将命令发送给所有的从节点，还会将命令写入复制积压缓冲区中（具体请看标题2.10）。</p>
-<p>也就是说，复制积压缓冲区最多可以备份1M大小的数据，如果主从节点断线时间过长，复制积压缓冲区的数据会被新数据覆盖，那么当从主从中断连接起，主节点接收到的数据超过1M大小，那么从节点就无法进行部分重同步，只能进行全量复制。</p>
-<p>在标题2.8，介绍的syncCommand()命令中，调用masterTryPartialResynchronization()函数会进行尝试部分重同步，在我们之前分析的第一次全量同步时，该函数会执行失败，然后返回syncCommand()函数执行全量同步，而在进行恢复主从连接后，则会进行部分重同步，masterTryPartialResynchronization()函数代码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div></pre></td><td class="code"><pre><div class="line">// 该函数从主节点接收到部分重新同步请求的角度处理PSYNC命令</div><div class="line">// 成功返回C_OK，否则返回C_ERR</div><div class="line">int masterTryPartialResynchronization(client *c) &#123;</div><div class="line">    long long psync_offset, psync_len;</div><div class="line">    char *master_runid = c-&gt;argv[1]-&gt;ptr;   //主节点的运行ID</div><div class="line">    char buf[128];</div><div class="line">    int buflen;</div><div class="line"></div><div class="line">    // 主节点的运行ID是否和从节点执行PSYNC的参数提供的运行ID相同。</div><div class="line">    // 如果运行ID发生了改变，则主节点是一个不同的实例，那么就不能进行继续执行原有的复制进程</div><div class="line">    if (strcasecmp(master_runid, server.runid)) &#123;</div><div class="line">        /* Run id &quot;?&quot; is used by slaves that want to force a full resync. */</div><div class="line">        // 如果从节点的运行ID是&quot;?&quot;，表示想要强制进行一个全量同步</div><div class="line">        if (master_runid[0] != &apos;?&apos;) &#123;</div><div class="line">            serverLog(LL_NOTICE,&quot;Partial resynchronization not accepted: &quot;</div><div class="line">                &quot;Runid mismatch (Client asked for runid &apos;%s&apos;, my runid is &apos;%s&apos;)&quot;,</div><div class="line">                master_runid, server.runid);</div><div class="line">        &#125; else &#123;</div><div class="line">            serverLog(LL_NOTICE,&quot;Full resync requested by slave %s&quot;,</div><div class="line">                replicationGetSlaveName(c));</div><div class="line">        &#125;</div><div class="line">        goto need_full_resync;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 从参数对象中获取psync_offset</div><div class="line">    if (getLongLongFromObjectOrReply(c,c-&gt;argv[2],&amp;psync_offset,NULL) !=</div><div class="line">       C_OK) goto need_full_resync;</div><div class="line">    // 如果psync_offset小于repl_backlog_off，说明backlog所备份的数据的已经太新了，有一些数据被覆盖，则需要进行全量复制</div><div class="line">    // 如果psync_offset大于(server.repl_backlog_off + server.repl_backlog_histlen)，表示当前backlog的数据不够全，则需要进行全量复制</div><div class="line">    if (!server.repl_backlog ||</div><div class="line">        psync_offset &lt; server.repl_backlog_off ||</div><div class="line">        psync_offset &gt; (server.repl_backlog_off + server.repl_backlog_histlen))</div><div class="line">    &#123;</div><div class="line">        serverLog(LL_NOTICE,</div><div class="line">            &quot;Unable to partial resync with slave %s for lack of backlog (Slave request was: %lld).&quot;, replicationGetSlaveName(c), psync_offset);</div><div class="line">        if (psync_offset &gt; server.master_repl_offset) &#123;</div><div class="line">            serverLog(LL_WARNING,</div><div class="line">                &quot;Warning: slave %s tried to PSYNC with an offset that is greater than the master replication offset.&quot;, replicationGetSlaveName(c));</div><div class="line">        &#125;</div><div class="line">        goto need_full_resync;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 执行到这里，则可以进行部分重同步</div><div class="line">    // 1. 设置client状态为从节点</div><div class="line">    // 2. 向从节点发送 +CONTINUE 表示接受 partial resync 被接受</div><div class="line">    // 3. 发送backlog的数据给从节点</div><div class="line"></div><div class="line">    // 设置client状态为从节点</div><div class="line">    c-&gt;flags |= CLIENT_SLAVE;</div><div class="line">    // 设置复制状态为在线，此时RDB文件传输完成，发送差异数据</div><div class="line">    c-&gt;replstate = SLAVE_STATE_ONLINE;</div><div class="line">    // 设置从节点收到ack的时间</div><div class="line">    c-&gt;repl_ack_time = server.unixtime;</div><div class="line">    // slave向master发送ack标志设置为0</div><div class="line">    c-&gt;repl_put_online_on_ack = 0;</div><div class="line">    // 将当前client加入到从节点链表中</div><div class="line">    listAddNodeTail(server.slaves,c);</div><div class="line">    // 向从节点发送 +CONTINUE</div><div class="line">    buflen = snprintf(buf,sizeof(buf),&quot;+CONTINUE\r\n&quot;);</div><div class="line">    if (write(c-&gt;fd,buf,buflen) != buflen) &#123;</div><div class="line">        freeClientAsync(c);</div><div class="line">        return C_OK;</div><div class="line">    &#125;</div><div class="line">    // 将backlog的数据发送从节点</div><div class="line">    psync_len = addReplyReplicationBacklog(c,psync_offset);</div><div class="line">    serverLog(LL_NOTICE,</div><div class="line">        &quot;Partial resynchronization request from %s accepted. Sending %lld bytes of backlog starting from offset %lld.&quot;, replicationGetSlaveName(c), psync_len, psync_offset);</div><div class="line">    // 计算延迟值小于min-slaves-max-lag的从节点的个数</div><div class="line">    refreshGoodSlavesCount();</div><div class="line">    return C_OK; /* The caller can return, no full resync needed. */</div><div class="line"></div><div class="line">need_full_resync:</div><div class="line">    return C_ERR;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>如果可以进行部分重同步，主节点则会发送”+CONTINUE\r\n”作为从节点发送PSYNC回复（看标题2.8）。然后调用addReplyReplicationBacklog()函数，将backlog中的数据发送给从节点。于是就完成了部分重同步。</p>
-<p>addReplyReplicationBacklog()函数所做的就是将backlog写到从节点的client的输出缓冲区中。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://hlei.io/2018/02/23/redis-analysis-replicate/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="He Lei">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="HeLei Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="HeLei Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2018/02/23/redis-analysis-replicate/" itemprop="url">
-                  Redis源码剖析和注释（十二）--- Redis 复制(replicate)源码详细解析
-                </a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-02-23T18:34:50+08:00">
-                2018-02-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Redis/" itemprop="url" rel="index">
-                    <span itemprop="name">Redis</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="1-复制介绍"><a href="#1-复制介绍" class="headerlink" title="1. 复制介绍"></a>1. 复制介绍</h2><p>分布式数据库为了获取更大的存储容量和更高的并发访问量，会将原来集中式数据库中的数据分散存储到多个通过网络连接的数据存储节点上。Redis为了解决单点数据库问题，会把数据复制多个副本部署到其他节点上，通过复制，实现Redis的高可用性，实现对数据的冗余备份，保证数据和服务的高度可靠性。</p>
-<h2 id="2-复制的建立"><a href="#2-复制的建立" class="headerlink" title="2. 复制的建立"></a>2. 复制的建立</h2><p>建立复制的配置方式有三种。</p>
-<ul>
-<li>在redis.conf文件中配置slaveof <masterip> <masterport>选项，然后指定该配置文件启动Redis生效。</masterport></masterip></li>
-<li>在redis-server启动命令后加上–slaveof <masterip> <masterport>启动生效。</masterport></masterip></li>
-<li><p>直接使用 slaveof <masterip> <masterport>命令在从节点执行生效。<br>我们以最简单的一主一从模型，使用第2种方式建立复制。</masterport></masterip></p>
-</li>
-<li><p>首先先开启主节点master实例，端口8888</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">redis-server --port 8888</div></pre></td></tr></table></figure>
-</li>
-<li><p>接着开启从节点slave实例，端口9999，并指定指定主节点。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">redis-server --port 9999 --slaveof 127.0.0.1 8888</div><div class="line">//命令行开启Redis服务器后，会打印如下日志信息，已经开启复制了</div><div class="line">Connecting to MASTER 127.0.0.1:8888</div><div class="line">MASTER &lt;-&gt; SLAVE sync started</div><div class="line">Non blocking connect for SYNC fired the event.</div><div class="line">Master replied to PING, replication can continue...</div><div class="line">Partial resynchronization not possible (no cached master)</div><div class="line">Full resync from master: 1aff09ecd70ca640e33083f8422018b29883b9d1:1</div><div class="line">MASTER &lt;-&gt; SLAVE sync: receiving 76 bytes from master</div><div class="line">MASTER &lt;-&gt; SLAVE sync: Flushing old data</div><div class="line">MASTER &lt;-&gt; SLAVE sync: Loading DB in memory</div><div class="line">MASTER &lt;-&gt; SLAVE sync: Finished with success</div></pre></td></tr></table></figure>
-</li>
-<li><p>开启一个client，连接上从节点服务器。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">➜  ~ redis-cli -p 9999</div><div class="line">127.0.0.1:9999&gt; INFO replication</div><div class="line"># Replication</div><div class="line">role:slave                      //节点角色</div><div class="line">master_host:127.0.0.1           //主节点的IP</div><div class="line">master_port:8888                //主节点的端口</div><div class="line">master_link_status:up           //与主节点的连接状态</div><div class="line">master_last_io_seconds_ago:0    //主节点最后与从节点的通信时间间隔，单位秒</div><div class="line">master_sync_in_progress:0       //从节点是否正在全量同步主节点的RDB文件</div><div class="line">slave_repl_offset:407           //复制偏移量</div><div class="line">slave_priority:100              //从节点的优先级</div><div class="line">slave_read_only:1               //从节点是否只读</div><div class="line">connected_slaves:0              //连接从节点的个数</div><div class="line">master_repl_offset:0            //当前从节点作为其他从节点的主节点时的复制偏移量</div><div class="line">//以下四种信息为通用的配置</div><div class="line">repl_backlog_active:0           //复制缓冲区的状态</div><div class="line">repl_backlog_size:1048576       //复制缓冲区的大小</div><div class="line">repl_backlog_first_byte_offset:0//复制缓冲区起始偏移量，标识当前缓冲区可用的范围</div><div class="line">repl_backlog_histlen:0          //标识复制缓冲区已存在的有效数据长度</div><div class="line">127.0.0.1:9999&gt; KEYS *          //由于主节点的键空间为空，所以从节点的键空间也为空。</div><div class="line">(empty list or set)</div></pre></td></tr></table></figure>
-</li>
-</ul>
-<p>此时，我们查看主节点的INFO replication 信息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">//通过INFO replication命令可以查看当前的复制信息</div><div class="line">127.0.0.1:6380&gt; INFO replication</div><div class="line"># Replication</div><div class="line">role:master                                                     //节点角色</div><div class="line">connected_slaves:1                                              //连接从节点的个数</div><div class="line">slave0:ip=127.0.0.1,port=9999,state=online,offset=631,lag=0     //连接从节点的信息</div><div class="line">master_repl_offset:631                                          //主节点的偏移量</div><div class="line">//以下四种信息为通用的配置  </div><div class="line">repl_backlog_active:1                                           //复制缓冲区的状态</div><div class="line">repl_backlog_size:1048576                                       //复制缓冲区的大小</div><div class="line">repl_backlog_first_byte_offset:2                                //复制缓冲区起始偏移量，标识当前缓冲区可用的范围</div><div class="line">repl_backlog_histlen:630                                        //由于主节点的键空间为空，所以从节点的键空间也为空。</div></pre></td></tr></table></figure></p>
-<p>到此，一主一从模型的复制就建立成功了。我们可以在主节点建立一些新的键，然后查看从节点的键空间的变化<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">//根据端口区别主从节点</div><div class="line">127.0.0.1:8888&gt; HSET hash_key hello world</div><div class="line">(integer) 1</div><div class="line">127.0.0.1:9999&gt; KEYS *  //从节点的键空间已经更新</div><div class="line">1) &quot;hash_key&quot;</div></pre></td></tr></table></figure></p>
-<p>我们在查看从节点的INFO replication信息时，可以知道slave_read_only:1，从节点默认只能读不能写，因此执行写命令会得到如下回复：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">127.0.0.1:9999&gt; SET key value</div><div class="line">(error) READONLY You can&apos;t write against a read only slave.</div></pre></td></tr></table></figure></p>
-<p>只读模式由 redis.conf 文件中的 slave-read-only 选项控制，也可以通过 CONFIG SET命令来开启或关闭这个模式。</p>
-<p>我们在查看从节点的INFO replication信息时，还发现有connected_slaves:0选项 ，说明Redis的复制拓扑结构支持单层或多层复制关系，从节点还可以作为其他从节点的主节点进行复制。</p>
-<p>根据拓扑关系可以分为三种：</p>
-<ul>
-<li><p>一主一从<br><img src="/2018/02/23/redis-analysis-replicate/redis-replication01.jpg" alt="replicate01"></p>
-</li>
-<li><p>一主多从<br><img src="/2018/02/23/redis-analysis-replicate/redis-replication02.jpg" alt="replicate01"></p>
-</li>
-<li><p>树型主从结构<br><img src="/2018/02/23/redis-analysis-replicate/redis-replication03.jpg" alt="replicate01"></p>
-</li>
-</ul>
-<h2 id="3-复制的断开"><a href="#3-复制的断开" class="headerlink" title="3. 复制的断开"></a>3. 复制的断开</h2><p>复制断开也是在从节点执行命令slaveof no one来断开于主节点的复制关系。例如，将刚才端口为9999的从节点断开复制：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">127.0.0.1:9999&gt; SLAVEOF no one</div><div class="line">OK</div><div class="line">//从节点服务器会打印如下日志</div><div class="line">Connection with master lost.</div><div class="line">Caching the disconnected master state.</div><div class="line">Discarding previously cached master state.</div><div class="line">MASTER MODE enabled (user request from &apos;id=3 addr=127.0.0.1:40218 fd=7 name= age=2218 idle=0 flags=N db=0 sub=0 psub=0 multi=-1 qbuf=0 qbuf-free=32768 obl=0 oll=0 omem=0 events=r cmd=slaveof&apos;)</div><div class="line">//主节点服务器也会打印断开的信息</div><div class="line">Connection with slave 127.0.0.1:9999 lost.</div></pre></td></tr></table></figure></p>
-<p>从节点服务器断开后，从节点会晋升为主节点。从日志中可以看到MASTER MODE enabled，也可以从INFO命令查看到<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">127.0.0.1:9999&gt; INFO replication</div><div class="line"># Replication</div><div class="line">role:master     //角色发生变化</div><div class="line">......</div></pre></td></tr></table></figure></p>
-<h2 id="4-min-slaves配置选项"><a href="#4-min-slaves配置选项" class="headerlink" title="4. min-slaves配置选项"></a>4. min-slaves配置选项</h2><p>Redis的min-slaves-to-write和min-slaves-max-lag两个选项可以防止主节点在不安全的情况下执行写命令。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">min-slaves-to-write 3   //从节点数量少于3个，主节点拒绝执行写命令</div><div class="line">min-slaves-max-lag 10   //3个从节点的延迟(lag)值，大于或等于10，主节点拒绝执行写命令</div></pre></td></tr></table></figure></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2255,7 +2122,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">73</span>
+                <span class="site-state-item-count">75</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
